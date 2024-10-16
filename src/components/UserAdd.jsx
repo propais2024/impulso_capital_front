@@ -17,7 +17,7 @@ export default function UserAdd() {
     const fetchRoles = async () => {
       try {
         const token = localStorage.getItem('token');
-        const response = await axios.get('http://localhost:4000/api/roles', {
+        const response = await axios.get('https://impulso-capital-back.onrender.com/api/roles', {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -38,7 +38,7 @@ export default function UserAdd() {
     try {
       const token = localStorage.getItem('token');
       const response = await axios.post(
-        'http://localhost:4000/api/users',
+        'https://impulso-capital-back.onrender.com/api/users',
         { username, email, password, role_id: roleId },
         {
           headers: {

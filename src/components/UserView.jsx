@@ -22,14 +22,14 @@ export default function UserView() {
         }
 
         // Obtener la información del usuario
-        const userResponse = await axios.get(`http://localhost:4000/api/users/${id}`, {
+        const userResponse = await axios.get(`https://impulso-capital-back.onrender.com/api/users/${id}`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
         });
 
         // Obtener los roles disponibles
-        const rolesResponse = await axios.get('http://localhost:4000/api/roles', {
+        const rolesResponse = await axios.get('https://impulso-capital-back.onrender.com/api/roles', {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -63,7 +63,7 @@ export default function UserView() {
     try {
       const token = localStorage.getItem('token');
       await axios.put(
-        `http://localhost:4000/api/users/${id}`,
+        `https://impulso-capital-back.onrender.com/api/users/${id}`,
         { ...updatedData },
         {
           headers: {

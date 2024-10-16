@@ -18,7 +18,7 @@ export default function EditRecord() {
         const token = localStorage.getItem('token');
 
         // Obtener los campos de la tabla
-        const fieldsResponse = await axios.get(`http://localhost:4000/api/inscriptions/tables/${tableName}/fields`, {
+        const fieldsResponse = await axios.get(`https://impulso-capital-back.onrender.com/api/inscriptions/tables/${tableName}/fields`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -26,7 +26,7 @@ export default function EditRecord() {
         setFields(fieldsResponse.data);
 
         // Obtener los datos del registro
-        const recordResponse = await axios.get(`http://localhost:4000/api/inscriptions/tables/${tableName}/records/${id}`, {
+        const recordResponse = await axios.get(`https://impulso-capital-back.onrender.com/api/inscriptions/tables/${tableName}/records/${id}`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -51,7 +51,7 @@ export default function EditRecord() {
   const handleSave = async () => {
     try {
       const token = localStorage.getItem('token');
-      await axios.put(`http://localhost:4000/api/inscriptions/tables/${tableName}/records/${id}`, record, {
+      await axios.put(`https://impulso-capital-back.onrender.com/api/inscriptions/tables/${tableName}/records/${id}`, record, {
         headers: {
           Authorization: `Bearer ${token}`,
         },

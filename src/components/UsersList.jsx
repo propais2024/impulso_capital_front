@@ -20,7 +20,7 @@ export default function UsersList() {
           throw new Error('Token no encontrado. Por favor, inicia sesión nuevamente.');
         }
 
-        const response = await axios.get('http://localhost:4000/api/users', {
+        const response = await axios.get('https://impulso-capital-back.onrender.com/api/users', {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -43,7 +43,7 @@ export default function UsersList() {
       const token = localStorage.getItem('token');
       const newStatus = currentStatus === 1 ? 0 : 1;
 
-      await axios.put(`http://localhost:4000/api/users/${id}/toggle-status`, { status: newStatus }, {
+      await axios.put(`https://impulso-capital-back.onrender.com/api/users/${id}/toggle-status`, { status: newStatus }, {
         headers: {
           Authorization: `Bearer ${token}`,
         },

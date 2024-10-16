@@ -27,7 +27,7 @@ export default function ResetPassword() {
     }
 
     try {
-      const response = await axios.post(`http://localhost:4000/api/users/reset-password/${token}`, { newPassword });
+      const response = await axios.post(`https://impulso-capital-back.onrender.com/api/users/reset-password/${token}`, { newPassword });
 
       if (response.status === 200) {
         setAlert({ message: 'Contraseña restablecida con éxito', type: 'success' });

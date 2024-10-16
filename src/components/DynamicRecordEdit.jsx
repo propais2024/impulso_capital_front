@@ -52,7 +52,7 @@ export default function DynamicRecordEdit() {
     try {
       const token = localStorage.getItem('token');
       await axios.put(
-        `http://localhost:4000/api/inscriptions/tables/${tableName}/record/${recordId}`,
+        `https://impulso-capital-back.onrender.com/api/inscriptions/tables/${tableName}/record/${recordId}`,
         { ...record, Estado: newStatus },
         {
           headers: {
@@ -76,7 +76,7 @@ export default function DynamicRecordEdit() {
 
         // Obtener campos de la tabla
         const fieldsResponse = await axios.get(
-          `http://localhost:4000/api/inscriptions/tables/${tableName}/fields`,
+          `https://impulso-capital-back.onrender.com/api/inscriptions/tables/${tableName}/fields`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -99,7 +99,7 @@ export default function DynamicRecordEdit() {
 
         // Obtener el registro y los datos relacionados de claves foráneas
         const recordResponse = await axios.get(
-          `http://localhost:4000/api/inscriptions/tables/${tableName}/record/${recordId}`,
+          `https://impulso-capital-back.onrender.com/api/inscriptions/tables/${tableName}/record/${recordId}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -113,7 +113,7 @@ export default function DynamicRecordEdit() {
         if (estadoExists) {
           // Obtener las opciones de estado
           const estadoOptionsResponse = await axios.get(
-            `http://localhost:4000/api/inscriptions/tables/${tableName}/field-options/Estado`,
+            `https://impulso-capital-back.onrender.com/api/inscriptions/tables/${tableName}/field-options/Estado`,
             {
               headers: {
                 Authorization: `Bearer ${token}`,
@@ -136,7 +136,7 @@ export default function DynamicRecordEdit() {
         // Obtener is_primary de la tabla seleccionada
         // Modificación para incluir tablas de proveedores
         const inscriptionsResponse = await axios.get(
-          'http://localhost:4000/api/inscriptions/tables?tableType=inscription',
+          'https://impulso-capital-back.onrender.com/api/inscriptions/tables?tableType=inscription',
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -144,7 +144,7 @@ export default function DynamicRecordEdit() {
           }
         );
         const providersResponse = await axios.get(
-          'http://localhost:4000/api/inscriptions/tables?tableType=provider',
+          'https://impulso-capital-back.onrender.com/api/inscriptions/tables?tableType=provider',
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -157,7 +157,7 @@ export default function DynamicRecordEdit() {
 
         // Obtener archivos subidos asociados al registro
         const filesResponse = await axios.get(
-          `http://localhost:4000/api/inscriptions/tables/${tableName}/record/${recordId}/files`,
+          `https://impulso-capital-back.onrender.com/api/inscriptions/tables/${tableName}/record/${recordId}/files`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -239,7 +239,7 @@ export default function DynamicRecordEdit() {
       const token = localStorage.getItem('token');
 
       await axios.put(
-        `http://localhost:4000/api/inscriptions/tables/${tableName}/record/${recordId}`,
+        `https://impulso-capital-back.onrender.com/api/inscriptions/tables/${tableName}/record/${recordId}`,
         record,
         {
           headers: {
@@ -268,7 +268,7 @@ export default function DynamicRecordEdit() {
       formData.append('fileName', fileName);
 
       await axios.post(
-        `http://localhost:4000/api/inscriptions/tables/${tableName}/record/${recordId}/upload`,
+        `https://impulso-capital-back.onrender.com/api/inscriptions/tables/${tableName}/record/${recordId}/upload`,
         formData,
         {
           headers: {
@@ -280,7 +280,7 @@ export default function DynamicRecordEdit() {
 
       // Actualizar la lista de archivos subidos
       const filesResponse = await axios.get(
-        `http://localhost:4000/api/inscriptions/tables/${tableName}/record/${recordId}/files`,
+        `https://impulso-capital-back.onrender.com/api/inscriptions/tables/${tableName}/record/${recordId}/files`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -305,7 +305,7 @@ export default function DynamicRecordEdit() {
       try {
         const token = localStorage.getItem('token');
         await axios.delete(
-          `http://localhost:4000/api/inscriptions/tables/${tableName}/record/${recordId}/file/${fileId}`,
+          `https://impulso-capital-back.onrender.com/api/inscriptions/tables/${tableName}/record/${recordId}/file/${fileId}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -315,7 +315,7 @@ export default function DynamicRecordEdit() {
 
         // Actualizar la lista de archivos después de la eliminación
         const filesResponse = await axios.get(
-          `http://localhost:4000/api/inscriptions/tables/${tableName}/record/${recordId}/files`,
+          `https://impulso-capital-back.onrender.com/api/inscriptions/tables/${tableName}/record/${recordId}/files`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -555,7 +555,7 @@ export default function DynamicRecordEdit() {
                               <strong>{file.name}</strong>
                               <br />
                               <a
-                                href={`http://localhost:4000${file.url}`}
+                                href={`https://impulso-capital-back.onrender.com${file.url}`}
                                 target="_blank"
                                 rel="noopener noreferrer"
                               >

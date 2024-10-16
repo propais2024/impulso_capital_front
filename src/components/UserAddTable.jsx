@@ -15,7 +15,7 @@ export default function UserAddTable() {
     const fetchTables = async () => {
       try {
         const token = localStorage.getItem('token');
-        const response = await axios.get('http://localhost:4000/api/inscriptions/tables', {
+        const response = await axios.get('https://impulso-capital-back.onrender.com/api/inscriptions/tables', {
           headers: { Authorization: `Bearer ${token}` },
         });
         setAvailableTables(response.data);
@@ -60,7 +60,7 @@ export default function UserAddTable() {
       console.log('Datos enviados al backend:', tableData); // Verificar los datos antes de enviarlos
 
       await axios.post(
-        'http://localhost:4000/api/inscriptions/create-table',
+        'https://impulso-capital-back.onrender.com/api/inscriptions/create-table',
         tableData,
         { headers: { Authorization: `Bearer ${token}` } }
       );

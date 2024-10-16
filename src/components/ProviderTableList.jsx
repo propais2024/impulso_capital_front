@@ -38,7 +38,7 @@ export default function ProviderTableList() {
 
       // Obtener campos con información completa
       const fieldsResponse = await axios.get(
-        `http://localhost:4000/api/inscriptions/tables/${tableName}/fields`,
+        `https://impulso-capital-back.onrender.com/api/inscriptions/tables/${tableName}/fields`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -71,7 +71,7 @@ export default function ProviderTableList() {
 
       // Obtener registros
       const recordsResponse = await axios.get(
-        `http://localhost:4000/api/inscriptions/tables/${tableName}/records`,
+        `https://impulso-capital-back.onrender.com/api/inscriptions/tables/${tableName}/records`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -95,7 +95,7 @@ export default function ProviderTableList() {
     const fetchTables = async () => {
       try {
         const token = localStorage.getItem('token');
-        const response = await axios.get('http://localhost:4000/api/inscriptions/tables', {
+        const response = await axios.get('https://impulso-capital-back.onrender.com/api/inscriptions/tables', {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -260,7 +260,7 @@ export default function ProviderTableList() {
     try {
       const token = localStorage.getItem('token');
       await axios.put(
-        `http://localhost:4000/api/inscriptions/tables/${selectedTable}/bulk-update`,
+        `https://impulso-capital-back.onrender.com/api/inscriptions/tables/${selectedTable}/bulk-update`,
         {
           recordIds: selectedRecords,
           updates: bulkUpdateData,
@@ -294,7 +294,7 @@ export default function ProviderTableList() {
 
         for (const field of multiSelectFields) {
           const response = await axios.get(
-            `http://localhost:4000/api/inscriptions/tables/${selectedTable}/field-options/${field}`,
+            `https://impulso-capital-back.onrender.com/api/inscriptions/tables/${selectedTable}/field-options/${field}`,
             {
               headers: {
                 Authorization: `Bearer ${token}`,

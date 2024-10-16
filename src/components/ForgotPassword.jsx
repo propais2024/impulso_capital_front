@@ -20,7 +20,7 @@ export default function ForgotPassword() {
     e.preventDefault();
 
     try {
-      const response = await axios.post('http://localhost:4000/api/users/forgot-password', { email });
+      const response = await axios.post('https://impulso-capital-back.onrender.com/api/users/forgot-password', { email });
 
       if (response.status === 200) {
         setAlert({

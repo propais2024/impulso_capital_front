@@ -14,13 +14,13 @@ export default function DownloadZip() {
       try {
         const token = localStorage.getItem('token');
         const responseInscriptions = await axios.get(
-          'http://localhost:4000/api/inscriptions/tables?tableType=inscription&isPrimary=true',
+          'https://impulso-capital-back.onrender.com/api/inscriptions/tables?tableType=inscription&isPrimary=true',
           {
             headers: { Authorization: `Bearer ${token}` },
           }
         );
         const responseProviders = await axios.get(
-          'http://localhost:4000/api/inscriptions/tables?tableType=provider&isPrimary=true',
+          'https://impulso-capital-back.onrender.com/api/inscriptions/tables?tableType=provider&isPrimary=true',
           {
             headers: { Authorization: `Bearer ${token}` },
           }
@@ -66,7 +66,7 @@ export default function DownloadZip() {
 
       // Hacer la solicitud para descargar el ZIP
       const response = await axios.post(
-        `http://localhost:4000/api/inscriptions/download-multiple-zip`,
+        `https://impulso-capital-back.onrender.com/api/inscriptions/download-multiple-zip`,
         requestData,
         {
           headers: { Authorization: `Bearer ${token}` },
