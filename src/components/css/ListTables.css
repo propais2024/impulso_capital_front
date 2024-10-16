@@ -1,0 +1,10 @@
+.field-row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 10px;
+  }
+  
+  .field-row input, .field-row select {
+    width: 48%; /* Hacer que el campo nombre y el tipo tengan el mismo tamaño */
+  }
+  
