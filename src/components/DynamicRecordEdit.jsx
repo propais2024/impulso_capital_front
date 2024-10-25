@@ -8,40 +8,41 @@ import 'react-circular-progressbar/dist/styles.css';
 
 export default function DynamicRecordEdit() {
   const { tableName, recordId } = useParams();
+  const navigate = useNavigate();
+
   const [record, setRecord] = useState({});
   const [fields, setFields] = useState([]);
   const [relatedData, setRelatedData] = useState({});
   const [isPrimaryTable, setIsPrimaryTable] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const navigate = useNavigate();
 
   // Estado para 'Calificacion'
   const [calificacion, setCalificacion] = useState(0);
 
+  // Estados para manejo de archivos
   const [file, setFile] = useState(null);
   const [fileName, setFileName] = useState('');
   const [showUploadForm, setShowUploadForm] = useState(false);
-
   const [uploadedFiles, setUploadedFiles] = useState([]);
 
+  // Estado para porcentaje de completado
   const [completionPercentage, setCompletionPercentage] = useState(0);
 
   // Estado y funciones para el modal de cambiar estado
   const [showStatusModal, setShowStatusModal] = useState(false);
   const [newStatus, setNewStatus] = useState('');
   const [estadoOptions, setEstadoOptions] = useState([]);
-
-  // Añadimos currentEstado como estado
   const [currentEstado, setCurrentEstado] = useState(null);
-
-  // Añadimos estado para verificar si el campo 'Estado' existe en la tabla actual
   const [estadoFieldExists, setEstadoFieldExists] = useState(false);
 
+  // Estado para almacenar asesores
+  const [asesors, setAsesors] = useState([]);
+
+  // Funciones para manejar el modal de estado
   const handleOpenStatusModal = () => {
     setNewStatus(record.Estado || '');
     setShowStatusModal(true);
-    // No es necesario volver a cargar estadoOptions aquí
   };
 
   const handleCloseStatusModal = () => {
@@ -68,13 +69,14 @@ export default function DynamicRecordEdit() {
     }
   };
 
-  // Obtener el registro a editar, los campos de la tabla y las opciones de estado
+  // Obtener el registro a editar, los campos de la tabla, las opciones de estado y asesores
   useEffect(() => {
     const fetchRecordData = async () => {
       try {
         const token = localStorage.getItem('token');
+        console.log('Token usado para la solicitud:', token);
 
-        // Obtener campos de la tabla
+        // Obtener los campos de la tabla
         const fieldsResponse = await axios.get(
           `https://impulso-capital-back.onrender.com/api/inscriptions/tables/${tableName}/fields`,
           {
@@ -84,20 +86,22 @@ export default function DynamicRecordEdit() {
           }
         );
 
-        // Verificar si el campo 'Estado' existe en la tabla
+        console.log('Campos obtenidos de la tabla:', fieldsResponse.data);
+
+        // Verificar si el campo 'Estado' existe
         const estadoField = fieldsResponse.data.find(
           (field) => field.column_name === 'Estado'
         );
         const estadoExists = !!estadoField;
         setEstadoFieldExists(estadoExists);
 
-        // Excluir el campo 'Estado' de los campos a mostrar en el formulario si existe
+        // Filtrar los campos si 'Estado' existe
         const filteredFields = estadoExists
           ? fieldsResponse.data.filter((field) => field.column_name !== 'Estado')
           : fieldsResponse.data;
         setFields(filteredFields);
 
-        // Obtener el registro y los datos relacionados de claves foráneas
+        // Obtener el registro específico
         const recordResponse = await axios.get(
           `https://impulso-capital-back.onrender.com/api/inscriptions/tables/${tableName}/record/${recordId}`,
           {
@@ -106,12 +110,13 @@ export default function DynamicRecordEdit() {
             },
           }
         );
+        console.log('Registro obtenido:', recordResponse.data);
+
         setRecord(recordResponse.data.record);
         setRelatedData(recordResponse.data.relatedData);
 
-        // Si el campo 'Estado' existe, obtener las opciones y el estado actual
+        // Manejar el campo 'Estado' si existe
         if (estadoExists) {
-          // Obtener las opciones de estado
           const estadoOptionsResponse = await axios.get(
             `https://impulso-capital-back.onrender.com/api/inscriptions/tables/${tableName}/field-options/Estado`,
             {
@@ -121,20 +126,30 @@ export default function DynamicRecordEdit() {
             }
           );
           setEstadoOptions(estadoOptionsResponse.data.options);
-
-          // Establecer el estado actual basado en las opciones y el valor del registro
           const current = estadoOptionsResponse.data.options.find(
-            (option) => option.value.toString() === recordResponse.data.record.Estado?.toString()
+            (option) =>
+              option.value.toString() ===
+              recordResponse.data.record.Estado?.toString()
           );
           setCurrentEstado(current);
         } else {
-          // Si el campo 'Estado' no existe, aseguramos que estadoOptions y currentEstado estén vacíos
           setEstadoOptions([]);
           setCurrentEstado(null);
         }
 
-        // Obtener is_primary de la tabla seleccionada
-        // Modificación para incluir tablas de proveedores
+        // Verificar si el campo 'Asesor' existe y obtener asesores si es necesario
+        if (filteredFields.some(field => field.column_name === 'Asesor')) {
+          console.log('El campo Asesor existe, solicitando asesores...');
+          const asesorsResponse = await axios.get('https://impulso-capital-back.onrender.com/api/users/asesors', {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          });
+          console.log('Asesores obtenidos:', asesorsResponse.data);
+          setAsesors(asesorsResponse.data);
+        }
+
+        // Obtener otras tablas (inscripciones y proveedores)
         const inscriptionsResponse = await axios.get(
           'https://impulso-capital-back.onrender.com/api/inscriptions/tables?tableType=inscription',
           {
@@ -151,11 +166,16 @@ export default function DynamicRecordEdit() {
             },
           }
         );
-        const tables = [...(inscriptionsResponse.data || []), ...(providersResponse.data || [])];
-        const selectedTableObj = tables.find((table) => table.table_name === tableName);
+        const tables = [
+          ...(inscriptionsResponse.data || []),
+          ...(providersResponse.data || []),
+        ];
+        const selectedTableObj = tables.find(
+          (table) => table.table_name === tableName
+        );
         setIsPrimaryTable(selectedTableObj?.is_primary || false);
 
-        // Obtener archivos subidos asociados al registro
+        // Obtener archivos subidos
         const filesResponse = await axios.get(
           `https://impulso-capital-back.onrender.com/api/inscriptions/tables/${tableName}/record/${recordId}/files`,
           {
@@ -166,10 +186,9 @@ export default function DynamicRecordEdit() {
         );
         setUploadedFiles(filesResponse.data.files);
 
-        // Obtener el valor de 'Calificacion' del registro
+        // Manejar 'Calificacion' si existe
         const calificacionValue = recordResponse.data.record.Calificacion;
         if (calificacionValue !== undefined && calificacionValue !== null) {
-          // Si 'Calificacion' está en un rango diferente a 0-100, ajusta aquí
           setCalificacion(Number(calificacionValue));
         } else {
           setCalificacion(0);
@@ -178,6 +197,9 @@ export default function DynamicRecordEdit() {
         setLoading(false);
       } catch (error) {
         console.error('Error obteniendo los datos:', error);
+        if (error.response) {
+          console.error('Detalles del error:', error.response.data);
+        }
         setError('Error obteniendo los datos');
         setLoading(false);
       }
@@ -216,27 +238,36 @@ export default function DynamicRecordEdit() {
     }
   }, [fields, record]);
 
+  // Manejar cambios en los campos del formulario
   const handleChange = (e) => {
     setRecord({ ...record, [e.target.name]: e.target.value });
 
-    // Si se cambia el campo 'Calificacion', actualizar el estado 'calificacion'
     if (e.target.name === 'Calificacion') {
       setCalificacion(Number(e.target.value));
     }
   };
 
+  // Manejar cambios en el archivo
   const handleFileChange = (e) => {
     setFile(e.target.files[0]);
   };
 
+  // Manejar cambios en el nombre del archivo
   const handleFileNameChange = (e) => {
     setFileName(e.target.value);
   };
 
+  // Manejar envío del formulario
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
       const token = localStorage.getItem('token');
+
+      console.log('Datos enviados:', record);
+      console.log(
+        'URL:',
+        `https://impulso-capital-back.onrender.com/api/inscriptions/tables/${tableName}/record/${recordId}`
+      );
 
       await axios.put(
         `https://impulso-capital-back.onrender.com/api/inscriptions/tables/${tableName}/record/${recordId}`,
@@ -250,11 +281,14 @@ export default function DynamicRecordEdit() {
       navigate(`/table/${tableName}`);
     } catch (error) {
       console.error('Error actualizando el registro:', error);
+      if (error.response) {
+        console.error('Respuesta del servidor:', error.response.data);
+      }
       setError('Error actualizando el registro');
     }
   };
 
-  // Función para manejar la subida de archivos
+  // Manejar subida de archivos
   const handleFileUpload = async (e) => {
     e.preventDefault();
     if (!file || !fileName) {
@@ -278,7 +312,6 @@ export default function DynamicRecordEdit() {
         }
       );
 
-      // Actualizar la lista de archivos subidos
       const filesResponse = await axios.get(
         `https://impulso-capital-back.onrender.com/api/inscriptions/tables/${tableName}/record/${recordId}/files`,
         {
@@ -288,8 +321,6 @@ export default function DynamicRecordEdit() {
         }
       );
       setUploadedFiles(filesResponse.data.files);
-
-      // Limpiar los campos y ocultar el formulario
       setFile(null);
       setFileName('');
       setShowUploadForm(false);
@@ -299,9 +330,11 @@ export default function DynamicRecordEdit() {
     }
   };
 
-  // Función para eliminar un archivo
+  // Manejar eliminación de archivos
   const handleFileDelete = async (fileId) => {
-    if (window.confirm('¿Estás seguro de que deseas eliminar este archivo?')) {
+    if (
+      window.confirm('¿Estás seguro de que deseas eliminar este archivo?')
+    ) {
       try {
         const token = localStorage.getItem('token');
         await axios.delete(
@@ -313,7 +346,6 @@ export default function DynamicRecordEdit() {
           }
         );
 
-        // Actualizar la lista de archivos después de la eliminación
         const filesResponse = await axios.get(
           `https://impulso-capital-back.onrender.com/api/inscriptions/tables/${tableName}/record/${recordId}/files`,
           {
@@ -330,26 +362,36 @@ export default function DynamicRecordEdit() {
     }
   };
 
-  // Determinar el estilo del cuadro de estado según el estado actual
+  // Estilos para el campo Estado
   const estadoStyle = {
     padding: '10px',
     borderRadius: '5px',
     color: '#fff',
     textAlign: 'center',
     marginBottom: '10px',
-    backgroundColor: currentEstado?.label === 'En Formulación' ? '#28a745' : '#6c757d',
+    backgroundColor:
+      currentEstado?.label === 'En Formulación' ? '#28a745' : '#6c757d',
   };
 
   return (
     <div className="content-wrapper">
       {/* Modal para Cambiar Estado */}
       {showStatusModal && (
-        <div className="modal fade show" style={{ display: 'block' }} tabIndex="-1" role="dialog">
+        <div
+          className="modal fade show"
+          style={{ display: 'block' }}
+          tabIndex="-1"
+          role="dialog"
+        >
           <div className="modal-dialog" role="document">
             <div className="modal-content">
               <div className="modal-header">
                 <h5 className="modal-title">Cambiar Estado</h5>
-                <button type="button" className="close" onClick={handleCloseStatusModal}>
+                <button
+                  type="button"
+                  className="close"
+                  onClick={handleCloseStatusModal}
+                >
                   <span>&times;</span>
                 </button>
               </div>
@@ -375,10 +417,18 @@ export default function DynamicRecordEdit() {
                 )}
               </div>
               <div className="modal-footer">
-                <button type="button" className="btn btn-secondary" onClick={handleCloseStatusModal}>
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={handleCloseStatusModal}
+                >
                   Cerrar
                 </button>
-                <button type="button" className="btn btn-primary" onClick={handleUpdateStatus}>
+                <button
+                  type="button"
+                  className="btn btn-primary"
+                  onClick={handleUpdateStatus}
+                >
                   Guardar cambios
                 </button>
               </div>
@@ -408,28 +458,65 @@ export default function DynamicRecordEdit() {
           ) : (
             <div className="row">
               {/* Columna izquierda */}
-              <div className={isPrimaryTable ? 'col-md-8' : 'col-md-12'}>
+              <div
+                className={isPrimaryTable ? 'col-md-8' : 'col-md-12'}
+              >
                 <form onSubmit={handleSubmit}>
                   {fields.map((field) => (
-                    <div className="form-group" key={field.column_name}>
+                    <div
+                      className="form-group"
+                      key={field.column_name}
+                    >
                       <label>{field.column_name}</label>
 
-                      {/* Si el campo tiene datos relacionados, mostrar un select */}
-                      {relatedData[field.column_name] ? (
+                      {/* Campo 'id' como solo lectura */}
+                      {field.column_name === 'id' ? (
+                        <input
+                          type="text"
+                          name={field.column_name}
+                          value={record[field.column_name] || ''}
+                          className="form-control"
+                          readOnly
+                        />
+                      ) : field.column_name === 'Asesor' ? (
+                        // Renderizar Asesor como lista desplegable
                         <select
                           className="form-control"
                           name={field.column_name}
                           value={record[field.column_name] || ''}
                           onChange={handleChange}
                         >
-                          <option value="">-- Selecciona una opción --</option>
-                          {relatedData[field.column_name]?.map((relatedRecord) => (
-                            <option key={relatedRecord.id} value={relatedRecord.id}>
-                              {relatedRecord.displayValue}
+                          <option value="">-- Selecciona un Asesor --</option>
+                          {asesors.map((asesor) => (
+                            <option key={asesor.id} value={asesor.id}>
+                              {asesor.username}
                             </option>
                           ))}
                         </select>
+                      ) : relatedData[field.column_name] ? (
+                        /* Si el campo tiene datos relacionados, mostrar un select */
+                        <select
+                          className="form-control"
+                          name={field.column_name}
+                          value={record[field.column_name] || ''}
+                          onChange={handleChange}
+                        >
+                          <option value="">
+                            -- Selecciona una opción --
+                          </option>
+                          {relatedData[field.column_name]?.map(
+                            (relatedRecord) => (
+                              <option
+                                key={relatedRecord.id}
+                                value={relatedRecord.id}
+                              >
+                                {relatedRecord.displayValue}
+                              </option>
+                            )
+                          )}
+                        </select>
                       ) : (
+                        /* Campo de texto por defecto */
                         <input
                           type="text"
                           name={field.column_name}
@@ -454,7 +541,12 @@ export default function DynamicRecordEdit() {
                   {tableName.startsWith('provider_') ? (
                     <>
                       {/* Barra de progreso para 'Calificacion' */}
-                      <div style={{ width: 150, marginBottom: '20px' }}>
+                      <div
+                        style={{
+                          width: 150,
+                          marginBottom: '20px',
+                        }}
+                      >
                         <CircularProgressbar
                           value={calificacion}
                           text={`${calificacion}%`}
@@ -467,12 +559,19 @@ export default function DynamicRecordEdit() {
                           })}
                         />
                       </div>
-                      <div className="knob-label mt-2">Calificación</div>
+                      <div className="knob-label mt-2">
+                        Calificación
+                      </div>
                     </>
                   ) : (
                     <>
                       {/* Barra de progreso para 'Completado' */}
-                      <div style={{ width: 150, marginBottom: '20px' }}>
+                      <div
+                        style={{
+                          width: 150,
+                          marginBottom: '20px',
+                        }}
+                      >
                         <CircularProgressbar
                           value={completionPercentage}
                           text={`${completionPercentage}%`}
@@ -484,13 +583,18 @@ export default function DynamicRecordEdit() {
                           })}
                         />
                       </div>
-                      <div className="knob-label mt-2">Completado</div>
+                      <div className="knob-label mt-2">
+                        Completado
+                      </div>
                     </>
                   )}
 
                   {/* Mostrar el estado actual solo si el campo 'Estado' existe */}
                   {estadoFieldExists && (
-                    <div className="mt-4 text-center" style={{ width: '100%' }}>
+                    <div
+                      className="mt-4 text-center"
+                      style={{ width: '100%' }}
+                    >
                       <div style={estadoStyle}>
                         {currentEstado?.label || 'Sin estado'}
                       </div>
@@ -504,10 +608,14 @@ export default function DynamicRecordEdit() {
                   )}
 
                   {/* Sección de Archivos adicionales */}
-                  <div className="mt-4" style={{ width: '100%' }}>
+                  <div
+                    className="mt-4"
+                    style={{ width: '100%' }}
+                  >
                     <h5>Archivos adicionales</h5>
                     {!showUploadForm && (
                       <button
+                        type="button"
                         className="btn btn-primary btn-sm btn-block mb-2"
                         onClick={() => setShowUploadForm(true)}
                       >
@@ -528,9 +636,16 @@ export default function DynamicRecordEdit() {
                         </div>
                         <div className="form-group">
                           <label>Seleccionar archivo</label>
-                          <input type="file" className="form-control" onChange={handleFileChange} />
+                          <input
+                            type="file"
+                            className="form-control"
+                            onChange={handleFileChange}
+                          />
                         </div>
-                        <button type="submit" className="btn btn-success btn-sm btn-block mb-2">
+                        <button
+                          type="submit"
+                          className="btn btn-success btn-sm btn-block mb-2"
+                        >
                           Cargar archivo
                         </button>
                         <button
@@ -555,7 +670,7 @@ export default function DynamicRecordEdit() {
                               <strong>{file.name}</strong>
                               <br />
                               <a
-                                href={`https://impulso-capital-back.onrender.com${file.url}`}
+                                href={`http://localhost:4000${file.url}`}
                                 target="_blank"
                                 rel="noopener noreferrer"
                               >
@@ -564,7 +679,9 @@ export default function DynamicRecordEdit() {
                             </div>
                             <button
                               className="btn btn-danger btn-sm"
-                              onClick={() => handleFileDelete(file.id)}
+                              onClick={() =>
+                                handleFileDelete(file.id)
+                              }
                             >
                               Eliminar
                             </button>
@@ -582,7 +699,6 @@ export default function DynamicRecordEdit() {
     </div>
   );
 }
-
 
 
 

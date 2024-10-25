@@ -1,7 +1,8 @@
-import { useEffect, useState } from 'react';
+// DynamicTableList.jsx
+import { useEffect, useState, useRef } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
-import './css/UsersList.css'; // Ajusta la ruta si es necesario
+import './css/UsersList.css'; // Asegúrate de ajustar la ruta si es necesario
 
 export default function DynamicTableList() {
   // Estados y variables
@@ -18,11 +19,34 @@ export default function DynamicTableList() {
   const [showSearchBar, setShowSearchBar] = useState(false); // Mostrar barra de búsqueda
 
   const [selectedRecords, setSelectedRecords] = useState([]); // Registros seleccionados
-  const [multiSelectFields, setMultiSelectFields] = useState([]); // Campos de clave foránea
+  const [multiSelectFields, setMultiSelectFields] = useState([]); // Campos de llave foránea
   const [bulkUpdateData, setBulkUpdateData] = useState({}); // Datos para actualización masiva
-  const [fieldOptions, setFieldOptions] = useState({}); // Opciones para campos de clave foránea
+  const [fieldOptions, setFieldOptions] = useState({}); // Opciones para campos de llave foránea
+  const [fieldOptionsLoaded, setFieldOptionsLoaded] = useState(false); // Estado de carga de opciones
+  const [relatedData, setRelatedData] = useState({}); // Datos relacionados para claves foráneas
+
+  const [currentPage, setCurrentPage] = useState(1); // Página actual
+  const recordsPerPage = 20; // Número de registros por página
 
   const navigate = useNavigate();
+
+  // Claves únicas para evitar conflictos entre módulos
+  const LOCAL_STORAGE_TABLE_KEY = 'dynamicSelectedTable'; // Clave única para tablas en dynamic
+  const LOCAL_STORAGE_COLUMNS_KEY = 'dynamicVisibleColumns'; // Clave única para columnas visibles
+  const LOCAL_STORAGE_SEARCH_KEY = 'dynamicSearchQuery'; // Clave única para búsqueda
+
+  // Referencia para el select de columnas
+  const selectRef = useRef(null);
+
+  // Función para obtener el ID del usuario logueado desde el localStorage
+  const getLoggedUserId = () => {
+    return localStorage.getItem('id') || null;
+  };
+
+  // Función para obtener el role_id del usuario logueado desde el localStorage
+  const getLoggedUserRoleId = () => {
+    return localStorage.getItem('role_id') || null;
+  };
 
   // Función para obtener columnas y registros de la tabla seleccionada
   const fetchTableData = async (tableName, savedVisibleColumns = null) => {
@@ -30,6 +54,8 @@ export default function DynamicTableList() {
       setLoading(true);
       setError(null);
       const token = localStorage.getItem('token');
+      const loggedUserId = getLoggedUserId();
+      const loggedUserRoleId = getLoggedUserRoleId();
 
       // Obtener campos con información completa
       const fieldsResponse = await axios.get(
@@ -45,7 +71,7 @@ export default function DynamicTableList() {
       setColumns(fetchedColumns);
       setFieldsData(fieldsResponse.data); // Guardar información completa de los campos
 
-      // Identificar campos de selección múltiple (claves foráneas)
+      // Identificar campos de selección múltiple (llaves foráneas)
       const multiSelectFieldsArray = fieldsResponse.data
         .filter((column) => column.constraint_type === 'FOREIGN KEY')
         .map((column) => column.column_name);
@@ -54,7 +80,7 @@ export default function DynamicTableList() {
 
       // Si hay columnas visibles guardadas en localStorage, úsalas; si no, muestra todas las columnas por defecto
       const localVisibleColumns =
-        savedVisibleColumns || JSON.parse(localStorage.getItem('visibleColumns')) || [];
+        savedVisibleColumns || JSON.parse(localStorage.getItem(LOCAL_STORAGE_COLUMNS_KEY)) || [];
       if (localVisibleColumns.length > 0) {
         setVisibleColumns(localVisibleColumns);
       } else {
@@ -70,10 +96,37 @@ export default function DynamicTableList() {
           },
         }
       );
-      setRecords(recordsResponse.data); // Establecer registros
 
+      let filteredRecords = recordsResponse.data;
+
+      // Filtrar los registros según el rol y el usuario
+      if (tableName === 'inscription_caracterizacion') {
+        if (loggedUserRoleId !== '1' && loggedUserId) {
+          // Usuario NO es SuperAdmin y está logueado
+          filteredRecords = filteredRecords.filter(
+            (record) => String(record.Asesor) === String(loggedUserId)
+          );
+        }
+        // Si el usuario es 'SuperAdmin' (role_id '1'), no se aplica el filtro y se muestran todos los registros
+      }
+
+      setRecords(filteredRecords);
+
+      // Obtener datos relacionados para claves foráneas
+      const relatedDataResponse = await axios.get(
+        `https://impulso-capital-back.onrender.com/api/inscriptions/tables/${tableName}/related-data`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      setRelatedData(relatedDataResponse.data.relatedData || {});
       setLoading(false);
+      setFieldOptionsLoaded(true);
     } catch (error) {
+      console.error('Error obteniendo los registros:', error);
       setError('Error obteniendo los registros');
       setLoading(false);
     }
@@ -92,8 +145,8 @@ export default function DynamicTableList() {
         setTables(response.data || []); // Asegurar que `tables` es un array
 
         // Cargar la tabla seleccionada y las columnas visibles guardadas desde el localStorage
-        const savedTable = localStorage.getItem('selectedTable');
-        const savedVisibleColumns = JSON.parse(localStorage.getItem('visibleColumns'));
+        const savedTable = localStorage.getItem(LOCAL_STORAGE_TABLE_KEY);
+        const savedVisibleColumns = JSON.parse(localStorage.getItem(LOCAL_STORAGE_COLUMNS_KEY));
 
         if (savedTable) {
           setSelectedTable(savedTable);
@@ -106,6 +159,7 @@ export default function DynamicTableList() {
           fetchTableData(savedTable, savedVisibleColumns);
         }
       } catch (error) {
+        console.error('Error obteniendo las tablas:', error);
         setError('Error obteniendo las tablas');
       }
     };
@@ -115,71 +169,97 @@ export default function DynamicTableList() {
 
   // Manejar Select2 con persistencia
   useEffect(() => {
-    if (window.$) {
-      // Inicializar select2
-      window.$('.select2').select2({
+    if (window.$ && selectedTable && selectRef.current) {
+      const $select = window.$(selectRef.current);
+
+      // Inicializar Select2
+      $select.select2({
         closeOnSelect: false, // No cerrar al seleccionar
+        theme: 'bootstrap4', // Usar el tema de Bootstrap 4
         width: '100%',
       });
 
-      // Manejar el cambio en select2 y actualizar el estado y localStorage
-      window.$('.select2').on('change', (e) => {
+      // Remover manejadores previos para evitar duplicidades
+      $select.off('change').on('change', (e) => {
         const selectedOptions = Array.from(e.target.selectedOptions || []).map(
           (option) => option.value
         );
+
+        if (selectedOptions.length === 0 && columns.length > 0) {
+          // Seleccionar automáticamente la primera columna
+          const firstColumn = columns[0];
+          $select.val([firstColumn]).trigger('change');
+          setVisibleColumns([firstColumn]);
+          localStorage.setItem(LOCAL_STORAGE_COLUMNS_KEY, JSON.stringify([firstColumn]));
+          return;
+        }
+
         setVisibleColumns(selectedOptions);
-        localStorage.setItem('visibleColumns', JSON.stringify(selectedOptions));
+        localStorage.setItem(LOCAL_STORAGE_COLUMNS_KEY, JSON.stringify(selectedOptions));
       });
 
       // Cargar las columnas visibles guardadas desde el localStorage
-      const savedVisibleColumns = JSON.parse(localStorage.getItem('visibleColumns'));
+      const savedVisibleColumns = JSON.parse(localStorage.getItem(LOCAL_STORAGE_COLUMNS_KEY));
       if (savedVisibleColumns && savedVisibleColumns.length > 0) {
-        window.$('.select2').val(savedVisibleColumns).trigger('change');
+        $select.val(savedVisibleColumns).trigger('change');
+      } else if (columns.length > 0) {
+        // Seleccionar la primera columna por defecto si no hay selecciones guardadas
+        $select.val([columns[0]]).trigger('change');
       }
+
+      // Cleanup al desmontar o cambiar de tabla
+      return () => {
+        if ($select.hasClass('select2-hidden-accessible')) {
+          $select.select2('destroy');
+        }
+      };
     }
 
     // Cargar la búsqueda persistente
-    const savedSearch = localStorage.getItem('searchQuery');
+    const savedSearch = localStorage.getItem(LOCAL_STORAGE_SEARCH_KEY);
     if (savedSearch) {
       setSearch(savedSearch);
     }
-  }, [columns]);
+  }, [columns, selectedTable]); // Eliminar visibleColumns de las dependencias
 
   // Manejar la selección de tabla
   const handleTableSelect = (e) => {
     const tableName = e.target.value;
     setSelectedTable(tableName);
-    localStorage.setItem('selectedTable', tableName); // Guardar tabla seleccionada en el localStorage
+    localStorage.setItem(LOCAL_STORAGE_TABLE_KEY, tableName); // Guardar tabla seleccionada en el localStorage
+    setCurrentPage(1); // Resetear la página actual
 
     if (tableName) {
       const selectedTableObj = tables.find((table) => table.table_name === tableName);
       setIsPrimaryTable(selectedTableObj?.is_primary || false); // Actualizar estado
 
-      const savedVisibleColumns = JSON.parse(localStorage.getItem('visibleColumns'));
+      const savedVisibleColumns = JSON.parse(localStorage.getItem(LOCAL_STORAGE_COLUMNS_KEY));
       fetchTableData(tableName, savedVisibleColumns); // Cargar columnas y registros de la tabla seleccionada
     } else {
       setRecords([]); // Limpiar los registros si no se selecciona ninguna tabla
       setIsPrimaryTable(false);
+      setVisibleColumns([]);
     }
   };
 
   // Función para obtener el valor a mostrar en una columna
   const getColumnDisplayValue = (record, column) => {
     if (multiSelectFields.includes(column)) {
-      // Es un campo de clave foránea
-      const fieldData = fieldsData.find((field) => field.column_name === column); // Uso de fieldsData
+      // Es un campo de llave foránea
       const foreignKeyValue = record[column];
 
-      if (fieldOptions[column]) {
-        const option = fieldOptions[column].find(
-          (opt) => opt.value === foreignKeyValue
+      if (relatedData[column]) {
+        const relatedRecord = relatedData[column].find(
+          (item) => String(item.id) === String(foreignKeyValue)
         );
-        if (option) {
-          return option.label; // Mostrar el nombre asociado
+        if (relatedRecord) {
+          return relatedRecord.displayValue || `ID: ${relatedRecord.id}`;
+        } else {
+          return `ID: ${foreignKeyValue}`;
         }
+      } else {
+        return `ID: ${foreignKeyValue}`;
       }
-
-      return foreignKeyValue; // Si no se encuentra el nombre, mostrar el ID
     } else {
       return record[column];
     }
@@ -195,12 +275,24 @@ export default function DynamicTableList() {
       })
     : records;
 
+  // Resetear la página actual cuando cambian los registros filtrados o la búsqueda
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [search, records]);
+
+  // Paginación
+  const totalPages = Math.ceil(filteredRecords.length / recordsPerPage);
+  const indexOfLastRecord = currentPage * recordsPerPage;
+  const indexOfFirstRecord = indexOfLastRecord - recordsPerPage;
+  const currentRecords = filteredRecords.slice(indexOfFirstRecord, indexOfLastRecord);
+
   // Función para limpiar filtros y mostrar todos los registros
   const clearFilters = () => {
     setVisibleColumns(columns); // Mostrar todas las columnas disponibles
     setSearch(''); // Limpiar búsqueda
-    localStorage.removeItem('visibleColumns'); // Limpiar filtros persistentes
-    localStorage.removeItem('searchQuery'); // Limpiar búsqueda persistente
+    localStorage.removeItem(LOCAL_STORAGE_COLUMNS_KEY); // Limpiar filtros persistentes
+    localStorage.removeItem(LOCAL_STORAGE_SEARCH_KEY); // Limpiar búsqueda persistente
+    setCurrentPage(1); // Resetear la página actual
 
     // Volver a cargar todos los registros de la tabla seleccionada
     fetchTableData(selectedTable); // Restablecer la tabla completa sin filtros
@@ -209,7 +301,8 @@ export default function DynamicTableList() {
   // Manejar el cambio en la búsqueda
   const handleSearchChange = (e) => {
     setSearch(e.target.value);
-    localStorage.setItem('searchQuery', e.target.value); // Guardar búsqueda en el localStorage
+    localStorage.setItem(LOCAL_STORAGE_SEARCH_KEY, e.target.value); // Guardar búsqueda en el localStorage
+    setCurrentPage(1); // Resetear la página actual
   };
 
   // Manejar cambios en los checkboxes
@@ -226,7 +319,7 @@ export default function DynamicTableList() {
   // Manejar selección de todos los registros
   const handleSelectAll = (e) => {
     if (e.target.checked) {
-      const allRecordIds = filteredRecords.map((record) => record.id);
+      const allRecordIds = currentRecords.map((record) => record.id);
       setSelectedRecords(allRecordIds);
     } else {
       setSelectedRecords([]);
@@ -264,40 +357,10 @@ export default function DynamicTableList() {
       setSelectedRecords([]);
       setBulkUpdateData({});
     } catch (error) {
+      console.error('Error actualizando los registros:', error);
       setError('Error actualizando los registros');
     }
   };
-
-  // Obtener opciones para los campos de selección múltiple (claves foráneas)
-  useEffect(() => {
-    const fetchFieldOptions = async () => {
-      try {
-        const token = localStorage.getItem('token');
-        const options = {};
-
-        for (const field of multiSelectFields) {
-          const response = await axios.get(
-            `https://impulso-capital-back.onrender.com/api/inscriptions/tables/${selectedTable}/field-options/${field}`,
-            {
-              headers: {
-                Authorization: `Bearer ${token}`,
-              },
-            }
-          );
-          options[field] = response.data.options;
-        }
-        setFieldOptions(options);
-      } catch (error) {
-        setError('Error obteniendo las opciones de los campos');
-      }
-    };
-
-    if (multiSelectFields.length > 0 && selectedTable) {
-      fetchFieldOptions();
-    } else {
-      setFieldOptions({});
-    }
-  }, [multiSelectFields, selectedTable]);
 
   return (
     <div className="content-wrapper">
@@ -338,146 +401,203 @@ export default function DynamicTableList() {
       {/* Contenido principal */}
       <section className="content">
         <div className="container-fluid">
-          {/* Otros contenidos */}
-          <div className="row">
-            <div className="col-12">
-              {error && <div className="alert alert-danger">{error}</div>}
+          {/* Mostrar errores */}
+          {error && <div className="alert alert-danger">{error}</div>}
 
-              <div className="card">
-                <div className="card-body table-responsive p-0">
-                  {/* Barra de búsqueda */}
-                  {showSearchBar && (
-                    <div className="row mb-3">
-                      <div className="col-sm-6">
-                        <div className="form-group">
-                          <input
-                            type="text"
-                            className="form-control search-input"
-                            placeholder="Buscar en columnas visibles..."
-                            value={search}
-                            onChange={handleSearchChange}
-                          />
-                        </div>
-                      </div>
+          <div className="card">
+            <div className="card-body table-responsive p-0">
+              {/* Barra de búsqueda */}
+              {showSearchBar && (
+                <div className="row mb-3">
+                  <div className="col-sm-6">
+                    <div className="form-group">
+                      <input
+                        type="text"
+                        className="form-control search-input"
+                        placeholder="Buscar en columnas visibles..."
+                        value={search}
+                        onChange={handleSearchChange}
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Select de columnas */}
+              {columns.length > 0 && (
+                <div className="form-group mb-3">
+                  <label>Selecciona las columnas a mostrar:</label>
+                  <select
+                    ref={selectRef}
+                    className="select2 form-control"
+                    multiple="multiple"
+                    style={{ width: '100%' }}
+                  >
+                    {columns.map((column) => (
+                      <option key={column} value={column}>
+                        {column}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
+              {/* Tabla de registros */}
+              {loading ? (
+                <div className="d-flex justify-content-center p-3">Cargando...</div>
+              ) : (
+                <>
+                  <table className="table table-hover text-nowrap minimal-table">
+                    <thead>
+                      <tr>
+                        {isPrimaryTable && (
+                          <th>
+                            <input
+                              type="checkbox"
+                              onChange={handleSelectAll}
+                              checked={
+                                selectedRecords.length === currentRecords.length &&
+                                currentRecords.length > 0
+                              }
+                            />
+                          </th>
+                        )}
+                        {visibleColumns.length > 0 &&
+                          visibleColumns.map((column) => (
+                            <th key={column}>{column}</th>
+                          ))}
+                        <th>Acciones</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {currentRecords.length > 0 ? (
+                        currentRecords.map((record) => (
+                          <tr key={record.id}>
+                            {isPrimaryTable && (
+                              <td>
+                                <input
+                                  type="checkbox"
+                                  checked={selectedRecords.includes(record.id)}
+                                  onChange={() => handleCheckboxChange(record.id)}
+                                />
+                              </td>
+                            )}
+                            {visibleColumns.length > 0 ? (
+                              visibleColumns.map((column) => (
+                                <td key={column}>{getColumnDisplayValue(record, column)}</td>
+                              ))
+                            ) : (
+                              <td
+                                colSpan={isPrimaryTable ? columns.length + 2 : columns.length + 1}
+                                className="text-center"
+                              >
+                                No hay columnas seleccionadas para mostrar.
+                              </td>
+                            )}
+                            <td>
+                              <button
+                                className="btn btn-sm btn-primary"
+                                onClick={() =>
+                                  navigate(`/table/${selectedTable}/record/${record.id}`)
+                                }
+                              >
+                                Editar
+                              </button>
+                            </td>
+                          </tr>
+                        ))
+                      ) : (
+                        <tr>
+                          <td
+                            colSpan={
+                              isPrimaryTable
+                                ? visibleColumns.length + 2
+                                : visibleColumns.length + 1
+                            }
+                            className="text-center"
+                          >
+                            No hay registros para mostrar.
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+
+                  {/* Paginación */}
+                  {totalPages > 1 && (
+                    <div className="pagination mt-3 d-flex justify-content-center">
+                      <button
+                        className="btn btn-light mr-2"
+                        onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                        disabled={currentPage === 1}
+                      >
+                        Anterior
+                      </button>
+                      {Array.from({ length: totalPages }, (_, index) => index + 1).map(
+                        (number) => (
+                          <button
+                            key={number}
+                            onClick={() => setCurrentPage(number)}
+                            className={`btn btn-light mr-2 ${
+                              number === currentPage ? 'active' : ''
+                            }`}
+                          >
+                            {number}
+                          </button>
+                        )
+                      )}
+                      <button
+                        className="btn btn-light"
+                        onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+                        disabled={currentPage === totalPages}
+                      >
+                        Siguiente
+                      </button>
                     </div>
                   )}
+                </>
+              )}
 
-                  {/* Select de columnas */}
-                  {columns.length > 0 && (
-                    <div className="form-group mb-3">
-                      <label>Selecciona las columnas a mostrar:</label>
-                      <select className="select2" multiple="multiple" style={{ width: '100%' }}>
-                        {columns.map((column) => (
-                          <option key={column} value={column}>
-                            {column}
+              {/* Sección de actualización masiva */}
+              {isPrimaryTable && selectedRecords.length > 0 && (
+                <div className="bulk-update-section mt-3 p-3 bg-light">
+                  <h4>Actualizar campos seleccionados</h4>
+                  {multiSelectFields.map((field) => (
+                    <div key={field} className="form-group">
+                      <label>{field}</label>
+                      <select
+                        className="form-control"
+                        value={bulkUpdateData[field] || ''}
+                        onChange={(e) => handleBulkUpdateChange(field, e.target.value)}
+                      >
+                        <option value="">-- Selecciona una opción --</option>
+                        {relatedData[field]?.map((option) => (
+                          <option key={option.id} value={option.id}>
+                            {option.displayValue || `ID: ${option.id}`}
                           </option>
                         ))}
                       </select>
                     </div>
-                  )}
-
-                  {/* Tabla de registros */}
-                  {loading ? (
-                    <div className="d-flex justify-content-center p-3">Cargando...</div>
-                  ) : (
-                    <table className="table table-hover text-nowrap minimal-table">
-                      <thead>
-                        <tr>
-                          {isPrimaryTable && (
-                            <th>
-                              <input
-                                type="checkbox"
-                                onChange={handleSelectAll}
-                                checked={
-                                  selectedRecords.length === filteredRecords.length &&
-                                  filteredRecords.length > 0
-                                }
-                              />
-                            </th>
-                          )}
-                          {visibleColumns.length > 0 &&
-                            visibleColumns.map((column) => (
-                              <th key={column}>{column}</th>
-                            ))}
-                          <th>Acciones</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {filteredRecords.length > 0 &&
-                          filteredRecords.map((record) => (
-                            <tr key={record.id}>
-                              {isPrimaryTable && (
-                                <td>
-                                  <input
-                                    type="checkbox"
-                                    checked={selectedRecords.includes(record.id)}
-                                    onChange={() => handleCheckboxChange(record.id)}
-                                  />
-                                </td>
-                              )}
-                              {visibleColumns.map((column) => (
-                                <td key={column}>{getColumnDisplayValue(record, column)}</td>
-                              ))}
-                              <td>
-                                <button
-                                  className="btn btn-sm btn-primary"
-                                  onClick={() =>
-                                    navigate(`/table/${selectedTable}/record/${record.id}`)
-                                  }
-                                >
-                                  Editar
-                                </button>
-                              </td>
-                            </tr>
-                          ))}
-                      </tbody>
-                    </table>
-                  )}
-
-                  {/* Sección de actualización masiva */}
-                  {isPrimaryTable && selectedRecords.length > 0 && (
-                    <div className="bulk-update-section mt-3 p-3 bg-light">
-                      <h4>Actualizar campos seleccionados</h4>
-                      {multiSelectFields.map((field) => (
-                        <div key={field} className="form-group">
-                          <label>{field}</label>
-                          <select
-                            className="form-control"
-                            value={bulkUpdateData[field] || ''}
-                            onChange={(e) => handleBulkUpdateChange(field, e.target.value)}
-                          >
-                            <option value="">-- Selecciona una opción --</option>
-                            {fieldOptions[field]?.map((option) => (
-                              <option key={option.value} value={option.value}>
-                                {option.label}
-                              </option>
-                            ))}
-                          </select>
-                        </div>
-                      ))}
-                      <button className="btn btn-primary" onClick={applyBulkUpdate}>
-                        Aplicar cambios
-                      </button>
-                    </div>
-                  )}
-
-                  {/* Botón para limpiar filtros */}
-                  <div className="mt-3">
-                    <button className="btn btn-secondary" onClick={clearFilters}>
-                      Limpiar filtros
-                    </button>
-                  </div>
+                  ))}
+                  <button className="btn btn-primary" onClick={applyBulkUpdate}>
+                    Aplicar cambios
+                  </button>
                 </div>
+              )}
+
+              {/* Botón para limpiar filtros */}
+              <div className="mt-3">
+                <button className="btn btn-secondary" onClick={clearFilters}>
+                  Limpiar filtros
+                </button>
               </div>
             </div>
           </div>
-          {/* Fin de otros contenidos */}
         </div>
       </section>
     </div>
   );
 }
-
 
 
 

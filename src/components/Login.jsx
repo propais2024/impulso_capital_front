@@ -25,6 +25,7 @@ export default function Login() {
   
       if (response.status === 200) {
         localStorage.setItem("token", response.data.token);
+        localStorage.setItem("id", response.data.user.id); // Guardar id de usuario
         localStorage.setItem("role_id", response.data.user.role); // Guardar role_id
         localStorage.setItem("username", response.data.user.username); // Guardar username
         localStorage.setItem(

@@ -7,32 +7,36 @@ export default function ListTables() {
   const [tables, setTables] = useState([]);
   const [selectedTable, setSelectedTable] = useState(null);
   const [fields, setFields] = useState([]);
-  const [newField, setNewField] = useState(null); // Estado para el nuevo campo
-  const [availableTables, setAvailableTables] = useState([]); // Tablas disponibles para relación
-  const [relatedTableFields, setRelatedTableFields] = useState([]); // Columnas de la tabla relacionada
+  const [newField, setNewField] = useState(null);
+  const [availableTables, setAvailableTables] = useState([]);
+  const [relatedTableFields, setRelatedTableFields] = useState([]);
   const [error, setError] = useState(null);
-  const [showTableFields, setShowTableFields] = useState(false); // Estado para mostrar/ocultar campos
-  const [file, setFile] = useState(null); // Estado para manejar la subida del archivo CSV
-  const [loading, setLoading] = useState(true); // Estado de carga
-  const [tableType, setTableType] = useState('inscription'); // Estado para alternar entre tipos de tablas
+  const [showTableFields, setShowTableFields] = useState(false);
+  const [file, setFile] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [tableType, setTableType] = useState('inscription');
 
   const navigate = useNavigate();
 
+  // Función para obtener el prefijo de una tabla
+  const getTablePrefix = (tableName) => {
+    const parts = tableName.split('_');
+    return parts[0]; // Se asume que el prefijo es la primera parte
+  };
 
-  // Función para obtener las tablas según el tipo (inscripción o proveedor)
+  // Función para obtener las tablas según el tipo (inscription, provider o pi)
   const fetchTables = useCallback(async () => {
     try {
       const token = localStorage.getItem('token');
-
       if (!token) {
         throw new Error('Token no encontrado. Por favor, inicia sesión nuevamente.');
       }
 
-      const response = await axios.get('https://impulso-capital-back.onrender.com/api/inscriptions/tables', {
+      const response = await axios.get('http://localhost:4000/api/inscriptions/tables', {
         headers: {
           Authorization: `Bearer ${token}`,
         },
-        params: { tableType }, // Enviamos el tipo de tabla como parámetro de consulta
+        params: { tableType },
       });
 
       const fetchedTables = response.data;
@@ -51,19 +55,20 @@ export default function ListTables() {
     }
   }, [tableType]);
 
-  // Obtener las tablas disponibles para las relaciones (respetando el tipo de tabla seleccionado)
+  // Obtener las tablas disponibles para las relaciones (todas las tablas)
   const fetchAvailableTables = useCallback(async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await axios.get('https://impulso-capital-back.onrender.com/api/inscriptions/tables', {
+      const response = await axios.get('http://localhost:4000/api/inscriptions/tables', {
         headers: { Authorization: `Bearer ${token}` },
-        params: { tableType }, // Aseguramos que solo cargamos tablas del tipo correcto
+        params: { tableType: 'all' },
       });
-      setAvailableTables(response.data); // Tablas disponibles para crear claves foráneas
+      setAvailableTables(response.data);
     } catch (error) {
       setError('Error obteniendo tablas disponibles');
     }
-  }, [tableType]);
+  }, []);
+  
 
   useEffect(() => {
     fetchTables();
@@ -82,11 +87,10 @@ export default function ListTables() {
       setShowTableFields(false); // Ocultar los campos si ya se están mostrando
     } else {
       try {
-        const response = await axios.get(`https://impulso-capital-back.onrender.com/api/inscriptions/tables/${tableName}/fields`, {
+        const response = await axios.get(`http://localhost:4000/api/inscriptions/tables/${tableName}/fields`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
-          params: { tableType }, // Aseguramos que se envía el tipo de tabla correcto
         });
 
         setFields(
@@ -96,7 +100,8 @@ export default function ListTables() {
             original_data_type: field.data_type,
             original_allow_null: field.is_nullable === 'YES',
             allow_null: field.is_nullable === 'YES',
-            relatedTable: field.foreign_table_name || '', // Si es clave foránea, obtenemos la tabla relacionada
+            relatedTable: field.foreign_table_name || '',
+            constraint_type: field.constraint_type,
           }))
         );
 
@@ -112,17 +117,26 @@ export default function ListTables() {
   const fetchRelatedTableFields = async (relatedTable) => {
     const token = localStorage.getItem('token');
     try {
-      const response = await axios.get(`https://impulso-capital-back.onrender.com/api/inscriptions/tables/${relatedTable}/fields`, {
+      const response = await axios.get(`http://localhost:4000/api/inscriptions/tables/${relatedTable}/fields`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
-        params: { tableType }, // Aseguramos que se envía el tipo de tabla correcto
       });
-      setRelatedTableFields(response.data); // Guardar las columnas de la tabla relacionada
+      setRelatedTableFields(response.data);
     } catch (error) {
       setError('Error obteniendo los campos de la tabla relacionada');
     }
   };
+
+  // Obtener el prefijo de la tabla seleccionada
+  const selectedTablePrefix = selectedTable ? getTablePrefix(selectedTable) : null;
+
+  // Filtrar las tablas disponibles según el prefijo de la tabla seleccionada
+  const filteredAvailableTables = selectedTable
+    ? availableTables.filter((table) =>
+        table.table_name.startsWith(`${selectedTablePrefix}_`)
+      )
+    : [];
 
   // Función para descargar plantilla CSV
   const downloadCSVTemplate = async (tableName) => {
@@ -133,7 +147,7 @@ export default function ListTables() {
     }
 
     try {
-      const response = await axios.get(`https://impulso-capital-back.onrender.com/api/inscriptions/tables/${tableName}/csv-template`, {
+      const response = await axios.get(`http://localhost:4000/api/inscriptions/tables/${tableName}/csv-template`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -159,7 +173,7 @@ export default function ListTables() {
     }
 
     try {
-      const response = await axios.get(`https://impulso-capital-back.onrender.com/api/inscriptions/tables/${tableName}/download-csv`, {
+      const response = await axios.get(`http://localhost:4000/api/inscriptions/tables/${tableName}/download-csv`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -193,7 +207,7 @@ export default function ListTables() {
     formData.append('file', file);
 
     try {
-      await axios.post(`https://impulso-capital-back.onrender.com/api/inscriptions/tables/${tableName}/upload-csv`, formData, {
+      await axios.post(`http://localhost:4000/api/inscriptions/tables/${tableName}/upload-csv`, formData, {
         headers: {
           Authorization: `Bearer ${token}`,
           'Content-Type': 'multipart/form-data',
@@ -214,7 +228,7 @@ export default function ListTables() {
     }
 
     try {
-      await axios.delete(`https://impulso-capital-back.onrender.com/api/inscriptions/tables/${tableName}`, {
+      await axios.delete(`http://localhost:4000/api/inscriptions/tables/${tableName}`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -251,7 +265,7 @@ export default function ListTables() {
       isRelation: false,
       relatedTable: '',
       allow_null: true,
-    }); // Crear un nuevo campo vacío
+    });
   };
 
   // Guardar el nuevo campo y añadirlo a la lista de campos
@@ -261,7 +275,7 @@ export default function ListTables() {
       return;
     }
     setFields([...fields, { ...newField, isNew: true }]);
-    setNewField(null); // Limpiar el campo después de guardarlo
+    setNewField(null);
   };
 
   // Función para guardar los cambios realizados en la tabla
@@ -277,7 +291,7 @@ export default function ListTables() {
       const fieldsToDelete = fields.filter((field) => field.toDelete);
 
       await axios.put(
-        `https://impulso-capital-back.onrender.com/api/inscriptions/tables/${selectedTable}`,
+        `http://localhost:4000/api/inscriptions/tables/${selectedTable}`,
         {
           fieldsToAdd,
           fieldsToDelete,
@@ -291,7 +305,7 @@ export default function ListTables() {
       );
       alert('Cambios guardados con éxito');
       setNewField(null);
-      fetchTableFields(selectedTable); // Volver a cargar los campos para reflejar los cambios
+      fetchTableFields(selectedTable);
     } catch (error) {
       alert(`Error guardando cambios: ${error.response?.data?.message || error.message}`);
     }
@@ -302,7 +316,7 @@ export default function ListTables() {
     try {
       const token = localStorage.getItem('token');
       await axios.put(
-        `https://impulso-capital-back.onrender.com/api/inscriptions/tables/${tableName}/principal`,
+        `http://localhost:4000/api/inscriptions/tables/${tableName}/principal`,
         { is_primary: !isPrimary },
         {
           headers: {
@@ -370,6 +384,16 @@ export default function ListTables() {
                         onClick={() => setTableType("provider")}
                       >
                         Ver Tablas de Proveedores
+                      </button>
+                      <button
+                        className={`btn ${
+                          tableType === "pi"
+                            ? "btn-primary"
+                            : "btn-secondary"
+                        } mx-2`}
+                        onClick={() => setTableType("pi")}
+                      >
+                        Ver Tablas de Plan de Inversión
                       </button>
                     </div>
                     <table className="table table-hover text-nowrap minimal-table">
@@ -492,8 +516,8 @@ export default function ListTables() {
                                 <label>Tipo de Dato</label>
                                 <select
                                   className="form-control"
-                                  value={field.data_type || field.type} // Aseguramos que estamos usando `data_type`
-                                  disabled={!field.isNew} // Desactivado para campos existentes
+                                  value={field.data_type || field.type}
+                                  disabled={!field.isNew}
                                   onChange={
                                     field.isNew
                                       ? (e) =>
@@ -505,7 +529,6 @@ export default function ListTables() {
                                       : undefined
                                   }
                                 >
-                                  {/* Mostrar los valores del select basados en el mapeo */}
                                   <option value="VARCHAR(255)">
                                     Texto Corto
                                   </option>
@@ -524,7 +547,7 @@ export default function ListTables() {
                             </div>
 
                             {/* Mostrar tabla relacionada si el campo es una clave foránea */}
-                            {field.relatedTable && (
+                            {field.constraint_type === 'FOREIGN KEY' && (
                               <div className="col-md-12">
                                 <p className="text-muted">
                                   Clave Foránea: Relacionado con la tabla{" "}
@@ -578,13 +601,13 @@ export default function ListTables() {
                                           ...field,
                                           relatedTable: e.target.value,
                                         });
-                                        fetchRelatedTableFields(e.target.value); // Obtener columnas de la tabla relacionada
+                                        fetchRelatedTableFields(e.target.value);
                                       }}
                                     >
                                       <option value="">
                                         -- Selecciona una tabla relacionada --
                                       </option>
-                                      {availableTables.map((table) => (
+                                      {filteredAvailableTables.map((table) => (
                                         <option
                                           key={table.table_name}
                                           value={table.table_name}
@@ -740,13 +763,13 @@ export default function ListTables() {
                                         ...newField,
                                         relatedTable: e.target.value,
                                       });
-                                      fetchRelatedTableFields(e.target.value); // Obtener columnas de la tabla relacionada
+                                      fetchRelatedTableFields(e.target.value);
                                     }}
                                   >
                                     <option value="">
                                       -- Selecciona una tabla relacionada --
                                     </option>
-                                    {availableTables.map((table) => (
+                                    {filteredAvailableTables.map((table) => (
                                       <option
                                         key={table.table_name}
                                         value={table.table_name}

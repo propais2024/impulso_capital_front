@@ -15,8 +15,10 @@ import ListTables from './components/ListTables';
 import UserAddTable from './components/UserAddTable';
 import DynamicTableList from './components/DynamicTableList';
 import DynamicRecordEdit from './components/DynamicRecordEdit';
-import DownloadZip from './components/DownloadZip'; // Importar el componente para descarga masiva
-import ProviderTableList from './components/ProviderTableList'; // Importar el componente para las tablas de proveedores
+import DownloadZip from './components/DownloadZip';
+import ProviderTableList from './components/ProviderTableList';
+import PiTableList from './components/PiTableList';
+import PlanDeInversion from './components/PlanDeInversion'; // Importar el componente PlanDeInversion
 
 function PrivateRoute({ children }) {
   const token = localStorage.getItem('token');
@@ -201,6 +203,36 @@ export default function App() {
           }
         />
 
+        {/* Nueva Ruta para las tablas de Plan de Inversión */}
+        <Route
+          path="/pi-tables"
+          element={
+            <PrivateRoute>
+              <div className="wrapper">
+                <Header />
+                <Aside />
+                <PiTableList />
+                <Footer />
+              </div>
+            </PrivateRoute>
+          }
+        />
+
+        {/* Ruta para Plan de Inversión con pestañas */}
+        <Route
+          path="/plan-inversion/:id"
+          element={
+            <PrivateRoute>
+              <div className="wrapper">
+                <Header />
+                <Aside />
+                <PlanDeInversion />
+                <Footer />
+              </div>
+            </PrivateRoute>
+          }
+        />
+
         {/* Nueva Ruta para la Descarga Masiva */}
         <Route
           path="/download-zip"
@@ -209,7 +241,7 @@ export default function App() {
               <div className="wrapper">
                 <Header />
                 <Aside />
-                <DownloadZip /> {/* Componente para la descarga masiva */}
+                <DownloadZip />
                 <Footer />
               </div>
             </PrivateRoute>
@@ -222,5 +254,6 @@ export default function App() {
     </Router>
   );
 }
+
 
 

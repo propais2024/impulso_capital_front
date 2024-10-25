@@ -1,7 +1,7 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
-import logo from '../assets/img/logo-impulso-capital.png'; // Importar la imagen del logo
-import './css/Aside.css'; // Importar el archivo CSS
+import logo from '../assets/img/logo-impulso-capital.png';
+import './css/Aside.css';
 
 export default function Aside() {
   const navigate = useNavigate();
@@ -10,26 +10,26 @@ export default function Aside() {
   const [userRole, setUserRole] = useState('');
 
   useEffect(() => {
-    const roleId = localStorage.getItem('role_id'); // Obtener role_id del localStorage
-    const usernameStored = localStorage.getItem('username'); // Obtener username almacenado
-    const roleStored = localStorage.getItem('role_name'); // Obtener role almacenado
+    const roleId = localStorage.getItem('role_id');
+    const usernameStored = localStorage.getItem('username');
+    const roleStored = localStorage.getItem('role_name');
 
     if (roleId) {
-      setRole(parseInt(roleId, 10)); // Convertir a número y almacenar en el estado
-      setUsername(usernameStored); // Asignar el nombre de usuario
-      setUserRole(roleStored); // Asignar el rol de usuario
+      setRole(parseInt(roleId, 10));
+      setUsername(usernameStored);
+      setUserRole(roleStored);
     } else {
-      navigate('/login'); // Redirigir al login si no hay role_id
+      navigate('/login');
     }
   }, [navigate]);
 
   // Función para cerrar sesión
   const handleLogout = () => {
-    localStorage.removeItem('token'); // Eliminar el token de autenticación
-    localStorage.removeItem('role_id'); // Eliminar el role_id
-    localStorage.removeItem('username'); // Eliminar el nombre de usuario
-    localStorage.removeItem('role_name'); // Eliminar el rol de usuario
-    navigate('/login'); // Redirigir al login
+    localStorage.removeItem('token');
+    localStorage.removeItem('role_id');
+    localStorage.removeItem('username');
+    localStorage.removeItem('role_name');
+    navigate('/login');
   };
 
   return (
@@ -99,7 +99,7 @@ export default function Aside() {
                 </Link>
               </li>
 
-              {/* Gestionar Tablas: visible solo para SuperAdmin (role_id === 1) y Administrador (role_id === 2) */}
+              {/* Gestionar Tablas: visible solo para SuperAdmin y Administrador */}
               {(role === 1 || role === 2) && (
                 <li className="nav-item">
                   <Link to="/list-tables" className="nav-link">
@@ -109,7 +109,7 @@ export default function Aside() {
                 </li>
               )}
 
-              {/* Nuevo enlace a las tablas dinámicas de Empresas */}
+              {/* Enlace a las tablas dinámicas de Empresas */}
               <li className="nav-item">
                 <Link to="/dynamic-tables" className="nav-link">
                   <i className="nav-icon fas fa-building" />
@@ -117,11 +117,19 @@ export default function Aside() {
                 </Link>
               </li>
 
-              {/* Nuevo enlace a las tablas dinámicas de Proveedores */}
+              {/* Enlace a las tablas dinámicas de Proveedores */}
               <li className="nav-item">
                 <Link to="/provider-tables" className="nav-link">
                   <i className="nav-icon fas fa-briefcase" />
                   <p>Proveedores</p>
+                </Link>
+              </li>
+
+              {/* Nuevo enlace a las tablas de Plan de Inversión */}
+              <li className="nav-item">
+                <Link to="/pi-tables" className="nav-link">
+                  <i className="nav-icon fas fa-chart-line" />
+                  <p>Plan de Inversión</p>
                 </Link>
               </li>
 
@@ -133,7 +141,7 @@ export default function Aside() {
                 </Link>
               </li>
 
-              {/* Usuarios: visible solo para SuperAdmin (role_id === 1) y Administrador (role_id === 2) */}
+              {/* Usuarios: visible solo para SuperAdmin y Administrador */}
               {(role === 1 || role === 2) && (
                 <li className="nav-item">
                   <Link to="/usuarios" className="nav-link">
@@ -167,5 +175,4 @@ export default function Aside() {
     </>
   );
 }
-
 
