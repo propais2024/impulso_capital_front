@@ -32,7 +32,7 @@ export default function ListTables() {
         throw new Error('Token no encontrado. Por favor, inicia sesión nuevamente.');
       }
 
-      const response = await axios.get('http://localhost:4000/api/inscriptions/tables', {
+      const response = await axios.get('https://impulso-capital-back.onrender.com/api/inscriptions/tables', {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -59,7 +59,7 @@ export default function ListTables() {
   const fetchAvailableTables = useCallback(async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await axios.get('http://localhost:4000/api/inscriptions/tables', {
+      const response = await axios.get('https://impulso-capital-back.onrender.com/api/inscriptions/tables', {
         headers: { Authorization: `Bearer ${token}` },
         params: { tableType: 'all' },
       });
@@ -87,7 +87,7 @@ export default function ListTables() {
       setShowTableFields(false); // Ocultar los campos si ya se están mostrando
     } else {
       try {
-        const response = await axios.get(`http://localhost:4000/api/inscriptions/tables/${tableName}/fields`, {
+        const response = await axios.get(`https://impulso-capital-back.onrender.com/api/inscriptions/tables/${tableName}/fields`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -117,7 +117,7 @@ export default function ListTables() {
   const fetchRelatedTableFields = async (relatedTable) => {
     const token = localStorage.getItem('token');
     try {
-      const response = await axios.get(`http://localhost:4000/api/inscriptions/tables/${relatedTable}/fields`, {
+      const response = await axios.get(`https://impulso-capital-back.onrender.com/api/inscriptions/tables/${relatedTable}/fields`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -147,7 +147,7 @@ export default function ListTables() {
     }
 
     try {
-      const response = await axios.get(`http://localhost:4000/api/inscriptions/tables/${tableName}/csv-template`, {
+      const response = await axios.get(`https://impulso-capital-back.onrender.com/api/inscriptions/tables/${tableName}/csv-template`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -173,7 +173,7 @@ export default function ListTables() {
     }
 
     try {
-      const response = await axios.get(`http://localhost:4000/api/inscriptions/tables/${tableName}/download-csv`, {
+      const response = await axios.get(`https://impulso-capital-back.onrender.com/api/inscriptions/tables/${tableName}/download-csv`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -207,7 +207,7 @@ export default function ListTables() {
     formData.append('file', file);
 
     try {
-      await axios.post(`http://localhost:4000/api/inscriptions/tables/${tableName}/upload-csv`, formData, {
+      await axios.post(`https://impulso-capital-back.onrender.com/api/inscriptions/tables/${tableName}/upload-csv`, formData, {
         headers: {
           Authorization: `Bearer ${token}`,
           'Content-Type': 'multipart/form-data',
@@ -228,7 +228,7 @@ export default function ListTables() {
     }
 
     try {
-      await axios.delete(`http://localhost:4000/api/inscriptions/tables/${tableName}`, {
+      await axios.delete(`https://impulso-capital-back.onrender.com/api/inscriptions/tables/${tableName}`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -291,7 +291,7 @@ export default function ListTables() {
       const fieldsToDelete = fields.filter((field) => field.toDelete);
 
       await axios.put(
-        `http://localhost:4000/api/inscriptions/tables/${selectedTable}`,
+        `https://impulso-capital-back.onrender.com/api/inscriptions/tables/${selectedTable}`,
         {
           fieldsToAdd,
           fieldsToDelete,
@@ -316,7 +316,7 @@ export default function ListTables() {
     try {
       const token = localStorage.getItem('token');
       await axios.put(
-        `http://localhost:4000/api/inscriptions/tables/${tableName}/principal`,
+        `https://impulso-capital-back.onrender.com/api/inscriptions/tables/${tableName}/principal`,
         { is_primary: !isPrimary },
         {
           headers: {
