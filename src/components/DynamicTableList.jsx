@@ -25,8 +25,9 @@ export default function DynamicTableList() {
   const [fieldOptionsLoaded, setFieldOptionsLoaded] = useState(false); // Estado de carga de opciones
   const [relatedData, setRelatedData] = useState({}); // Datos relacionados para claves foráneas
 
+  // Estados para la paginación
   const [currentPage, setCurrentPage] = useState(1); // Página actual
-  const recordsPerPage = 20; // Número de registros por página
+  const recordsPerPage = 20; // Número máximo de registros por página
 
   const navigate = useNavigate();
 
