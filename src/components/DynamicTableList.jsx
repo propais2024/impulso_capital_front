@@ -140,9 +140,6 @@ export default function DynamicTableList() {
       console.error('Error obteniendo los registros:', error);
       setError('Error obteniendo los registros');
       setLoading(false);
-      setRecords([]); // Asegurarse de que records no sea undefined
-      setColumns([]); // Asegurarse de que columns no sea undefined
-      setVisibleColumns([]); // Asegurarse de que visibleColumns no sea undefined
     }
   };
 
@@ -178,7 +175,6 @@ export default function DynamicTableList() {
       } catch (error) {
         console.error('Error obteniendo las tablas:', error);
         setError('Error obteniendo las tablas');
-        setTables([]); // Asegurarse de que tables no sea undefined
       }
     };
 
@@ -257,7 +253,6 @@ export default function DynamicTableList() {
       setRecords([]); // Limpiar los registros si no se selecciona ninguna tabla
       setIsPrimaryTable(false);
       setVisibleColumns([]);
-      setColumns([]); // Asegurarse de que columns no sea undefined
     }
   };
 
@@ -366,33 +361,6 @@ export default function DynamicTableList() {
     if (pageNumber < 1 || pageNumber > totalPages) return;
     setCurrentPage(pageNumber);
     fetchTableData(selectedTable, visibleColumns, pageNumber);
-  };
-
-  // Función para generar los números de página a mostrar
-  const getPageNumbers = () => {
-    const maxPageNumbersToShow = 10; // Número máximo de páginas a mostrar
-    let startPage = 1;
-    let endPage = totalPages;
-
-    if (totalPages > maxPageNumbersToShow) {
-      const middle = Math.floor(maxPageNumbersToShow / 2);
-      if (currentPage <= middle) {
-        startPage = 1;
-        endPage = maxPageNumbersToShow;
-      } else if (currentPage + middle >= totalPages) {
-        startPage = totalPages - maxPageNumbersToShow + 1;
-        endPage = totalPages;
-      } else {
-        startPage = currentPage - middle;
-        endPage = currentPage + middle - 1;
-      }
-    }
-
-    const pageNumbers = [];
-    for (let i = startPage; i <= endPage; i++) {
-      pageNumbers.push(i);
-    }
-    return pageNumbers;
   };
 
   return (
@@ -557,7 +525,7 @@ export default function DynamicTableList() {
 
                   {/* Paginación */}
                   {totalPages > 1 && (
-                    <div className="pagination mt-3 d-flex justify-content-center align-items-center">
+                    <div className="pagination mt-3 d-flex justify-content-center">
                       <button
                         className="btn btn-light mr-2"
                         onClick={() => handlePageChange(currentPage - 1)}
@@ -565,47 +533,21 @@ export default function DynamicTableList() {
                       >
                         Anterior
                       </button>
-
-                      {/* Botón de Primera Página */}
-                      {currentPage > 6 && (
-                        <>
+                      {Array.from({ length: totalPages }, (_, index) => index + 1).map(
+                        (number) => (
                           <button
-                            className="btn btn-light mr-1"
-                            onClick={() => handlePageChange(1)}
+                            key={number}
+                            onClick={() => handlePageChange(number)}
+                            className={`btn btn-light mr-2 ${
+                              number === currentPage ? 'active' : ''
+                            }`}
                           >
-                            1
+                            {number}
                           </button>
-                          <span className="mr-1">...</span>
-                        </>
+                        )
                       )}
-
-                      {getPageNumbers().map((number) => (
-                        <button
-                          key={number}
-                          onClick={() => handlePageChange(number)}
-                          className={`btn btn-light mr-1 ${
-                            number === currentPage ? 'active' : ''
-                          }`}
-                        >
-                          {number}
-                        </button>
-                      ))}
-
-                      {/* Botón de Última Página */}
-                      {currentPage < totalPages - 5 && (
-                        <>
-                          <span className="mr-1">...</span>
-                          <button
-                            className="btn btn-light mr-1"
-                            onClick={() => handlePageChange(totalPages)}
-                          >
-                            {totalPages}
-                          </button>
-                        </>
-                      )}
-
                       <button
-                        className="btn btn-light ml-2"
+                        className="btn btn-light"
                         onClick={() => handlePageChange(currentPage + 1)}
                         disabled={currentPage === totalPages}
                       >
