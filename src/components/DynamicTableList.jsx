@@ -27,7 +27,7 @@ export default function DynamicTableList() {
 
   // Estados para la paginación
   const [currentPage, setCurrentPage] = useState(1); // Página actual
-  const recordsPerPage = 20; // Número máximo de registros por página
+  const recordsPerPage = 50; // Número máximo de registros por página
   const [totalPages, setTotalPages] = useState(1); // Total de páginas
 
   const navigate = useNavigate();
