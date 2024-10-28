@@ -55,25 +55,31 @@ export default function ListTables() {
     }
   }, [tableType]);
 
-  // Obtener las tablas disponibles para las relaciones (todas las tablas)
-  const fetchAvailableTables = useCallback(async () => {
-    try {
-      const token = localStorage.getItem('token');
-      const response = await axios.get('https://impulso-capital-back.onrender.com/api/inscriptions/tables', {
-        headers: { Authorization: `Bearer ${token}` },
-        params: { tableType: 'all' },
-      });
-      setAvailableTables(response.data);
-    } catch (error) {
-      setError('Error obteniendo tablas disponibles');
-    }
-  }, []);
-  
+  // Obtener las tablas disponibles para las relaciones (según el tipo actual)
+  const fetchAvailableTables = useCallback(
+    async (type) => {
+      try {
+        const token = localStorage.getItem('token');
+        const response = await axios.get('https://impulso-capital-back.onrender.com/api/inscriptions/tables', {
+          headers: { Authorization: `Bearer ${token}` },
+          params: { tableType: type },
+        });
+        setAvailableTables(response.data);
+      } catch (error) {
+        setError('Error obteniendo tablas disponibles');
+      }
+    },
+    []
+  );
 
   useEffect(() => {
     fetchTables();
-    fetchAvailableTables();
-  }, [fetchTables, fetchAvailableTables]);
+    fetchAvailableTables(tableType);
+    // Resetear tabla seleccionada y campos al cambiar el tipo
+    setSelectedTable(null);
+    setFields([]);
+    setShowTableFields(false);
+  }, [fetchTables, fetchAvailableTables, tableType]);
 
   // Obtener los campos de la tabla seleccionada
   const fetchTableFields = async (tableName) => {
@@ -87,11 +93,14 @@ export default function ListTables() {
       setShowTableFields(false); // Ocultar los campos si ya se están mostrando
     } else {
       try {
-        const response = await axios.get(`https://impulso-capital-back.onrender.com/api/inscriptions/tables/${tableName}/fields`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
+        const response = await axios.get(
+          `https://impulso-capital-back.onrender.com/api/inscriptions/tables/${tableName}/fields`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
 
         setFields(
           response.data.map((field) => ({
@@ -117,26 +126,26 @@ export default function ListTables() {
   const fetchRelatedTableFields = async (relatedTable) => {
     const token = localStorage.getItem('token');
     try {
-      const response = await axios.get(`https://impulso-capital-back.onrender.com/api/inscriptions/tables/${relatedTable}/fields`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      const response = await axios.get(
+        `https://impulso-capital-back.onrender.com/api/inscriptions/tables/${relatedTable}/fields`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
       setRelatedTableFields(response.data);
     } catch (error) {
       setError('Error obteniendo los campos de la tabla relacionada');
     }
   };
 
-  // Obtener el prefijo de la tabla seleccionada
-  const selectedTablePrefix = selectedTable ? getTablePrefix(selectedTable) : null;
-
   // Filtrar las tablas disponibles según el prefijo de la tabla seleccionada
-  const filteredAvailableTables = selectedTable
-    ? availableTables.filter((table) =>
-        table.table_name.startsWith(`${selectedTablePrefix}_`)
-      )
-    : [];
+  const selectedTablePrefix = selectedTable ? getTablePrefix(selectedTable) : tableType;
+
+  const filteredAvailableTables = availableTables.filter((table) =>
+    table.table_name.startsWith(`${selectedTablePrefix}_`)
+  );
 
   // Función para descargar plantilla CSV
   const downloadCSVTemplate = async (tableName) => {
@@ -147,12 +156,15 @@ export default function ListTables() {
     }
 
     try {
-      const response = await axios.get(`https://impulso-capital-back.onrender.com/api/inscriptions/tables/${tableName}/csv-template`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-        responseType: 'blob',
-      });
+      const response = await axios.get(
+        `https://impulso-capital-back.onrender.com/api/inscriptions/tables/${tableName}/csv-template`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+          responseType: 'blob',
+        }
+      );
       const url = window.URL.createObjectURL(new Blob([response.data]));
       const link = document.createElement('a');
       link.href = url;
@@ -173,12 +185,15 @@ export default function ListTables() {
     }
 
     try {
-      const response = await axios.get(`https://impulso-capital-back.onrender.com/api/inscriptions/tables/${tableName}/download-csv`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-        responseType: 'blob',
-      });
+      const response = await axios.get(
+        `https://impulso-capital-back.onrender.com/api/inscriptions/tables/${tableName}/download-csv`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+          responseType: 'blob',
+        }
+      );
       const url = window.URL.createObjectURL(new Blob([response.data]));
       const link = document.createElement('a');
       link.href = url;
@@ -207,12 +222,16 @@ export default function ListTables() {
     formData.append('file', file);
 
     try {
-      await axios.post(`https://impulso-capital-back.onrender.com/api/inscriptions/tables/${tableName}/upload-csv`, formData, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'multipart/form-data',
-        },
-      });
+      await axios.post(
+        `https://impulso-capital-back.onrender.com/api/inscriptions/tables/${tableName}/upload-csv`,
+        formData,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'multipart/form-data',
+          },
+        }
+      );
       alert('Archivo CSV cargado con éxito');
     } catch (error) {
       setError('Error cargando el archivo CSV');
@@ -330,7 +349,9 @@ export default function ListTables() {
         )
       );
     } catch (error) {
-      setError(`Error actualizando el estado de "Principal": ${error.response?.data?.message || error.message}`);
+      setError(
+        `Error actualizando el estado de "Principal": ${error.response?.data?.message || error.message}`
+      );
     }
   };
 
@@ -345,7 +366,7 @@ export default function ListTables() {
             <div className="col-sm-6 d-flex justify-content-end">
               <button
                 className="btn btn-primary"
-                onClick={() => navigate("/inscription")} // Redirige a /inscription
+                onClick={() => navigate('/inscription')} // Redirige a /inscription
               >
                 Crear Tabla
               </button>
@@ -367,31 +388,23 @@ export default function ListTables() {
                     <div className="d-flex justify-content-center my-3">
                       <button
                         className={`btn ${
-                          tableType === "inscription"
-                            ? "btn-primary"
-                            : "btn-secondary"
+                          tableType === 'inscription' ? 'btn-primary' : 'btn-secondary'
                         } mx-2`}
-                        onClick={() => setTableType("inscription")}
+                        onClick={() => setTableType('inscription')}
                       >
                         Ver Tablas de Inscripción
                       </button>
                       <button
                         className={`btn ${
-                          tableType === "provider"
-                            ? "btn-primary"
-                            : "btn-secondary"
+                          tableType === 'provider' ? 'btn-primary' : 'btn-secondary'
                         } mx-2`}
-                        onClick={() => setTableType("provider")}
+                        onClick={() => setTableType('provider')}
                       >
                         Ver Tablas de Proveedores
                       </button>
                       <button
-                        className={`btn ${
-                          tableType === "pi"
-                            ? "btn-primary"
-                            : "btn-secondary"
-                        } mx-2`}
-                        onClick={() => setTableType("pi")}
+                        className={`btn ${tableType === 'pi' ? 'btn-primary' : 'btn-secondary'} mx-2`}
+                        onClick={() => setTableType('pi')}
                       >
                         Ver Tablas de Plan de Inversión
                       </button>
@@ -410,17 +423,10 @@ export default function ListTables() {
                             <td>{table.table_name}</td>
                             <td>
                               <button
-                                className={`btn btn-${
-                                  table.is_primary ? "success" : "secondary"
-                                }`}
-                                onClick={() =>
-                                  togglePrincipal(
-                                    table.table_name,
-                                    table.is_primary
-                                  )
-                                }
+                                className={`btn btn-${table.is_primary ? 'success' : 'secondary'}`}
+                                onClick={() => togglePrincipal(table.table_name, table.is_primary)}
                               >
-                                {table.is_primary ? "Sí" : "No"}
+                                {table.is_primary ? 'Sí' : 'No'}
                               </button>
                             </td>
                             <td>
@@ -432,28 +438,21 @@ export default function ListTables() {
                               </button>
                               <button
                                 className="btn btn-primary"
-                                onClick={() =>
-                                  fetchTableFields(table.table_name)
-                                }
+                                onClick={() => fetchTableFields(table.table_name)}
                               >
-                                {selectedTable === table.table_name &&
-                                showTableFields
-                                  ? "Ocultar"
-                                  : "Gestionar"}
+                                {selectedTable === table.table_name && showTableFields
+                                  ? 'Ocultar'
+                                  : 'Gestionar'}
                               </button>
                               <button
                                 className="btn btn-secondary ml-2"
-                                onClick={() =>
-                                  downloadCSVTemplate(table.table_name)
-                                }
+                                onClick={() => downloadCSVTemplate(table.table_name)}
                               >
                                 Descargar CSV Plantilla
                               </button>
                               <button
                                 className="btn btn-warning ml-2"
-                                onClick={() =>
-                                  downloadCSVData(table.table_name)
-                                }
+                                onClick={() => downloadCSVData(table.table_name)}
                               >
                                 Descargar Datos CSV
                               </button>
@@ -529,19 +528,13 @@ export default function ListTables() {
                                       : undefined
                                   }
                                 >
-                                  <option value="VARCHAR(255)">
-                                    Texto Corto
-                                  </option>
+                                  <option value="VARCHAR(255)">Texto Corto</option>
                                   <option value="TEXT">Texto Largo</option>
                                   <option value="INTEGER">Número Entero</option>
-                                  <option value="DECIMAL">
-                                    Número Decimal
-                                  </option>
+                                  <option value="DECIMAL">Número Decimal</option>
                                   <option value="BOOLEAN">Booleano</option>
                                   <option value="DATE">Fecha</option>
-                                  <option value="FOREIGN_KEY">
-                                    Clave Foránea
-                                  </option>
+                                  <option value="FOREIGN_KEY">Clave Foránea</option>
                                 </select>
                               </div>
                             </div>
@@ -550,7 +543,7 @@ export default function ListTables() {
                             {field.constraint_type === 'FOREIGN KEY' && (
                               <div className="col-md-12">
                                 <p className="text-muted">
-                                  Clave Foránea: Relacionado con la tabla{" "}
+                                  Clave Foránea: Relacionado con la tabla{' '}
                                   <strong>{field.relatedTable}</strong>
                                 </p>
                               </div>
@@ -576,10 +569,7 @@ export default function ListTables() {
                                     }
                                     id={`required-${index}`}
                                   />
-                                  <label
-                                    className="form-check-label"
-                                    htmlFor={`required-${index}`}
-                                  >
+                                  <label className="form-check-label" htmlFor={`required-${index}`}>
                                     Obligatorio
                                   </label>
                                 </div>
@@ -587,15 +577,14 @@ export default function ListTables() {
                             </div>
 
                             {/* Seleccionar tabla relacionada si es clave foránea */}
-                            {(field.data_type === "FOREIGN_KEY" ||
-                              field.type === "FOREIGN_KEY") &&
+                            {(field.data_type === 'FOREIGN_KEY' || field.type === 'FOREIGN_KEY') &&
                               field.isNew && (
                                 <div className="col-md-6">
                                   <div className="form-group">
                                     <label>Tabla Relacionada</label>
                                     <select
                                       className="form-control"
-                                      value={field.relatedTable || ""}
+                                      value={field.relatedTable || ''}
                                       onChange={(e) => {
                                         handleNewFieldChange(index, {
                                           ...field,
@@ -608,10 +597,7 @@ export default function ListTables() {
                                         -- Selecciona una tabla relacionada --
                                       </option>
                                       {filteredAvailableTables.map((table) => (
-                                        <option
-                                          key={table.table_name}
-                                          value={table.table_name}
-                                        >
+                                        <option key={table.table_name} value={table.table_name}>
                                           {table.table_name}
                                         </option>
                                       ))}
@@ -624,7 +610,7 @@ export default function ListTables() {
                                       <label>Columna Relacionada</label>
                                       <select
                                         className="form-control"
-                                        value={field.relatedColumn || ""}
+                                        value={field.relatedColumn || ''}
                                         onChange={(e) =>
                                           handleNewFieldChange(index, {
                                             ...field,
@@ -632,19 +618,15 @@ export default function ListTables() {
                                           })
                                         }
                                       >
-                                        <option value="">
-                                          -- Selecciona una columna --
-                                        </option>
-                                        {relatedTableFields.map(
-                                          (relatedField) => (
-                                            <option
-                                              key={relatedField.column_name}
-                                              value={relatedField.column_name}
-                                            >
-                                              {relatedField.column_name}
-                                            </option>
-                                          )
-                                        )}
+                                        <option value="">-- Selecciona una columna --</option>
+                                        {relatedTableFields.map((relatedField) => (
+                                          <option
+                                            key={relatedField.column_name}
+                                            value={relatedField.column_name}
+                                          >
+                                            {relatedField.column_name}
+                                          </option>
+                                        ))}
                                       </select>
                                     </div>
                                   )}
@@ -652,22 +634,18 @@ export default function ListTables() {
                               )}
 
                             {/* Botón para eliminar campo */}
-                            {field.column_name !== "id" && (
+                            {field.column_name !== 'id' && (
                               <div className="col-md-12">
                                 <button
                                   className={`btn btn-${
-                                    field.toDelete ? "secondary" : "danger"
+                                    field.toDelete ? 'secondary' : 'danger'
                                   } mt-2`}
                                   onClick={() => handleFieldDelete(index)}
                                 >
-                                  {field.toDelete
-                                    ? "Cancelar Eliminación"
-                                    : "Eliminar Campo"}
+                                  {field.toDelete ? 'Cancelar Eliminación' : 'Eliminar Campo'}
                                 </button>
                                 {field.toDelete && (
-                                  <p className="text-danger">
-                                    Este campo será eliminado
-                                  </p>
+                                  <p className="text-danger">Este campo será eliminado</p>
                                 )}
                               </div>
                             )}
@@ -707,19 +685,13 @@ export default function ListTables() {
                                     })
                                   }
                                 >
-                                  <option value="VARCHAR(255)">
-                                    Texto Corto
-                                  </option>
+                                  <option value="VARCHAR(255)">Texto Corto</option>
                                   <option value="TEXT">Texto Largo</option>
                                   <option value="INTEGER">Número Entero</option>
-                                  <option value="DECIMAL">
-                                    Número Decimal
-                                  </option>
+                                  <option value="DECIMAL">Número Decimal</option>
                                   <option value="BOOLEAN">Booleano</option>
                                   <option value="DATE">Fecha</option>
-                                  <option value="FOREIGN_KEY">
-                                    Clave Foránea
-                                  </option>
+                                  <option value="FOREIGN_KEY">Clave Foránea</option>
                                 </select>
                               </div>
                             </div>
@@ -740,10 +712,7 @@ export default function ListTables() {
                                     }
                                     id="new-field-required"
                                   />
-                                  <label
-                                    className="form-check-label"
-                                    htmlFor="new-field-required"
-                                  >
+                                  <label className="form-check-label" htmlFor="new-field-required">
                                     Obligatorio
                                   </label>
                                 </div>
@@ -751,13 +720,13 @@ export default function ListTables() {
                             </div>
 
                             {/* Seleccionar tabla relacionada si es clave foránea */}
-                            {newField.type === "FOREIGN_KEY" && (
+                            {newField.type === 'FOREIGN_KEY' && (
                               <div className="col-md-6">
                                 <div className="form-group">
                                   <label>Tabla Relacionada</label>
                                   <select
                                     className="form-control"
-                                    value={newField.relatedTable || ""}
+                                    value={newField.relatedTable || ''}
                                     onChange={(e) => {
                                       setNewField({
                                         ...newField,
@@ -770,10 +739,7 @@ export default function ListTables() {
                                       -- Selecciona una tabla relacionada --
                                     </option>
                                     {filteredAvailableTables.map((table) => (
-                                      <option
-                                        key={table.table_name}
-                                        value={table.table_name}
-                                      >
+                                      <option key={table.table_name} value={table.table_name}>
                                         {table.table_name}
                                       </option>
                                     ))}
@@ -786,7 +752,7 @@ export default function ListTables() {
                                     <label>Columna Relacionada</label>
                                     <select
                                       className="form-control"
-                                      value={newField.relatedColumn || ""}
+                                      value={newField.relatedColumn || ''}
                                       onChange={(e) =>
                                         setNewField({
                                           ...newField,
@@ -794,19 +760,15 @@ export default function ListTables() {
                                         })
                                       }
                                     >
-                                      <option value="">
-                                        -- Selecciona una columna --
-                                      </option>
-                                      {relatedTableFields.map(
-                                        (relatedField) => (
-                                          <option
-                                            key={relatedField.column_name}
-                                            value={relatedField.column_name}
-                                          >
-                                            {relatedField.column_name}
-                                          </option>
-                                        )
-                                      )}
+                                      <option value="">-- Selecciona una columna --</option>
+                                      {relatedTableFields.map((relatedField) => (
+                                        <option
+                                          key={relatedField.column_name}
+                                          value={relatedField.column_name}
+                                        >
+                                          {relatedField.column_name}
+                                        </option>
+                                      ))}
                                     </select>
                                   </div>
                                 )}
@@ -814,10 +776,7 @@ export default function ListTables() {
                             )}
 
                             <div className="col-md-12">
-                              <button
-                                className="btn btn-success mt-2"
-                                onClick={saveNewField}
-                              >
+                              <button className="btn btn-success mt-2" onClick={saveNewField}>
                                 Guardar Nuevo Campo
                               </button>
                             </div>
@@ -825,10 +784,7 @@ export default function ListTables() {
                         )}
 
                         {!newField && (
-                          <button
-                            className="btn btn-success mt-4"
-                            onClick={addField}
-                          >
+                          <button className="btn btn-success mt-4" onClick={addField}>
                             Agregar Campo
                           </button>
                         )}
@@ -851,3 +807,4 @@ export default function ListTables() {
     </div>
   );
 }
+
