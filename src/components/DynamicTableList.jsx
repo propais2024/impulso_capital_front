@@ -25,10 +25,8 @@ export default function DynamicTableList() {
   const [fieldOptionsLoaded, setFieldOptionsLoaded] = useState(false); // Estado de carga de opciones
   const [relatedData, setRelatedData] = useState({}); // Datos relacionados para claves foráneas
 
-  // Estados para la paginación
   const [currentPage, setCurrentPage] = useState(1); // Página actual
-  const recordsPerPage = 20; // Número máximo de registros por página
-  const [totalPages, setTotalPages] = useState(1); // Total de páginas
+  const recordsPerPage = 20; // Número de registros por página
 
   const navigate = useNavigate();
 
@@ -51,7 +49,7 @@ export default function DynamicTableList() {
   };
 
   // Función para obtener columnas y registros de la tabla seleccionada
-  const fetchTableData = async (tableName, savedVisibleColumns = null, page = 1) => {
+  const fetchTableData = async (tableName, savedVisibleColumns = null) => {
     try {
       setLoading(true);
       setError(null);
@@ -68,8 +66,6 @@ export default function DynamicTableList() {
           },
         }
       );
-
-      console.log('fieldsResponse.data:', fieldsResponse.data);
 
       const fetchedColumns = fieldsResponse.data.map((column) => column.column_name);
       setColumns(fetchedColumns);
@@ -91,27 +87,17 @@ export default function DynamicTableList() {
         setVisibleColumns(fetchedColumns); // Mostrar todas las columnas por defecto
       }
 
-      // Obtener registros con paginación y búsqueda
+      // Obtener registros
       const recordsResponse = await axios.get(
         `https://impulso-capital-back.onrender.com/api/inscriptions/tables/${tableName}/records`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
           },
-          params: {
-            page,
-            limit: recordsPerPage,
-            search,
-          },
         }
       );
 
-      console.log('recordsResponse.data:', recordsResponse.data);
-
-      // Ajuste aquí: la respuesta es un objeto con 'records' y 'totalPages'
-      const { records: fetchedRecords, totalPages: fetchedTotalPages } = recordsResponse.data;
-
-      let filteredRecords = fetchedRecords || [];
+      let filteredRecords = recordsResponse.data;
 
       // Filtrar los registros según el rol y el usuario
       if (tableName === 'inscription_caracterizacion') {
@@ -125,8 +111,6 @@ export default function DynamicTableList() {
       }
 
       setRecords(filteredRecords);
-      setTotalPages(fetchedTotalPages || 1);
-      setCurrentPage(page);
 
       // Obtener datos relacionados para claves foráneas
       const relatedDataResponse = await axios.get(
@@ -138,8 +122,6 @@ export default function DynamicTableList() {
         }
       );
 
-      console.log('relatedDataResponse.data:', relatedDataResponse.data);
-
       setRelatedData(relatedDataResponse.data.relatedData || {});
       setLoading(false);
       setFieldOptionsLoaded(true);
@@ -147,10 +129,6 @@ export default function DynamicTableList() {
       console.error('Error obteniendo los registros:', error);
       setError('Error obteniendo los registros');
       setLoading(false);
-      setRecords([]);
-      setColumns([]);
-      setVisibleColumns([]);
-      setMultiSelectFields([]);
     }
   };
 
@@ -159,15 +137,11 @@ export default function DynamicTableList() {
     const fetchTables = async () => {
       try {
         const token = localStorage.getItem('token');
-        const response = await axios.get(
-          'https://impulso-capital-back.onrender.com/api/inscriptions/tables',
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
-        console.log('fetchTables response.data:', response.data);
+        const response = await axios.get('https://impulso-capital-back.onrender.com/api/inscriptions/tables', {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
         setTables(response.data || []); // Asegurar que `tables` es un array
 
         // Cargar la tabla seleccionada y las columnas visibles guardadas desde el localStorage
@@ -187,7 +161,6 @@ export default function DynamicTableList() {
       } catch (error) {
         console.error('Error obteniendo las tablas:', error);
         setError('Error obteniendo las tablas');
-        setTables([]); // Asegurarse de que tables no sea undefined
       }
     };
 
@@ -196,10 +169,7 @@ export default function DynamicTableList() {
 
   // Manejar Select2 con persistencia
   useEffect(() => {
-    console.log('useEffect - columns:', columns);
-    console.log('useEffect - selectedTable:', selectedTable);
-
-    if (window.$ && selectedTable && selectRef.current && columns && columns.length > 0) {
+    if (window.$ && selectedTable && selectRef.current) {
       const $select = window.$(selectRef.current);
 
       // Inicializar Select2
@@ -214,8 +184,6 @@ export default function DynamicTableList() {
         const selectedOptions = Array.from(e.target.selectedOptions || []).map(
           (option) => option.value
         );
-
-        console.log('Selected options:', selectedOptions);
 
         if (selectedOptions.length === 0 && columns.length > 0) {
           // Seleccionar automáticamente la primera columna
@@ -232,8 +200,6 @@ export default function DynamicTableList() {
 
       // Cargar las columnas visibles guardadas desde el localStorage
       const savedVisibleColumns = JSON.parse(localStorage.getItem(LOCAL_STORAGE_COLUMNS_KEY));
-      console.log('savedVisibleColumns:', savedVisibleColumns);
-
       if (savedVisibleColumns && savedVisibleColumns.length > 0) {
         $select.val(savedVisibleColumns).trigger('change');
       } else if (columns.length > 0) {
@@ -268,12 +234,11 @@ export default function DynamicTableList() {
       setIsPrimaryTable(selectedTableObj?.is_primary || false); // Actualizar estado
 
       const savedVisibleColumns = JSON.parse(localStorage.getItem(LOCAL_STORAGE_COLUMNS_KEY));
-      fetchTableData(tableName, savedVisibleColumns, 1); // Cargar datos de la página 1
+      fetchTableData(tableName, savedVisibleColumns); // Cargar columnas y registros de la tabla seleccionada
     } else {
       setRecords([]); // Limpiar los registros si no se selecciona ninguna tabla
       setIsPrimaryTable(false);
       setVisibleColumns([]);
-      setColumns([]); // Asegurarse de que columns no sea undefined
     }
   };
 
@@ -300,6 +265,27 @@ export default function DynamicTableList() {
     }
   };
 
+  // Aplicar el filtro de búsqueda
+  const filteredRecords = search
+    ? records.filter((record) => {
+        return visibleColumns.some((column) => {
+          const value = getColumnDisplayValue(record, column);
+          return value?.toString()?.toLowerCase().includes(search.toLowerCase());
+        });
+      })
+    : records;
+
+  // Resetear la página actual cuando cambian los registros filtrados o la búsqueda
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [search, records]);
+
+  // Paginación
+  const totalPages = Math.ceil(filteredRecords.length / recordsPerPage);
+  const indexOfLastRecord = currentPage * recordsPerPage;
+  const indexOfFirstRecord = indexOfLastRecord - recordsPerPage;
+  const currentRecords = filteredRecords.slice(indexOfFirstRecord, indexOfLastRecord);
+
   // Función para limpiar filtros y mostrar todos los registros
   const clearFilters = () => {
     setVisibleColumns(columns); // Mostrar todas las columnas disponibles
@@ -309,7 +295,7 @@ export default function DynamicTableList() {
     setCurrentPage(1); // Resetear la página actual
 
     // Volver a cargar todos los registros de la tabla seleccionada
-    fetchTableData(selectedTable, null, 1); // Restablecer la tabla completa sin filtros
+    fetchTableData(selectedTable); // Restablecer la tabla completa sin filtros
   };
 
   // Manejar el cambio en la búsqueda
@@ -317,7 +303,6 @@ export default function DynamicTableList() {
     setSearch(e.target.value);
     localStorage.setItem(LOCAL_STORAGE_SEARCH_KEY, e.target.value); // Guardar búsqueda en el localStorage
     setCurrentPage(1); // Resetear la página actual
-    fetchTableData(selectedTable, visibleColumns, 1); // Volver a cargar datos con la nueva búsqueda
   };
 
   // Manejar cambios en los checkboxes
@@ -334,7 +319,7 @@ export default function DynamicTableList() {
   // Manejar selección de todos los registros
   const handleSelectAll = (e) => {
     if (e.target.checked) {
-      const allRecordIds = records.map((record) => record.id);
+      const allRecordIds = currentRecords.map((record) => record.id);
       setSelectedRecords(allRecordIds);
     } else {
       setSelectedRecords([]);
@@ -367,7 +352,7 @@ export default function DynamicTableList() {
       );
       alert('Registros actualizados con éxito');
       // Recargar los registros después de la actualización
-      fetchTableData(selectedTable, visibleColumns, currentPage);
+      fetchTableData(selectedTable);
       // Limpiar la selección
       setSelectedRecords([]);
       setBulkUpdateData({});
@@ -376,48 +361,6 @@ export default function DynamicTableList() {
       setError('Error actualizando los registros');
     }
   };
-
-  // Función para manejar el cambio de página
-  const handlePageChange = (pageNumber) => {
-    if (pageNumber < 1 || pageNumber > totalPages) return;
-    setCurrentPage(pageNumber);
-    fetchTableData(selectedTable, visibleColumns, pageNumber);
-  };
-
-  // Función para generar los números de página a mostrar
-  const getPageNumbers = () => {
-    const maxPageNumbersToShow = 10; // Número máximo de páginas a mostrar
-    let startPage = 1;
-    let endPage = totalPages;
-
-    if (totalPages > maxPageNumbersToShow) {
-      const middle = Math.floor(maxPageNumbersToShow / 2);
-      if (currentPage <= middle) {
-        startPage = 1;
-        endPage = maxPageNumbersToShow;
-      } else if (currentPage + middle >= totalPages) {
-        startPage = totalPages - maxPageNumbersToShow + 1;
-        endPage = totalPages;
-      } else {
-        startPage = currentPage - middle;
-        endPage = currentPage + middle - 1;
-      }
-    }
-
-    const pageNumbers = [];
-    for (let i = startPage; i <= endPage; i++) {
-      pageNumbers.push(i);
-    }
-    return pageNumbers;
-  };
-
-  console.log('Rendering component...');
-  console.log('tables:', tables);
-  console.log('columns:', columns);
-  console.log('visibleColumns:', visibleColumns);
-  console.log('records:', records);
-  console.log('selectedRecords:', selectedRecords);
-  console.log('multiSelectFields:', multiSelectFields);
 
   return (
     <div className="content-wrapper">
@@ -443,7 +386,7 @@ export default function DynamicTableList() {
                 style={{ maxWidth: '250px' }}
               >
                 <option value="">-- Selecciona una tabla --</option>
-                {tables && tables.length > 0 &&
+                {tables.length > 0 &&
                   tables.map((table) => (
                     <option key={table.table_name} value={table.table_name}>
                       {table.table_name}
@@ -481,7 +424,7 @@ export default function DynamicTableList() {
               )}
 
               {/* Select de columnas */}
-              {columns && columns.length > 0 && (
+              {columns.length > 0 && (
                 <div className="form-group mb-3">
                   <label>Selecciona las columnas a mostrar:</label>
                   <select
@@ -513,12 +456,13 @@ export default function DynamicTableList() {
                               type="checkbox"
                               onChange={handleSelectAll}
                               checked={
-                                selectedRecords.length === records.length && records.length > 0
+                                selectedRecords.length === currentRecords.length &&
+                                currentRecords.length > 0
                               }
                             />
                           </th>
                         )}
-                        {visibleColumns && visibleColumns.length > 0 &&
+                        {visibleColumns.length > 0 &&
                           visibleColumns.map((column) => (
                             <th key={column}>{column}</th>
                           ))}
@@ -526,8 +470,8 @@ export default function DynamicTableList() {
                       </tr>
                     </thead>
                     <tbody>
-                      {records && records.length > 0 ? (
-                        records.map((record) => (
+                      {currentRecords.length > 0 ? (
+                        currentRecords.map((record) => (
                           <tr key={record.id}>
                             {isPrimaryTable && (
                               <td>
@@ -538,7 +482,7 @@ export default function DynamicTableList() {
                                 />
                               </td>
                             )}
-                            {visibleColumns && visibleColumns.length > 0 ? (
+                            {visibleColumns.length > 0 ? (
                               visibleColumns.map((column) => (
                                 <td key={column}>{getColumnDisplayValue(record, column)}</td>
                               ))
@@ -567,8 +511,8 @@ export default function DynamicTableList() {
                           <td
                             colSpan={
                               isPrimaryTable
-                                ? (visibleColumns ? visibleColumns.length : 0) + 2
-                                : (visibleColumns ? visibleColumns.length : 0) + 1
+                                ? visibleColumns.length + 2
+                                : visibleColumns.length + 1
                             }
                             className="text-center"
                           >
@@ -581,56 +525,30 @@ export default function DynamicTableList() {
 
                   {/* Paginación */}
                   {totalPages > 1 && (
-                    <div className="pagination mt-3 d-flex justify-content-center align-items-center">
+                    <div className="pagination mt-3 d-flex justify-content-center">
                       <button
                         className="btn btn-light mr-2"
-                        onClick={() => handlePageChange(currentPage - 1)}
+                        onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
                         disabled={currentPage === 1}
                       >
                         Anterior
                       </button>
-
-                      {/* Botón de Primera Página */}
-                      {currentPage > 6 && (
-                        <>
+                      {Array.from({ length: totalPages }, (_, index) => index + 1).map(
+                        (number) => (
                           <button
-                            className="btn btn-light mr-1"
-                            onClick={() => handlePageChange(1)}
+                            key={number}
+                            onClick={() => setCurrentPage(number)}
+                            className={`btn btn-light mr-2 ${
+                              number === currentPage ? 'active' : ''
+                            }`}
                           >
-                            1
+                            {number}
                           </button>
-                          <span className="mr-1">...</span>
-                        </>
+                        )
                       )}
-
-                      {getPageNumbers().map((number) => (
-                        <button
-                          key={number}
-                          onClick={() => handlePageChange(number)}
-                          className={`btn btn-light mr-1 ${
-                            number === currentPage ? 'active' : ''
-                          }`}
-                        >
-                          {number}
-                        </button>
-                      ))}
-
-                      {/* Botón de Última Página */}
-                      {currentPage < totalPages - 5 && (
-                        <>
-                          <span className="mr-1">...</span>
-                          <button
-                            className="btn btn-light mr-1"
-                            onClick={() => handlePageChange(totalPages)}
-                          >
-                            {totalPages}
-                          </button>
-                        </>
-                      )}
-
                       <button
-                        className="btn btn-light ml-2"
-                        onClick={() => handlePageChange(currentPage + 1)}
+                        className="btn btn-light"
+                        onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
                         disabled={currentPage === totalPages}
                       >
                         Siguiente
