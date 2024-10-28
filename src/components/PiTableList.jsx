@@ -32,7 +32,7 @@ export default function PiTableList() {
 
       // Obtener campos de la tabla
       const fieldsResponse = await axios.get(
-        `http://localhost:4000/api/inscriptions/pi/tables/${tableName}/fields`,
+        `https://impulso-capital-back.onrender.com/api/inscriptions/pi/tables/${tableName}/fields`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -57,7 +57,7 @@ export default function PiTableList() {
 
       // Obtener registros de la tabla
       const recordsResponse = await axios.get(
-        `http://localhost:4000/api/inscriptions/pi/caracterizacion/records`,
+        `https://impulso-capital-back.onrender.com/api/inscriptions/pi/caracterizacion/records`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -69,7 +69,7 @@ export default function PiTableList() {
 
       // Obtener datos relacionados para llaves foráneas
       const relatedDataResponse = await axios.get(
-        `http://localhost:4000/api/inscriptions/pi/tables/${tableName}/related-data`,
+        `https://impulso-capital-back.onrender.com/api/inscriptions/pi/tables/${tableName}/related-data`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
