@@ -140,6 +140,9 @@ export default function DynamicTableList() {
       console.error('Error obteniendo los registros:', error);
       setError('Error obteniendo los registros');
       setLoading(false);
+      setRecords([]); // Asegurarse de que records no sea undefined
+      setColumns([]); // Asegurarse de que columns no sea undefined
+      setVisibleColumns([]); // Asegurarse de que visibleColumns no sea undefined
     }
   };
 
@@ -175,6 +178,7 @@ export default function DynamicTableList() {
       } catch (error) {
         console.error('Error obteniendo las tablas:', error);
         setError('Error obteniendo las tablas');
+        setTables([]); // Asegurarse de que tables no sea undefined
       }
     };
 
@@ -253,6 +257,7 @@ export default function DynamicTableList() {
       setRecords([]); // Limpiar los registros si no se selecciona ninguna tabla
       setIsPrimaryTable(false);
       setVisibleColumns([]);
+      setColumns([]); // Asegurarse de que columns no sea undefined
     }
   };
 
