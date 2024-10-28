@@ -3,6 +3,7 @@ import { useParams } from 'react-router-dom';
 import DatosTab from './PlanDeInversion/DatosTab';
 import ValidacionesTab from './PlanDeInversion/ValidacionesTab';
 import FormulacionTab from './PlanDeInversion/FormulacionTab';
+import AnexosTab from './PlanDeInversion/AnexosTab'; // Importar la nueva pestaña de Anexos
 import EncuestaSalidaTab from './PlanDeInversion/EncuestaSalidaTab';
 import GenerarFichaTab from './PlanDeInversion/GenerarFichaTab';
 
@@ -54,6 +55,18 @@ export default function PlanDeInversion() {
               Formulación
             </a>
           </li>
+          <li className={`nav-item ${activeTab === 'Anexos' ? 'active' : ''}`}>
+            <a
+              href="#"
+              className="nav-link"
+              onClick={(e) => {
+                e.preventDefault();
+                setActiveTab('Anexos');
+              }}
+            >
+              Anexos
+            </a>
+          </li>
           <li className={`nav-item ${activeTab === 'EncuestaSalida' ? 'active' : ''}`}>
             <a
               href="#"
@@ -85,6 +98,7 @@ export default function PlanDeInversion() {
           {activeTab === 'Datos' && <DatosTab id={id} />}
           {activeTab === 'Validaciones' && <ValidacionesTab id={id} />}
           {activeTab === 'Formulacion' && <FormulacionTab id={id} />}
+          {activeTab === 'Anexos' && <AnexosTab id={id} />} {/* Contenido de Anexos */}
           {activeTab === 'EncuestaSalida' && <EncuestaSalidaTab id={id} />}
           {activeTab === 'GenerarFicha' && <GenerarFichaTab id={id} />}
         </div>
