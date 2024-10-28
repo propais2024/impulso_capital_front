@@ -26,7 +26,7 @@ export default function DynamicTableList() {
   const [relatedData, setRelatedData] = useState({}); // Datos relacionados para claves foráneas
 
   const [currentPage, setCurrentPage] = useState(1); // Página actual
-  const recordsPerPage = 20; // Número de registros por página
+  const recordsPerPage = 100; // Número de registros por página
 
   const navigate = useNavigate();
 
