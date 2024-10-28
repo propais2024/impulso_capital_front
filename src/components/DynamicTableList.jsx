@@ -108,9 +108,10 @@ export default function DynamicTableList() {
 
       console.log('recordsResponse.data:', recordsResponse.data);
 
-      const { records: fetchedRecords, totalPages } = recordsResponse.data;
+      // Ajuste aquí: la respuesta es un objeto con 'records' y 'totalPages'
+      const { records: fetchedRecords, totalPages: fetchedTotalPages } = recordsResponse.data;
 
-      let filteredRecords = fetchedRecords;
+      let filteredRecords = fetchedRecords || [];
 
       // Filtrar los registros según el rol y el usuario
       if (tableName === 'inscription_caracterizacion') {
@@ -124,7 +125,7 @@ export default function DynamicTableList() {
       }
 
       setRecords(filteredRecords);
-      setTotalPages(totalPages);
+      setTotalPages(fetchedTotalPages || 1);
       setCurrentPage(page);
 
       // Obtener datos relacionados para claves foráneas
