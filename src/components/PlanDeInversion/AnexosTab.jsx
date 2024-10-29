@@ -233,7 +233,7 @@ export default function AnexosTab({ id }) {
                       <strong>{file.name}</strong>
                       <br />
                       <a
-                        href={`http://localhost:4000${file.url}`}
+                        href={`https://impulso-capital-back.onrender.com${file.url}`}
                         target="_blank"
                         rel="noopener noreferrer"
                       >
