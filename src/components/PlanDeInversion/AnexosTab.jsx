@@ -21,7 +21,7 @@ export default function AnexosTab({ id }) {
       if (!token) return;
 
       const filesResponse = await axios.get(
-        `http://localhost:4000/api/inscriptions/tables/${tableName}/record/${id}/files`,
+        `https://impulso-capital-back.onrender.com/api/inscriptions/tables/${tableName}/record/${id}/files`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -48,7 +48,7 @@ export default function AnexosTab({ id }) {
 
         // Obtener los campos de la tabla `pi_anexos`
         const fieldsResponse = await axios.get(
-          `http://localhost:4000/api/inscriptions/pi/tables/${tableName}/fields`,
+          `https://impulso-capital-back.onrender.com/api/inscriptions/pi/tables/${tableName}/fields`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -59,7 +59,7 @@ export default function AnexosTab({ id }) {
 
         // Verificar si ya existe un registro en `pi_anexos` con `caracterizacion_id`
         const recordsResponse = await axios.get(
-          `http://localhost:4000/api/inscriptions/pi/tables/${tableName}/records?caracterizacion_id=${id}`,
+          `https://impulso-capital-back.onrender.com/api/inscriptions/pi/tables/${tableName}/records?caracterizacion_id=${id}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -78,7 +78,7 @@ export default function AnexosTab({ id }) {
           // Si no existe, creamos el registro y luego cargamos los archivos
           console.log("No existing record found, creating a new one."); // LOG para verificar creación
           const createResponse = await axios.post(
-            `http://localhost:4000/api/inscriptions/pi/tables/${tableName}/record`,
+            `https://impulso-capital-back.onrender.com/api/inscriptions/pi/tables/${tableName}/record`,
             { caracterizacion_id: id },
             {
               headers: {
@@ -128,7 +128,7 @@ export default function AnexosTab({ id }) {
 
       // Subir archivo al registro existente o recién creado
       await axios.post(
-        `http://localhost:4000/api/inscriptions/tables/${tableName}/record/${recordId}/upload`,
+        `https://impulso-capital-back.onrender.com/api/inscriptions/tables/${tableName}/record/${recordId}/upload`,
         formData,
         {
           headers: {
@@ -153,7 +153,7 @@ export default function AnexosTab({ id }) {
       try {
         const token = localStorage.getItem('token');
         await axios.delete(
-          `http://localhost:4000/api/inscriptions/tables/${tableName}/record/${recordId}/file/${fileId}`,
+          `https://impulso-capital-back.onrender.com/api/inscriptions/tables/${tableName}/record/${recordId}/file/${fileId}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
