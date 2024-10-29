@@ -122,11 +122,10 @@ export default function AnexosTab({ id }) {
       formData.append('file', file);
       formData.append('fileName', fileName);
       formData.append('caracterizacion_id', id);
-      formData.append('source', 'anexos');
-
-      console.log("Uploading file with recordId:", recordId); // LOG para ver el recordId en el momento de subir el archivo
-
-      // Subir archivo al registro existente o recién creado
+      formData.append('source', 'anexos'); // asegurando que source se envía
+  
+      console.log("Uploading file with source:", formData.get('source')); // Agregamos un log para verificar el envío de source
+  
       await axios.post(
         `https://impulso-capital-back.onrender.com/api/inscriptions/tables/${tableName}/record/${recordId}/upload`,
         formData,
@@ -137,8 +136,8 @@ export default function AnexosTab({ id }) {
           },
         }
       );
-
-      await fetchFiles(); // Actualizar la lista de archivos después de subir uno nuevo
+  
+      await fetchFiles();
       setFile(null);
       setFileName('');
       setShowUploadForm(false);
@@ -147,6 +146,7 @@ export default function AnexosTab({ id }) {
       setError('Error subiendo el archivo');
     }
   };
+  
 
   const handleFileDelete = async (fileId) => {
     if (window.confirm('¿Estás seguro de que deseas eliminar este archivo?')) {
