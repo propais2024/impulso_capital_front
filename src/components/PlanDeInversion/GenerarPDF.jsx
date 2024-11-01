@@ -6,7 +6,7 @@ export default function GenerarPDF({ id }) {
   const [caracterizacionData, setCaracterizacionData] = useState({});
   const [datosTab, setDatosTab] = useState({});
   const [foreignData, setForeignData] = useState({});
-  const [loading, setLoading] = useState(true); // Estado para controlar la carga de datos
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -18,7 +18,7 @@ export default function GenerarPDF({ id }) {
       try {
         const token = localStorage.getItem('token');
 
-        // Obtener los datos de `inscription_caracterizacion` usando el `id` proporcionado
+        // Obtener datos de `inscription_caracterizacion` usando el `id` proporcionado
         const caracterizacionResponse = await axios.get(
           `https://impulso-capital-back.onrender.com/api/inscriptions/tables/inscription_caracterizacion/record/${id}`,
           { headers: { Authorization: `Bearer ${token}` } }
@@ -28,28 +28,27 @@ export default function GenerarPDF({ id }) {
         setCaracterizacionData(data);
         console.log("Datos de caracterización obtenidos:", data);
 
-        // Verificar y obtener valores de claves foráneas (ej. "Localidad unidad RIC")
-        const foreignFields = {
-          localidad: `https://impulso-capital-back.onrender.com/api/inscriptions/tables/localidad/record/${data["Localidad unidad RIC"]}`
-          // Agrega más claves foráneas si es necesario
-        };
-
-        const foreignDataPromises = Object.keys(foreignFields).map(async (field) => {
+        // Obtener valor descriptivo de "Localidad unidad RIC" (si es una clave foránea)
+        const localidadId = data["Localidad unidad RIC"];
+        if (localidadId) {
           try {
-            const response = await axios.get(foreignFields[field], {
-              headers: { Authorization: `Bearer ${token}` }
+            const localidadResponse = await axios.get(
+              `https://impulso-capital-back.onrender.com/api/inscriptions/tables/localidad/record/${localidadId}`,
+              { headers: { Authorization: `Bearer ${token}` }
             });
-            return { [field]: response.data.record.nombre }; // Ajusta 'nombre' al campo descriptivo correcto
+            setForeignData((prevData) => ({
+              ...prevData,
+              "Localidad unidad RIC": localidadResponse.data.record.nombre, // Guarda el nombre en foreignData con la clave exacta
+            }));
+            console.log("Nombre descriptivo de Localidad unidad RIC:", localidadResponse.data.record.nombre);
           } catch (error) {
-            console.error(`Error obteniendo datos de clave foránea para ${field}:`, error);
-            return { [field]: 'No disponible' };
+            console.error("Error obteniendo la localidad:", error);
+            setForeignData((prevData) => ({
+              ...prevData,
+              "Localidad unidad RIC": 'No disponible',
+            }));
           }
-        });
-
-        const foreignResults = await Promise.all(foreignDataPromises);
-        const foreignDataResolved = foreignResults.reduce((acc, curr) => ({ ...acc, ...curr }), {});
-        setForeignData(foreignDataResolved);
-        console.log("Datos de claves foráneas obtenidos:", foreignDataResolved);
+        }
 
         // Obtener datos de `pi_datos` usando `caracterizacion_id`
         const datosResponse = await axios.get(
@@ -81,9 +80,9 @@ export default function GenerarPDF({ id }) {
     const doc = new jsPDF('p', 'pt', 'a4');
 
     // Encabezado
-    doc.setFillColor(200, 200, 200); // Color gris claro
-    doc.rect(40, 40, 515, 25, 'F'); // Rectángulo de fondo gris para el header
-    doc.setTextColor(0, 0, 0); // Color del texto negro
+    doc.setFillColor(200, 200, 200);
+    doc.rect(40, 40, 515, 25, 'F');
+    doc.setTextColor(0, 0, 0);
     doc.text("ESPACIO PARA HEADER", 250, 58, { align: 'center' });
 
     // Información del emprendimiento
@@ -94,8 +93,11 @@ export default function GenerarPDF({ id }) {
     const nombreComercial = caracterizacionData["Nombre comercial"] || caracterizacionData["NOMBRE COMERCIAL"] || 'No disponible';
     console.log("Nombre comercial:", nombreComercial);
 
+    const localidadNombre = foreignData["Localidad unidad RIC"] || 'No disponible';
+    console.log("Nombre descriptivo de Localidad unidad RIC:", localidadNombre);
+
     doc.text(`Nombre comercial: ${nombreComercial}`, 40, 120);
-    doc.text(`Localidad: ${foreignData.localidad || 'No disponible'}`, 40, 135); // Usa el valor descriptivo de la localidad
+    doc.text(`Localidad: ${localidadNombre}`, 40, 135); // Muestra el nombre descriptivo
     doc.text(`Dirección: ${caracterizacionData.direccion || 'No disponible'}`, 40, 150);
     doc.text(`Número de contacto: ${caracterizacionData.numero_contacto || 'No disponible'}`, 40, 165);
 
