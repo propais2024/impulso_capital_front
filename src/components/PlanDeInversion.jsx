@@ -132,7 +132,7 @@ export default function PlanDeInversion() {
           </li>
         </ul>
 
-        {/* Contenido de las pestañas */}
+       
         <div className="tab-content">
           {activeTab === 'Datos' && <DatosTab id={id} />}
           {activeTab === 'Diagnostico' && <DiagnosticoTab id={id} />}
@@ -147,4 +147,4 @@ export default function PlanDeInversion() {
       </section>
     </div>
   );
-}
+} 
