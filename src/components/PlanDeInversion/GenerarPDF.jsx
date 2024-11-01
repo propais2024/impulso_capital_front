@@ -5,8 +5,7 @@ import axios from 'axios';
 export default function GenerarPDF({ id }) {
   const [caracterizacionData, setCaracterizacionData] = useState({});
   const [datosTab, setDatosTab] = useState({});
-  const [foreignData, setForeignData] = useState({});
-  const [loading, setLoading] = useState(true);
+  const [relatedData, setRelatedData] = useState({});
 
   useEffect(() => {
     const fetchData = async () => {
@@ -18,57 +17,32 @@ export default function GenerarPDF({ id }) {
       try {
         const token = localStorage.getItem('token');
 
-        // Obtener datos de `inscription_caracterizacion` usando el `id` proporcionado
+        // Obtener datos de `inscription_caracterizacion` usando el `id`
         const caracterizacionResponse = await axios.get(
           `https://impulso-capital-back.onrender.com/api/inscriptions/tables/inscription_caracterizacion/record/${id}`,
           { headers: { Authorization: `Bearer ${token}` } }
         );
-
         const data = caracterizacionResponse.data.record;
         setCaracterizacionData(data);
         console.log("Datos de caracterización obtenidos:", data);
 
-        // Verificar si "Localidad unidad RIC" tiene un ID asignado
-        const localidadId = data["Localidad unidad RIC"];
-        console.log("ID de Localidad unidad RIC:", localidadId);
-
-        if (localidadId) {
-          try {
-            // Consulta dinámica en `inscription_localidad_unidad_ric`
-            const localidadResponse = await axios.get(
-              `https://impulso-capital-back.onrender.com/api/inscriptions/tables/inscription_localidad_unidad_ric/record/${localidadId}`,
-              { headers: { Authorization: `Bearer ${token}` } }
-            );
-            const localidadNombre = localidadResponse.data.record.nombre; // Ajusta si el campo es diferente
-            console.log("Nombre descriptivo de Localidad unidad RIC:", localidadNombre);
-
-            setForeignData((prevData) => ({
-              ...prevData,
-              "Localidad unidad RIC": localidadNombre,
-            }));
-          } catch (error) {
-            console.error("Error obteniendo la localidad:", error);
-            setForeignData((prevData) => ({
-              ...prevData,
-              "Localidad unidad RIC": 'No disponible',
-            }));
-          }
-        } else {
-          console.log("Campo Localidad unidad RIC no tiene ID asignado.");
-        }
+        // Obtener datos relacionados para claves foráneas
+        const fieldsResponse = await axios.get(
+          `https://impulso-capital-back.onrender.com/api/inscriptions/pi/tables/inscription_caracterizacion/related-data`,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        setRelatedData(fieldsResponse.data.relatedData || {});
+        console.log("Datos relacionados de claves foráneas:", fieldsResponse.data.relatedData);
 
         // Obtener datos de `pi_datos` usando `caracterizacion_id`
         const datosResponse = await axios.get(
           `https://impulso-capital-back.onrender.com/api/inscriptions/pi/tables/pi_datos/records?caracterizacion_id=${id}`,
           { headers: { Authorization: `Bearer ${token}` } }
         );
-
         if (datosResponse.data.length > 0) {
           setDatosTab(datosResponse.data[0]);
           console.log("Datos de pi_datos obtenidos:", datosResponse.data[0]);
         }
-
-        setLoading(false);
       } catch (error) {
         console.error("Error al obtener los datos:", error);
       }
@@ -77,12 +51,18 @@ export default function GenerarPDF({ id }) {
     fetchData();
   }, [id]);
 
-  const generatePDF = () => {
-    if (loading) {
-      console.log("Los datos aún están cargando...");
-      return;
+  const getColumnDisplayValue = (column, value) => {
+    // Verifica si es una clave foránea y reemplaza por el valor descriptivo si existe
+    if (relatedData[column]) {
+      const relatedRecord = relatedData[column].find(
+        (item) => String(item.id) === String(value)
+      );
+      return relatedRecord ? relatedRecord.displayValue : `ID: ${value}`;
     }
+    return value; // Si no es clave foránea, devuelve el valor tal cual
+  };
 
+  const generatePDF = () => {
     const doc = new jsPDF('p', 'pt', 'a4');
 
     // Encabezado
@@ -99,11 +79,11 @@ export default function GenerarPDF({ id }) {
     const nombreComercial = caracterizacionData["Nombre comercial"] || caracterizacionData["NOMBRE COMERCIAL"] || 'No disponible';
     console.log("Nombre comercial:", nombreComercial);
 
-    const localidadNombre = foreignData["Localidad unidad RIC"] || 'No disponible';
-    console.log("Nombre descriptivo de Localidad unidad RIC para el PDF:", localidadNombre);
+    const localidadNombre = getColumnDisplayValue("Localidad unidad RIC", caracterizacionData["Localidad unidad RIC"]);
+    console.log("Nombre descriptivo de Localidad unidad RIC:", localidadNombre);
 
     doc.text(`Nombre comercial: ${nombreComercial}`, 40, 120);
-    doc.text(`Localidad: ${localidadNombre}`, 40, 135);
+    doc.text(`Localidad: ${localidadNombre || 'No disponible'}`, 40, 135);
     doc.text(`Dirección: ${caracterizacionData.direccion || 'No disponible'}`, 40, 150);
     doc.text(`Número de contacto: ${caracterizacionData.numero_contacto || 'No disponible'}`, 40, 165);
 
@@ -145,10 +125,9 @@ export default function GenerarPDF({ id }) {
   return (
     <div>
       <h3>Generar PDF</h3>
-      <button onClick={generatePDF} disabled={loading} className="btn btn-primary">
+      <button onClick={generatePDF} className="btn btn-primary">
         Descargar PDF
       </button>
-      {loading && <p>Los datos están cargando, por favor espera...</p>}
     </div>
   );
 }
