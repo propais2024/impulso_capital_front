@@ -6,6 +6,7 @@ export default function GenerarPDF({ id }) {
   const [caracterizacionData, setCaracterizacionData] = useState({});
   const [datosTab, setDatosTab] = useState({});
   const [relatedData, setRelatedData] = useState({});
+  const [loading, setLoading] = useState(true); // Controlar carga de datos
 
   useEffect(() => {
     const fetchData = async () => {
@@ -15,6 +16,7 @@ export default function GenerarPDF({ id }) {
       }
 
       try {
+        setLoading(true); // Inicia la carga
         const token = localStorage.getItem('token');
 
         // Obtener datos de `inscription_caracterizacion` usando el `id`
@@ -43,8 +45,11 @@ export default function GenerarPDF({ id }) {
           setDatosTab(datosResponse.data[0]);
           console.log("Datos de pi_datos obtenidos:", datosResponse.data[0]);
         }
+
+        setLoading(false); // Finaliza la carga una vez que todos los datos están disponibles
       } catch (error) {
         console.error("Error al obtener los datos:", error);
+        setLoading(false); // En caso de error, finaliza la carga para permitir interacción
       }
     };
 
@@ -52,7 +57,6 @@ export default function GenerarPDF({ id }) {
   }, [id]);
 
   const getColumnDisplayValue = (column, value) => {
-    // Verifica si es una clave foránea y reemplaza por el valor descriptivo si existe
     if (relatedData[column]) {
       const relatedRecord = relatedData[column].find(
         (item) => String(item.id) === String(value)
@@ -125,9 +129,14 @@ export default function GenerarPDF({ id }) {
   return (
     <div>
       <h3>Generar PDF</h3>
-      <button onClick={generatePDF} className="btn btn-primary">
+      <button
+        onClick={generatePDF}
+        className="btn btn-primary"
+        disabled={loading} // Desactiva el botón si está cargando
+      >
         Descargar PDF
       </button>
+      {loading && <p>Cargando datos, por favor espera...</p>}
     </div>
   );
 }
