@@ -18,20 +18,20 @@ export default function GenerarPDF({ id }) {
       try {
         const token = localStorage.getItem('token');
 
-        // Obtener datos de `inscription_caracterizacion` usando el `id` proporcionado
+        // Obtener los datos de `inscription_caracterizacion` usando el `id` proporcionado
         const caracterizacionResponse = await axios.get(
           `https://impulso-capital-back.onrender.com/api/inscriptions/tables/inscription_caracterizacion/record/${id}`,
           { headers: { Authorization: `Bearer ${token}` } }
         );
-        
+
         const data = caracterizacionResponse.data.record;
         setCaracterizacionData(data);
         console.log("Datos de caracterización obtenidos:", data);
 
-        // Verificar y obtener valores de claves foráneas (ej. localidad)
+        // Verificar y obtener valores de claves foráneas (ej. "Localidad unidad RIC")
         const foreignFields = {
           localidad: `https://impulso-capital-back.onrender.com/api/inscriptions/tables/localidad/record/${data["Localidad unidad RIC"]}`
-          // Agregar otros campos de claves foráneas aquí si es necesario
+          // Agrega más claves foráneas si es necesario
         };
 
         const foreignDataPromises = Object.keys(foreignFields).map(async (field) => {
@@ -96,40 +96,39 @@ export default function GenerarPDF({ id }) {
 
     doc.text(`Nombre comercial: ${nombreComercial}`, 40, 120);
     doc.text(`Localidad: ${foreignData.localidad || 'No disponible'}`, 40, 135); // Usa el valor descriptivo de la localidad
-    doc.text(`Barrio: ${foreignData.barrio || 'No disponible'}`, 40, 150); // Usa el valor descriptivo del barrio si existe
-    doc.text(`Dirección: ${caracterizacionData.direccion || 'No disponible'}`, 40, 165);
-    doc.text(`Número de contacto: ${caracterizacionData.numero_contacto || 'No disponible'}`, 40, 180);
+    doc.text(`Dirección: ${caracterizacionData.direccion || 'No disponible'}`, 40, 150);
+    doc.text(`Número de contacto: ${caracterizacionData.numero_contacto || 'No disponible'}`, 40, 165);
 
     // Información del emprendedor
     doc.setFontSize(12);
-    doc.text("Información del Emprendedor", 40, 220);
+    doc.text("Información del Emprendedor", 40, 200);
 
     doc.setFontSize(10);
-    doc.text(`Nombre emprendedor: ${caracterizacionData.nombre_emprendedor || 'No disponible'}`, 40, 240);
-    doc.text(`Tipo documento identidad: ${caracterizacionData.tipo_documento || 'No disponible'}`, 40, 255);
-    doc.text(`Número documento identidad: ${caracterizacionData.numero_documento || 'No disponible'}`, 40, 270);
-    doc.text(`Tiempo dedicación al negocio: ${caracterizacionData.tiempo_dedicacion || 'No disponible'}`, 40, 285);
+    doc.text(`Nombre emprendedor: ${caracterizacionData.nombre_emprendedor || 'No disponible'}`, 40, 220);
+    doc.text(`Tipo documento identidad: ${caracterizacionData.tipo_documento || 'No disponible'}`, 40, 235);
+    doc.text(`Número documento identidad: ${caracterizacionData.numero_documento || 'No disponible'}`, 40, 250);
+    doc.text(`Tiempo dedicación al negocio: ${caracterizacionData.tiempo_dedicacion || 'No disponible'}`, 40, 265);
 
     // Plan de Inversión - Información de `pi_datos`
     doc.setFillColor(200, 200, 200);
-    doc.rect(40, 315, 515, 25, 'F');
+    doc.rect(40, 295, 515, 25, 'F');
     doc.setTextColor(0, 0, 0);
-    doc.text("PLAN DE INVERSIÓN", 250, 332, { align: 'center' });
+    doc.text("PLAN DE INVERSIÓN", 250, 312, { align: 'center' });
 
     doc.setFontSize(10);
-    doc.text(`Descripción general del negocio: ${datosTab["Descripción general del negocio"] || 'No disponible'}`, 40, 360);
-    doc.text(`Descripción del lugar donde desarrolla la actividad: ${datosTab["Descripción del lugar donde desarrolla la actividad"] || 'No disponible'}`, 40, 380);
-    doc.text(`Descripción de los activos del negocio: ${datosTab["Descripción de los activos del negocio equipos - maquinaria - mobiliario"] || 'No disponible'}`, 40, 400);
-    doc.text(`Valor aproximado de los activos del negocio: ${datosTab["Valor aproximado de los activos del negocio"] || 'No disponible'}`, 40, 420);
-    doc.text(`Total costos fijos mensuales: ${datosTab["Total costos fijos mensuales"] || 'No disponible'}`, 40, 440);
-    doc.text(`Total costos variables: ${datosTab["Total costos variables"] || 'No disponible'}`, 40, 460);
-    doc.text(`Total gastos mensuales: ${datosTab["Total gastos mensuales"] || 'No disponible'}`, 40, 480);
-    doc.text(`Total ventas mensuales del negocio: ${datosTab["Total ventas mensuales del negocio"] || 'No disponible'}`, 40, 500);
-    doc.text(`Descripción de la capacidad de producción: ${datosTab["Descripción de la capacidad de producción"] || 'No disponible'}`, 40, 520);
-    doc.text(`Valor de los gastos familiares mensuales promedio: ${datosTab["Valor de los gastos familiares mensuales promedio"] || 'No disponible'}`, 40, 540);
-    doc.text(`Lleva registros separados de las finanzas personales y las del negocio: ${datosTab["Lleva registros separados de las finanzas personales y las del negocio"] || 'No disponible'}`, 40, 560);
-    doc.text(`Usa billeteras móviles: ${datosTab["Usa billeteras móviles"] || 'No disponible'}`, 40, 580);
-    doc.text(`¿Cuál?: ${datosTab["Cuál"] || 'No disponible'}`, 40, 600);
+    doc.text(`Descripción general del negocio: ${datosTab["Descripción general del negocio"] || 'No disponible'}`, 40, 340);
+    doc.text(`Descripción del lugar donde desarrolla la actividad: ${datosTab["Descripción del lugar donde desarrolla la actividad"] || 'No disponible'}`, 40, 355);
+    doc.text(`Descripción de los activos del negocio: ${datosTab["Descripción de los activos del negocio equipos - maquinaria - mobiliario"] || 'No disponible'}`, 40, 370);
+    doc.text(`Valor aproximado de los activos del negocio: ${datosTab["Valor aproximado de los activos del negocio"] || 'No disponible'}`, 40, 385);
+    doc.text(`Total costos fijos mensuales: ${datosTab["Total costos fijos mensuales"] || 'No disponible'}`, 40, 400);
+    doc.text(`Total costos variables: ${datosTab["Total costos variables"] || 'No disponible'}`, 40, 415);
+    doc.text(`Total gastos mensuales: ${datosTab["Total gastos mensuales"] || 'No disponible'}`, 40, 430);
+    doc.text(`Total ventas mensuales del negocio: ${datosTab["Total ventas mensuales del negocio"] || 'No disponible'}`, 40, 445);
+    doc.text(`Descripción de la capacidad de producción: ${datosTab["Descripción de la capacidad de producción"] || 'No disponible'}`, 40, 460);
+    doc.text(`Valor de los gastos familiares mensuales promedio: ${datosTab["Valor de los gastos familiares mensuales promedio"] || 'No disponible'}`, 40, 475);
+    doc.text(`Lleva registros separados de las finanzas personales y las del negocio: ${datosTab["Lleva registros separados de las finanzas personales y las del negocio"] || 'No disponible'}`, 40, 490);
+    doc.text(`Usa billeteras móviles: ${datosTab["Usa billeteras móviles"] || 'No disponible'}`, 40, 505);
+    doc.text(`¿Cuál?: ${datosTab["Cuál"] || 'No disponible'}`, 40, 520);
 
     // Descarga el PDF
     doc.save('Informe_Emprendimiento.pdf');
@@ -138,9 +137,10 @@ export default function GenerarPDF({ id }) {
   return (
     <div>
       <h3>Generar PDF</h3>
-      <button onClick={generatePDF} className="btn btn-primary">
+      <button onClick={generatePDF} disabled={loading} className="btn btn-primary">
         Descargar PDF
       </button>
+      {loading && <p>Los datos están cargando, por favor espera...</p>}
     </div>
   );
 }
