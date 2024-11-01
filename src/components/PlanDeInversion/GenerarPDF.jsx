@@ -28,19 +28,23 @@ export default function GenerarPDF({ id }) {
         setCaracterizacionData(data);
         console.log("Datos de caracterización obtenidos:", data);
 
-        // Obtener valor descriptivo de "Localidad unidad RIC" (si es una clave foránea)
+        // Verificar si "Localidad unidad RIC" está en los datos y tiene un valor
         const localidadId = data["Localidad unidad RIC"];
+        console.log("ID de Localidad unidad RIC:", localidadId);
+
         if (localidadId) {
           try {
             const localidadResponse = await axios.get(
               `https://impulso-capital-back.onrender.com/api/inscriptions/tables/localidad/record/${localidadId}`,
-              { headers: { Authorization: `Bearer ${token}` }
-            });
+              { headers: { Authorization: `Bearer ${token}` } }
+            );
+            const localidadNombre = localidadResponse.data.record.nombre; // Ajusta si el campo no es `nombre`
+            console.log("Nombre descriptivo de Localidad unidad RIC:", localidadNombre);
+
             setForeignData((prevData) => ({
               ...prevData,
-              "Localidad unidad RIC": localidadResponse.data.record.nombre, // Guarda el nombre en foreignData con la clave exacta
+              "Localidad unidad RIC": localidadNombre,
             }));
-            console.log("Nombre descriptivo de Localidad unidad RIC:", localidadResponse.data.record.nombre);
           } catch (error) {
             console.error("Error obteniendo la localidad:", error);
             setForeignData((prevData) => ({
@@ -48,6 +52,8 @@ export default function GenerarPDF({ id }) {
               "Localidad unidad RIC": 'No disponible',
             }));
           }
+        } else {
+          console.log("Campo Localidad unidad RIC no tiene ID asignado.");
         }
 
         // Obtener datos de `pi_datos` usando `caracterizacion_id`
@@ -60,8 +66,7 @@ export default function GenerarPDF({ id }) {
           setDatosTab(datosResponse.data[0]);
           console.log("Datos de pi_datos obtenidos:", datosResponse.data[0]);
         }
-        
-        // Establecer que la carga ha terminado
+
         setLoading(false);
       } catch (error) {
         console.error("Error al obtener los datos:", error);
@@ -74,7 +79,7 @@ export default function GenerarPDF({ id }) {
   const generatePDF = () => {
     if (loading) {
       console.log("Los datos aún están cargando...");
-      return; // Evita generar el PDF si los datos aún no están listos
+      return;
     }
 
     const doc = new jsPDF('p', 'pt', 'a4');
@@ -94,10 +99,10 @@ export default function GenerarPDF({ id }) {
     console.log("Nombre comercial:", nombreComercial);
 
     const localidadNombre = foreignData["Localidad unidad RIC"] || 'No disponible';
-    console.log("Nombre descriptivo de Localidad unidad RIC:", localidadNombre);
+    console.log("Nombre descriptivo de Localidad unidad RIC para el PDF:", localidadNombre);
 
     doc.text(`Nombre comercial: ${nombreComercial}`, 40, 120);
-    doc.text(`Localidad: ${localidadNombre}`, 40, 135); // Muestra el nombre descriptivo
+    doc.text(`Localidad: ${localidadNombre}`, 40, 135);
     doc.text(`Dirección: ${caracterizacionData.direccion || 'No disponible'}`, 40, 150);
     doc.text(`Número de contacto: ${caracterizacionData.numero_contacto || 'No disponible'}`, 40, 165);
 
