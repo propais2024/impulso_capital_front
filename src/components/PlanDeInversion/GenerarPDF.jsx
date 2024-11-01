@@ -21,7 +21,9 @@ export default function GenerarPDF({ id }) {
           `https://impulso-capital-back.onrender.com/api/inscriptions/tables/inscription_caracterizacion/record/${id}`,
           { headers: { Authorization: `Bearer ${token}` } }
         );
+        
         setCaracterizacionData(caracterizacionResponse.data.record);
+        console.log("Datos de caracterización obtenidos:", caracterizacionResponse.data.record);
 
         // 2. Obtener los datos de `pi_datos` usando `caracterizacion_id`
         const datosResponse = await axios.get(
@@ -30,7 +32,8 @@ export default function GenerarPDF({ id }) {
         );
 
         if (datosResponse.data.length > 0) {
-          setDatosTab(datosResponse.data[0]); // Solo el primer registro correspondiente
+          setDatosTab(datosResponse.data[0]);
+          console.log("Datos de pi_datos obtenidos:", datosResponse.data[0]);
         }
       } catch (error) {
         console.error("Error al obtener los datos:", error);
@@ -54,7 +57,10 @@ export default function GenerarPDF({ id }) {
     doc.text("Información del Emprendimiento", 40, 100);
 
     doc.setFontSize(10);
-    doc.text(`Nombre comercial: ${caracterizacionData["Nombre comercial"] || 'No disponible'}`, 40, 120);
+    const nombreComercial = caracterizacionData["Nombre comercial"] || caracterizacionData["NOMBRE COMERCIAL"] || 'No disponible';
+    console.log("Nombre comercial:", nombreComercial);
+
+    doc.text(`Nombre comercial: ${nombreComercial}`, 40, 120);
     doc.text(`Localidad: ${caracterizacionData["Localidad unidad RIC"] || 'No disponible'}`, 40, 135);
     doc.text(`Barrio: ${caracterizacionData.barrio || 'No disponible'}`, 40, 150);
     doc.text(`Dirección: ${caracterizacionData.direccion || 'No disponible'}`, 40, 165);
