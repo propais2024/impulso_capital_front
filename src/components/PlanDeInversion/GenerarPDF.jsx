@@ -28,17 +28,18 @@ export default function GenerarPDF({ id }) {
         setCaracterizacionData(data);
         console.log("Datos de caracterización obtenidos:", data);
 
-        // Verificar si "Localidad unidad RIC" está en los datos y tiene un valor
+        // Verificar si "Localidad unidad RIC" tiene un ID asignado
         const localidadId = data["Localidad unidad RIC"];
         console.log("ID de Localidad unidad RIC:", localidadId);
 
         if (localidadId) {
           try {
+            // Consulta dinámica en `inscription_localidad_unidad_ric`
             const localidadResponse = await axios.get(
-              `https://impulso-capital-back.onrender.com/api/inscriptions/tables/localidad/record/${localidadId}`,
+              `https://impulso-capital-back.onrender.com/api/inscriptions/tables/inscription_localidad_unidad_ric/record/${localidadId}`,
               { headers: { Authorization: `Bearer ${token}` } }
             );
-            const localidadNombre = localidadResponse.data.record.nombre; // Ajusta si el campo no es `nombre`
+            const localidadNombre = localidadResponse.data.record.nombre; // Ajusta si el campo es diferente
             console.log("Nombre descriptivo de Localidad unidad RIC:", localidadNombre);
 
             setForeignData((prevData) => ({
@@ -151,3 +152,4 @@ export default function GenerarPDF({ id }) {
     </div>
   );
 }
+
