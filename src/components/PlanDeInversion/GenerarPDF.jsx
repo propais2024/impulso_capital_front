@@ -5,7 +5,8 @@ import axios from 'axios';
 export default function GenerarPDF({ id }) {
   const [caracterizacionData, setCaracterizacionData] = useState({});
   const [datosTab, setDatosTab] = useState({});
-  const [foreignData, setForeignData] = useState({}); // Almacenar valores de claves foráneas
+  const [foreignData, setForeignData] = useState({});
+  const [loading, setLoading] = useState(true); // Estado para controlar la carga de datos
 
   useEffect(() => {
     const fetchData = async () => {
@@ -17,7 +18,7 @@ export default function GenerarPDF({ id }) {
       try {
         const token = localStorage.getItem('token');
 
-        // Obtener los datos de `inscription_caracterizacion` usando el `id` proporcionado
+        // Obtener datos de `inscription_caracterizacion` usando el `id` proporcionado
         const caracterizacionResponse = await axios.get(
           `https://impulso-capital-back.onrender.com/api/inscriptions/tables/inscription_caracterizacion/record/${id}`,
           { headers: { Authorization: `Bearer ${token}` } }
@@ -27,11 +28,10 @@ export default function GenerarPDF({ id }) {
         setCaracterizacionData(data);
         console.log("Datos de caracterización obtenidos:", data);
 
-        // Verificar y obtener valores de claves foráneas
+        // Verificar y obtener valores de claves foráneas (ej. localidad)
         const foreignFields = {
-          localidad: `https://impulso-capital-back.onrender.com/api/inscriptions/tables/localidad/record/${data.localidad}`,
-          // Agregar otros campos de claves foráneas aquí
-          // Ejemplo: barrio: `https://.../barrio/record/${data.barrio}`
+          localidad: `https://impulso-capital-back.onrender.com/api/inscriptions/tables/localidad/record/${data["Localidad unidad RIC"]}`
+          // Agregar otros campos de claves foráneas aquí si es necesario
         };
 
         const foreignDataPromises = Object.keys(foreignFields).map(async (field) => {
@@ -39,7 +39,7 @@ export default function GenerarPDF({ id }) {
             const response = await axios.get(foreignFields[field], {
               headers: { Authorization: `Bearer ${token}` }
             });
-            return { [field]: response.data.record.nombre }; // Cambia 'nombre' al campo descriptivo correcto
+            return { [field]: response.data.record.nombre }; // Ajusta 'nombre' al campo descriptivo correcto
           } catch (error) {
             console.error(`Error obteniendo datos de clave foránea para ${field}:`, error);
             return { [field]: 'No disponible' };
@@ -51,7 +51,7 @@ export default function GenerarPDF({ id }) {
         setForeignData(foreignDataResolved);
         console.log("Datos de claves foráneas obtenidos:", foreignDataResolved);
 
-        // Obtener los datos de `pi_datos` usando `caracterizacion_id`
+        // Obtener datos de `pi_datos` usando `caracterizacion_id`
         const datosResponse = await axios.get(
           `https://impulso-capital-back.onrender.com/api/inscriptions/pi/tables/pi_datos/records?caracterizacion_id=${id}`,
           { headers: { Authorization: `Bearer ${token}` } }
@@ -61,6 +61,9 @@ export default function GenerarPDF({ id }) {
           setDatosTab(datosResponse.data[0]);
           console.log("Datos de pi_datos obtenidos:", datosResponse.data[0]);
         }
+        
+        // Establecer que la carga ha terminado
+        setLoading(false);
       } catch (error) {
         console.error("Error al obtener los datos:", error);
       }
@@ -70,6 +73,11 @@ export default function GenerarPDF({ id }) {
   }, [id]);
 
   const generatePDF = () => {
+    if (loading) {
+      console.log("Los datos aún están cargando...");
+      return; // Evita generar el PDF si los datos aún no están listos
+    }
+
     const doc = new jsPDF('p', 'pt', 'a4');
 
     // Encabezado
@@ -87,8 +95,8 @@ export default function GenerarPDF({ id }) {
     console.log("Nombre comercial:", nombreComercial);
 
     doc.text(`Nombre comercial: ${nombreComercial}`, 40, 120);
-    doc.text(`Localidad: ${foreignData.localidad || 'No disponible'}`, 40, 135); // Usa el valor descriptivo
-    doc.text(`Barrio: ${foreignData.barrio || 'No disponible'}`, 40, 150); // Usa el valor descriptivo
+    doc.text(`Localidad: ${foreignData.localidad || 'No disponible'}`, 40, 135); // Usa el valor descriptivo de la localidad
+    doc.text(`Barrio: ${foreignData.barrio || 'No disponible'}`, 40, 150); // Usa el valor descriptivo del barrio si existe
     doc.text(`Dirección: ${caracterizacionData.direccion || 'No disponible'}`, 40, 165);
     doc.text(`Número de contacto: ${caracterizacionData.numero_contacto || 'No disponible'}`, 40, 180);
 
