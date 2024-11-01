@@ -54,8 +54,8 @@ export default function GenerarPDF({ id }) {
     doc.text("Información del Emprendimiento", 40, 100);
 
     doc.setFontSize(10);
-    doc.text(`Nombre comercial: ${caracterizacionData["NOMBRE COMERCIAL"] || 'No disponible'}`, 40, 120);
-    doc.text(`Localidad: ${caracterizacionData.localidad || 'No disponible'}`, 40, 135);
+    doc.text(`Nombre comercial: ${caracterizacionData["Nombre comercial"] || 'No disponible'}`, 40, 120);
+    doc.text(`Localidad: ${caracterizacionData["Localidad unidad RIC"] || 'No disponible'}`, 40, 135);
     doc.text(`Barrio: ${caracterizacionData.barrio || 'No disponible'}`, 40, 150);
     doc.text(`Dirección: ${caracterizacionData.direccion || 'No disponible'}`, 40, 165);
     doc.text(`Número de contacto: ${caracterizacionData.numero_contacto || 'No disponible'}`, 40, 180);
