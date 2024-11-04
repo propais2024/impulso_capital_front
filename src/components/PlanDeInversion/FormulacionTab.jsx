@@ -12,7 +12,6 @@ export default function FormulacionTab({ id }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [piFormulacionRecords, setPiFormulacionRecords] = useState([]);
-  const [selectedProducts, setSelectedProducts] = useState([]);
   const tableName = 'provider_proveedores';
   const rubroTableName = 'provider_rubro';
   const elementoTableName = 'provider_elemento';
@@ -89,7 +88,7 @@ export default function FormulacionTab({ id }) {
         });
 
         const sortedRecords = recordsResponse.data.sort(
-          (a, b) => b.Calificacion - a.Calificacion
+          (a, b) => b["Puntuacion evaluacion"] - a["Puntuacion evaluacion"]
         );
         const topThreeRecords = sortedRecords.slice(0, 3);
 
@@ -168,7 +167,7 @@ export default function FormulacionTab({ id }) {
   // Función para obtener el nombre del Elemento
   const getElementoName = (elementoId) => {
     const elemento = elementos.find((el) => String(el.id) === String(elementoId));
-    return elemento ? elemento.Elemento : 'Desconocido';
+    return elemento ? elemento["Descripcion"] || elemento["Elemento"] || elemento["Descripcion corta"] : 'Desconocido';
   };
 
   // Función para obtener el nombre del Rubro
@@ -374,10 +373,10 @@ export default function FormulacionTab({ id }) {
             >
               <option value="">-- Selecciona un elemento --</option>
               {elementos
-                .filter((el) => String(el.Rubro) === String(selectedRubro))
+                .filter((el) => String(el.Rubro) === String(selectedRubro) || String(el.Rubro_id) === String(selectedRubro))
                 .map((elemento) => (
                   <option key={elemento.id} value={elemento.id}>
-                    {elemento.Elemento}
+                    {elemento["Descripcion"] || elemento["Elemento"] || elemento["Descripcion corta"]}
                   </option>
                 ))}
             </select>
@@ -482,7 +481,7 @@ export default function FormulacionTab({ id }) {
               <table className="table">
                 <thead>
                   <tr>
-                    <th>Nombre Proveedor</th>
+                    <th>Nombre proveedor</th>
                     <th>Rubro</th>
                     <th>Elemento</th>
                     <th>Descripción</th>
@@ -502,10 +501,10 @@ export default function FormulacionTab({ id }) {
 
                     return (
                       <tr key={piRecord.rel_id_prov}>
-                        <td>{provider["Nombre Proveedor"]}</td>
+                        <td>{provider["Nombre proveedor"]}</td>
                         <td>{getRubroName(provider.Rubro)}</td>
                         <td>{getElementoName(provider.Elemento)}</td>
-                        <td>{provider["Descripción producto"]}</td>
+                        <td>{provider["Descripcion corta"]}</td>
                         <td>{provider.Precio}</td>
                         <td>{cantidad}</td>
                         <td>{total}</td>
