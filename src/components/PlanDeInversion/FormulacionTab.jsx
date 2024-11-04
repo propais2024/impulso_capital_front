@@ -372,13 +372,11 @@ export default function FormulacionTab({ id }) {
               disabled={!selectedRubro}
             >
               <option value="">-- Selecciona un elemento --</option>
-              {elementos
-                .filter((el) => String(el.Rubro) === String(selectedRubro))
-                .map((elemento) => (
-                  <option key={elemento.id} value={elemento.id}>
-                    {elemento.Elemento}
-                  </option>
-                ))}
+              {elementos.map((elemento) => (
+                <option key={elemento.id} value={elemento.id}>
+                  {elemento.Elemento}
+                </option>
+              ))}
             </select>
           </div>
 
