@@ -184,8 +184,8 @@ export default function GenerarPDF({ id }) {
 
     // Estilos de fuente
     const fontSizes = {
-      title: 14,
-      subtitle: 12,
+      title: 12,      // Reducido de 14 a 12
+      subtitle: 11,
       normal: 10,
     };
 
@@ -293,11 +293,20 @@ export default function GenerarPDF({ id }) {
     datosKeys.forEach(key => {
       const label = key.replace(/_/g, ' ') + ':';
       const value = datosTab[key] || 'No disponible';
-      const fullText = `${label} ${value}`;
-      const lines = doc.splitTextToSize(fullText, maxLineWidth);
-      checkPageEnd(doc, yPosition, lines.length * 12);
-      doc.text(lines, margin, yPosition);
-      yPosition += lines.length * 12;
+
+      // Texto en negrita para el label
+      doc.setFont(undefined, 'bold');
+      const labelLines = doc.splitTextToSize(label, maxLineWidth);
+      checkPageEnd(doc, yPosition, labelLines.length * 12);
+      doc.text(labelLines, margin, yPosition);
+      yPosition += labelLines.length * 12;
+
+      // Salto de línea y texto normal para el valor
+      doc.setFont(undefined, 'normal');
+      const valueLines = doc.splitTextToSize(value, maxLineWidth);
+      checkPageEnd(doc, yPosition, valueLines.length * 12);
+      doc.text(valueLines, margin, yPosition);
+      yPosition += valueLines.length * 12 + 5; // Espacio adicional entre entradas
     });
 
     // DIAGNÓSTICO DEL NEGOCIO Y PROPUESTA DE MEJORA
