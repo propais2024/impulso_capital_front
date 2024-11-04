@@ -18,13 +18,13 @@ export default function FormulacionTab({ id }) {
   const piFormulacionTableName = 'pi_formulacion';
 
   const displayedFieldNames = [
-    "Nombre Proveedor",
+    "Nombre proveedor",
     "Rubro",
     "Elemento",
-    "Descripción producto",
-    "Valor Catalogo y/o referencia",
+    "Descripcion corta",
+    "Valor catalogo",
     "Precio",
-    "Calificacion"
+    "Puntuacion evaluacion"
   ];
 
   // Hook para obtener los campos y datos iniciales
