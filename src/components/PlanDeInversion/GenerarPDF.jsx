@@ -487,57 +487,29 @@ export default function GenerarPDF({ id }) {
     doc.text(`Total Inversión: $${totalInversion}`, pageWidth - margin, yPosition, { align: 'right' });
 
     yPosition += 30;
-    doc.setFontSize(fontSizes.subtitle);
+    doc.setFontSize(fontSizes.title);
     doc.setTextColor(0, 0, 0);
     doc.text("CONCEPTO DE VIABILIDAD", pageWidth / 2, yPosition, { align: 'center' });
 
     yPosition += 20;
     doc.setFontSize(fontSizes.normal);
+
+    // Texto de la sección CONCEPTO DE VIABILIDAD
     const textoViabilidad = [
-      "Yo, Nombre del asesor, identificado con documento de identidad 123456789 expedido en",
-      "la ciudad de BOGOTA, en mi calidad de asesor empresarial del micronegocio denominado",
-      "Nombre del emprendimiento y haciendo parte del equipo ejecutor del programa “Impulso Capital”",
-      "suscrito entre la Corporación para el Desarrollo de las Microempresas - Propaís y la Secretaría de",
-      "Desarrollo Económico - SDDE, emito concepto de VIABILIDAD para que el emprendedor pueda",
-      "acceder a los recursos de capitalización proporcionados por el citado programa."
+      "Yo, Nombre del asesor, identificado con documento de identidad 123456789 expedido en la ciudad de BOGOTÁ, en mi calidad de asesor empresarial del micronegocio denominado Nombre del emprendimiento y haciendo parte del equipo ejecutor del programa “Impulso Capital” suscrito entre la Corporación para el Desarrollo de las Microempresas - Propaís y la Secretaría de Desarrollo Económico - SDDE, emito concepto de VIABILIDAD para que el emprendedor pueda acceder a los recursos de capitalización proporcionados por el citado programa.",
+      "",
+      "Nota: El valor detallado en el presente documento corresponde a la planeación de las inversiones que requiere cada negocio local, sin embargo, es preciso aclarar que el programa Impulso Capital no capitalizará este valor en su totalidad, sino que fortalecerá cada unidad productiva con algunos de estos bienes hasta por $3.000.000 de pesos en total, de acuerdo con la disponibilidad de los mismos y la mayor eficiencia en el uso de los recursos públicos.",
+      "",
+      "Nota: Declaro que toda la información sobre el plan de inversión aquí consignada fue diligenciada en conjunto con el asesor empresarial a cargo, está de acuerdo con las condiciones del negocio, es verdadera, completa y correcta, la cual puede ser verificada en cualquier momento."
     ];
 
-    textoViabilidad.forEach(line => {
-      const lines = doc.splitTextToSize(line, maxLineWidth);
+    textoViabilidad.forEach(parrafo => {
+      const lines = doc.splitTextToSize(parrafo, maxLineWidth);
       doc.text(lines, margin, yPosition);
-      yPosition += lines.length * 12;
+      yPosition += lines.length * 12 + 10; // Añadimos un espacio adicional entre párrafos
     });
 
-    yPosition += 10;
-    doc.setFontSize(8);
-    const notas = [
-      "Nota: El valor detallado en el presente documento corresponde a la planeación de la inversiones",
-      "que requiere cada negocio local, sin embargo, es preciso aclarar que, el programa impulso capital",
-      "no capitalizará este valor en su totalidad, sino que fortalecerá cada unidad productiva con",
-      "algunos de estos bienes hasta por $3.000.000 de pesos en total, de acuerdo con la",
-      "disponibilidad de los mismos y la mayor eficiencia en el uso de los recursos públicos."
-    ];
-
-    notas.forEach(line => {
-      const lines = doc.splitTextToSize(line, maxLineWidth);
-      doc.text(lines, margin, yPosition);
-      yPosition += lines.length * 10;
-    });
-
-    yPosition += 15;
-    const notasAdicional = [
-      "Nota: Declaro que toda la información sobre el plan de inversión aquí consignada fue diligenciada",
-      "en conjunto con el asesor empresarial a cargo, está de acuerdo con las condiciones del negocio,",
-      "es verdadera, completa y correcta, la cual puede ser verificada en cualquier momento."
-    ];
-
-    notasAdicional.forEach(line => {
-      const lines = doc.splitTextToSize(line, maxLineWidth);
-      doc.text(lines, margin, yPosition);
-      yPosition += lines.length * 10;
-    });
-
-    yPosition += 40;
+    yPosition += 20;
     doc.setFontSize(fontSizes.subtitle);
     doc.text("FIRMAS", pageWidth / 2, yPosition, { align: 'center' });
 
