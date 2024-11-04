@@ -180,7 +180,7 @@ export default function GenerarPDF({ id }) {
     // Definir columnas para la tabla de Diagnóstico
     const diagnosticoColumns = [
       { header: 'No.', dataKey: 'index' },
-      { header: 'Área', dataKey: 'area' },
+      { header: 'Área de Fortalecimiento', dataKey: 'area' },
       { header: 'Descripción', dataKey: 'descripcion' },
       { header: 'Propuesta de Mejora', dataKey: 'propuesta' },
     ];
@@ -211,10 +211,9 @@ export default function GenerarPDF({ id }) {
       index: index + 1,
       equipo: item["Equipo"] || 'No disponible',
       descripcion: item["Descripcion"] || 'No disponible',
-      vidaUtil: item["Vida Util"] || 'No disponible',
-      frecuenciaUso: item["Frecuencia de uso"] || 'No disponible',
-      elementoReposicion: item["Elemento para reposicion"] || 'No disponible',
-      valorEstimado: item["Valor estimado"] || 'No disponible',
+      vidaUtil: item["Vida util"] || 'No disponible',
+      frecuenciaUso: item["Frecuencia de uso (media alta, baja)"] || 'No disponible',
+      elementoReposicion: item["Elemento para reposicion (SI NO)"] || 'No disponible',
     }));
 
     // Definir columnas para la tabla de Activos
@@ -225,7 +224,6 @@ export default function GenerarPDF({ id }) {
       { header: 'Vida Útil', dataKey: 'vidaUtil' },
       { header: 'Frecuencia de Uso', dataKey: 'frecuenciaUso' },
       { header: 'Elemento para Reposición', dataKey: 'elementoReposicion' },
-      { header: 'Valor Estimado', dataKey: 'valorEstimado' },
     ];
 
     // Agregar la tabla de Activos
@@ -245,7 +243,7 @@ export default function GenerarPDF({ id }) {
     // DESCRIPCIÓN DE LAS CARACTERÍSTICAS DEL ESPACIO
     doc.setFillColor(200, 200, 200);
     doc.rect(40, yPosition, 515, 20, 'F');
-    doc.text("DESCRIPCIÓN DE LAS CARACTERÍSTICAS DEL ESPACIO", 250, yPosition + 15, { align: 'center' });
+    doc.text("DESCRIPCIÓN DE LAS CARACTERÍSTICAS DEL ESPACIO DISPONIBLE PARA LA INSTALACIÓN Y/O UTILIZACIÓN DEL (LOS) BIEN(ES) DE INVERSIÓN  ", 250, yPosition + 15, { align: 'center' });
 
     yPosition += 30;
 
