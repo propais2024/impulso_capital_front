@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import PropTypes from 'prop-types';
 import axios from 'axios';
 
@@ -167,7 +167,7 @@ export default function FormulacionTab({ id }) {
   // Función para obtener el nombre del Elemento
   const getElementoName = (elementoId) => {
     const elemento = elementos.find((el) => String(el.id) === String(elementoId));
-    return elemento ? elemento.Elemento || elemento["Descripcion"] || elemento["Descripcion corta"] : 'Desconocido';
+    return elemento ? elemento.Elemento : 'Desconocido';
   };
 
   // Función para obtener el nombre del Rubro
@@ -176,9 +176,167 @@ export default function FormulacionTab({ id }) {
     return rubro ? rubro.Rubro : 'Desconocido';
   };
 
-  // Las funciones handleCantidadChange, handleApprovalChange y demás permanecen sin cambios
+  // Función para obtener datos de pi_formulacion para un proveedor
+  const getPiFormulacionData = (recordId) => {
+    return piFormulacionRecords.find(
+      (piRecord) => String(piRecord.rel_id_prov) === String(recordId)
+    ) || {};
+  };
 
-  // ... (resto del código, incluyendo las funciones restantes y el return)
+  // Función para manejar cambios en la cantidad
+  const handleCantidadChange = async (recordId, cantidad) => {
+    try {
+      const token = localStorage.getItem('token');
+      const existingPiData = getPiFormulacionData(recordId);
+
+      const recordData = {
+        caracterizacion_id: id,
+        rel_id_prov: recordId,
+        Cantidad: cantidad,
+      };
+
+      const endpoint = `https://impulso-capital-back.onrender.com/api/inscriptions/pi/tables/${piFormulacionTableName}/record`;
+
+      if (existingPiData.id) {
+        // Actualizar registro existente
+        await axios.put(`${endpoint}/${existingPiData.id}`, recordData, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+      } else {
+        // Crear nuevo registro
+        await axios.post(endpoint, recordData, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+      }
+
+      // Actualizar estado
+      setPiFormulacionRecords((prevRecords) => {
+        const index = prevRecords.findIndex(
+          (rec) => String(rec.rel_id_prov) === String(recordId)
+        );
+        if (index !== -1) {
+          const updatedRecord = { ...prevRecords[index], Cantidad: cantidad };
+          return [
+            ...prevRecords.slice(0, index),
+            updatedRecord,
+            ...prevRecords.slice(index + 1),
+          ];
+        } else {
+          // Necesitamos obtener los datos del proveedor
+          const providerUrl = `https://impulso-capital-back.onrender.com/api/inscriptions/tables/${tableName}/record/${recordId}`;
+          axios.get(providerUrl, {
+            headers: { Authorization: `Bearer ${token}` },
+          }).then((res) => {
+            const providerData = res.data.record;
+            setPiFormulacionRecords((prev) => [
+              ...prev,
+              { ...recordData, providerData },
+            ]);
+          });
+          return prevRecords;
+        }
+      });
+    } catch (error) {
+      console.error('Error al cambiar la cantidad:', error);
+    }
+  };
+
+  // Función para manejar cambios en la aprobación
+  const handleApprovalChange = async (record, field, value) => {
+    try {
+      const token = localStorage.getItem('token');
+      const existingPiData = getPiFormulacionData(record.id);
+
+      const recordData = {
+        caracterizacion_id: id,
+        rel_id_prov: record.id,
+        [field]: value,
+      };
+
+      const endpoint = `https://impulso-capital-back.onrender.com/api/inscriptions/pi/tables/${piFormulacionTableName}/record`;
+
+      if (existingPiData.id) {
+        // Actualizar registro existente
+        await axios.put(`${endpoint}/${existingPiData.id}`, recordData, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+      } else {
+        // Crear nuevo registro
+        await axios.post(endpoint, recordData, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+      }
+
+      // Actualizar estado
+      setPiFormulacionRecords((prevRecords) => {
+        const index = prevRecords.findIndex(
+          (rec) => String(rec.rel_id_prov) === String(record.id)
+        );
+        if (index !== -1) {
+          const updatedRecord = { ...prevRecords[index], [field]: value };
+          return [
+            ...prevRecords.slice(0, index),
+            updatedRecord,
+            ...prevRecords.slice(index + 1),
+          ];
+        } else {
+          // Necesitamos obtener los datos del proveedor
+          const providerUrl = `https://impulso-capital-back.onrender.com/api/inscriptions/tables/${tableName}/record/${record.id}`;
+          axios.get(providerUrl, {
+            headers: { Authorization: `Bearer ${token}` },
+          }).then((res) => {
+            const providerData = res.data.record;
+            setPiFormulacionRecords((prev) => [
+              ...prev,
+              { ...recordData, providerData },
+            ]);
+          });
+          return prevRecords;
+        }
+      });
+    } catch (error) {
+      console.error('Error al cambiar la aprobación:', error);
+    }
+  };
+
+  // Agrupar Rubros y sumar los Valores
+  const groupedRubros = useMemo(() => {
+    const rubroMap = {};
+
+    piFormulacionRecords.forEach((piRecord) => {
+      if (piRecord["Seleccion"]) {
+        const provider = piRecord.providerData;
+        if (provider) {
+          const rubroName = getRubroName(provider.Rubro);
+          const precio = parseFloat(provider.Precio) || 0;
+          const cantidad = parseFloat(piRecord.Cantidad) || 1;
+          const totalPrice = precio * cantidad;
+
+          if (rubroMap[rubroName]) {
+            rubroMap[rubroName] += totalPrice;
+          } else {
+            rubroMap[rubroName] = totalPrice;
+          }
+        }
+      }
+    });
+
+    return Object.entries(rubroMap).map(([rubro, total]) => ({
+      rubro,
+      total: total.toFixed(2),
+    }));
+  }, [piFormulacionRecords]);
+
+  // Calcular el total de la inversión a partir de los rubros agrupados
+  const totalInversion = groupedRubros.reduce(
+    (acc, record) => acc + parseFloat(record.total || 0),
+    0
+  ).toFixed(2);
+
+  // Obtener registros seleccionados
+  const selectedRecords = piFormulacionRecords.filter(
+    (piRecord) => piRecord["Seleccion"]
+  );
 
   return (
     <div>
@@ -214,15 +372,181 @@ export default function FormulacionTab({ id }) {
               disabled={!selectedRubro}
             >
               <option value="">-- Selecciona un elemento --</option>
-              {elementos.map((elemento) => (
-                <option key={elemento.id} value={elemento.id}>
-                  {elemento.Elemento || elemento["Descripcion"] || elemento["Descripcion corta"]}
-                </option>
-              ))}
+              {elementos
+                .filter((el) => String(el.Rubro) === String(selectedRubro))
+                .map((elemento) => (
+                  <option key={elemento.id} value={elemento.id}>
+                    {elemento.Elemento}
+                  </option>
+                ))}
             </select>
           </div>
 
-          {/* ... resto del código permanece igual ... */}
+          <table className="table mt-3">
+            <thead>
+              <tr>
+                {fields.map((field) => (
+                  <th key={field.column_name}>
+                    {field.column_name.replace('_', ' ')}
+                  </th>
+                ))}
+                <th>Cantidad</th>
+                <th>Pre-selección</th>
+                <th>Selección</th>
+                <th>Aprobación Comité</th>
+              </tr>
+            </thead>
+            <tbody>
+              {records.length > 0 ? (
+                records.map((record) => {
+                  const piData = getPiFormulacionData(record.id);
+
+                  return (
+                    <tr key={record.id}>
+                      {fields.map((field) => (
+                        <td key={field.column_name}>
+                          {field.column_name === 'Elemento'
+                            ? getElementoName(record.Elemento)
+                            : field.column_name === 'Rubro'
+                            ? getRubroName(record.Rubro)
+                            : record[field.column_name]}
+                        </td>
+                      ))}
+                      <td>
+                        <input
+                          type="number"
+                          min="1"
+                          value={piData.Cantidad || 1}
+                          onChange={(e) =>
+                            handleCantidadChange(record.id, e.target.value)
+                          }
+                          style={{ width: '60px' }}
+                        />
+                      </td>
+                      <td>
+                        <input
+                          type="checkbox"
+                          checked={piData["pre-Seleccion"] || false}
+                          onChange={(e) =>
+                            handleApprovalChange(
+                              record,
+                              "pre-Seleccion",
+                              e.target.checked
+                            )
+                          }
+                        />
+                      </td>
+                      <td>
+                        <input
+                          type="checkbox"
+                          checked={piData["Seleccion"] || false}
+                          onChange={(e) =>
+                            handleApprovalChange(
+                              record,
+                              "Seleccion",
+                              e.target.checked
+                            )
+                          }
+                        />
+                      </td>
+                      <td>
+                        <input
+                          type="checkbox"
+                          checked={piData["Aprobación comité"] || false}
+                          onChange={(e) =>
+                            handleApprovalChange(
+                              record,
+                              "Aprobación comité",
+                              e.target.checked
+                            )
+                          }
+                        />
+                      </td>
+                    </tr>
+                  );
+                })
+              ) : (
+                <tr>
+                  <td colSpan={fields.length + 4} className="text-center">
+                    No hay coincidencias.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+
+          <div className="mt-4">
+            <h5>Productos Seleccionados</h5>
+            {selectedRecords.length > 0 ? (
+              <table className="table">
+                <thead>
+                  <tr>
+                    <th>Nombre proveedor</th>
+                    <th>Rubro</th>
+                    <th>Elemento</th>
+                    <th>Descripción</th>
+                    <th>Precio Unitario</th>
+                    <th>Cantidad</th>
+                    <th>Total</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {selectedRecords.map((piRecord) => {
+                    const provider = piRecord.providerData;
+                    if (!provider) return null;
+
+                    const cantidad = parseFloat(piRecord.Cantidad) || 1;
+                    const precio = parseFloat(provider.Precio) || 0;
+                    const total = (precio * cantidad).toFixed(2);
+
+                    return (
+                      <tr key={piRecord.rel_id_prov}>
+                        <td>{provider["Nombre proveedor"]}</td>
+                        <td>{getRubroName(provider.Rubro)}</td>
+                        <td>{getElementoName(provider.Elemento)}</td>
+                        <td>{provider["Descripcion corta"]}</td>
+                        <td>{provider.Precio}</td>
+                        <td>{cantidad}</td>
+                        <td>{total}</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            ) : (
+              <p>No hay productos seleccionados.</p>
+            )}
+          </div>
+
+          <div className="mt-4">
+            <h5>Resumen de la Inversión</h5>
+            {groupedRubros.length > 0 ? (
+              <table className="table">
+                <thead>
+                  <tr>
+                    <th>Rubro</th>
+                    <th>Valor</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {groupedRubros.map((record) => (
+                    <tr key={record.rubro}>
+                      <td>{record.rubro}</td>
+                      <td>{record.total}</td>
+                    </tr>
+                  ))}
+                </tbody>
+                <tfoot>
+                  <tr>
+                    <td>Total</td>
+                    <td>{totalInversion}</td>
+                  </tr>
+                </tfoot>
+              </table>
+            ) : (
+              <p>No hay productos seleccionados para inversión.</p>
+            )}
+          </div>
         </>
       )}
     </div>
