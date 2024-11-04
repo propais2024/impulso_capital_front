@@ -8,7 +8,6 @@ export default function DiagnosticoTab({ id }) {
   const [tableName] = useState('pi_diagnostico');
   const [loading, setLoading] = useState(false);
   const [records, setRecords] = useState([]);
-  const [selectedRecordId, setSelectedRecordId] = useState(null);
   const [error, setError] = useState(null);
 
   useEffect(() => {
@@ -54,24 +53,14 @@ export default function DiagnosticoTab({ id }) {
 
       const recordData = { ...data, caracterizacion_id: id };
 
-      if (selectedRecordId) {
-        await axios.put(
-          `https://impulso-capital-back.onrender.com/api/inscriptions/pi/tables/${tableName}/record/${selectedRecordId}`,
-          recordData,
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
-        alert('Datos actualizados exitosamente');
-      } else {
-        await axios.post(
-          `https://impulso-capital-back.onrender.com/api/inscriptions/pi/tables/${tableName}/record`,
-          recordData,
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
-        alert('Datos guardados exitosamente');
-      }
+      await axios.post(
+        `https://impulso-capital-back.onrender.com/api/inscriptions/pi/tables/${tableName}/record`,
+        recordData,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
 
-      setSelectedRecordId(null);
-      setData({ caracterizacion_id: id });
+      alert('Datos guardados exitosamente');
+      setData({ caracterizacion_id: id }); // Limpiar formulario para agregar un nuevo registro
       await fetchRecords(); // Actualizar la lista de registros
     } catch (error) {
       console.error('Error guardando los datos:', error);
@@ -111,11 +100,6 @@ export default function DiagnosticoTab({ id }) {
     }
   };
 
-  const handleEdit = (record) => {
-    setData(record);
-    setSelectedRecordId(record.id);
-  };
-
   return (
     <div>
       <h3>Diagnóstico</h3>
@@ -142,7 +126,7 @@ export default function DiagnosticoTab({ id }) {
                 </div>
               ))}
             <button type="submit" className="btn btn-primary">
-              {selectedRecordId ? 'Actualizar' : 'Guardar'}
+              Guardar
             </button>
           </form>
 
@@ -169,12 +153,6 @@ export default function DiagnosticoTab({ id }) {
                       <td key={field.column_name}>{record[field.column_name] || ''}</td>
                     ))}
                   <td>
-                    <button
-                      className="btn btn-sm btn-secondary mr-2"
-                      onClick={() => handleEdit(record)}
-                    >
-                      Editar
-                    </button>
                     <button
                       className="btn btn-sm btn-danger"
                       onClick={() => handleDelete(record.id)}
