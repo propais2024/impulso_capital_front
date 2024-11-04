@@ -13,6 +13,7 @@ export default function GenerarPDF({ id }) {
   const [groupedRubros, setGroupedRubros] = useState([]);
   const [totalInversion, setTotalInversion] = useState(0);
   const [relatedData, setRelatedData] = useState({});
+  const [providerRelatedData, setProviderRelatedData] = useState({});
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -91,6 +92,13 @@ export default function GenerarPDF({ id }) {
         const providersResponses = await Promise.all(providerPromises);
         const providersData = providersResponses.map((res) => res.data.record);
 
+        // Obtener datos relacionados para proveedores (Rubro y Elemento)
+        const providerFieldsResponse = await axios.get(
+          `https://impulso-capital-back.onrender.com/api/inscriptions/pi/tables/provider_proveedores/related-data`,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        setProviderRelatedData(providerFieldsResponse.data.relatedData || {});
+
         // Combinar pi_formulacion y proveedores
         const combinedData = piRecords.map((piRecord) => {
           const providerData = providersData.find(
@@ -110,7 +118,7 @@ export default function GenerarPDF({ id }) {
         combinedData.forEach((piRecord) => {
           const provider = piRecord.providerData;
           if (provider) {
-            const rubroName = provider.Rubro;
+            const rubroName = getProviderColumnDisplayValue('Rubro', provider.Rubro);
             const precio = parseFloat(provider.Precio) || 0;
             const cantidad = parseFloat(piRecord.Cantidad) || 1;
             const totalPrice = precio * cantidad;
@@ -149,6 +157,16 @@ export default function GenerarPDF({ id }) {
   const getColumnDisplayValue = (column, value) => {
     if (relatedData[column]) {
       const relatedRecord = relatedData[column].find(
+        (item) => String(item.id) === String(value)
+      );
+      return relatedRecord ? relatedRecord.displayValue : `ID: ${value}`;
+    }
+    return value;
+  };
+
+  const getProviderColumnDisplayValue = (column, value) => {
+    if (providerRelatedData[column]) {
+      const relatedRecord = providerRelatedData[column].find(
         (item) => String(item.id) === String(value)
       );
       return relatedRecord ? relatedRecord.displayValue : `ID: ${value}`;
@@ -252,7 +270,7 @@ export default function GenerarPDF({ id }) {
       { header: 'Área de Fortalecimiento', dataKey: 'area' },
       { header: 'Descripción', dataKey: 'descripcion' },
       { header: 'Propuesta de Mejora', dataKey: 'propuesta' },
-    ]);
+    ];
 
     // Agregar la tabla de Diagnóstico
     doc.autoTable({
@@ -330,6 +348,7 @@ export default function GenerarPDF({ id }) {
     const caracteristicasColumns = [
       { header: 'No.', dataKey: 'index' },
       { header: 'Tipo de Bien', dataKey: 'tipoBien' },
+      { header: 'Cantidad', dataKey: 'cantidad' },
       { header: 'Dimensiones del espacio disponible', dataKey: 'dimensiones' },
       { header: 'Dimensiones del bien', dataKey: 'dimensionesDelBien' },
       { header: 'Otras Características', dataKey: 'otrasCaracteristicas' },
@@ -363,11 +382,14 @@ export default function GenerarPDF({ id }) {
       const precio = parseFloat(provider.Precio) || 0;
       const total = (precio * cantidad).toFixed(2);
 
+      const rubroName = getProviderColumnDisplayValue('Rubro', provider.Rubro);
+      const elementoName = getProviderColumnDisplayValue('Elemento', provider.Elemento);
+
       return {
         index: index + 1,
         nombreProveedor: provider["Nombre proveedor"] || 'No disponible',
-        rubro: provider.Rubro || 'No disponible',
-        elemento: provider.Elemento || 'No disponible',
+        rubro: rubroName || 'No disponible',
+        elemento: elementoName || 'No disponible',
         descripcion: provider["Descripcion corta"] || 'No disponible',
         precioUnitario: provider.Precio || '0',
         cantidad: cantidad.toString(),
