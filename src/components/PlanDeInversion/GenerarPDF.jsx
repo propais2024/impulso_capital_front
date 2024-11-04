@@ -9,6 +9,7 @@ export default function GenerarPDF({ id }) {
   const [diagnosticoData, setDiagnosticoData] = useState([]);
   const [activosData, setActivosData] = useState([]);
   const [caracteristicasData, setCaracteristicasData] = useState([]);
+  const [inversionData, setInversionData] = useState([]);
   const [relatedData, setRelatedData] = useState({});
   const [loading, setLoading] = useState(true);
 
@@ -66,6 +67,13 @@ export default function GenerarPDF({ id }) {
           { headers: { Authorization: `Bearer ${token}` } }
         );
         setCaracteristicasData(caracteristicasResponse.data);
+
+        // Obtener datos de `pi_formulacion` para la tabla de inversión
+        const inversionResponse = await axios.get(
+          `https://impulso-capital-back.onrender.com/api/inscriptions/pi/tables/pi_formulacion/records?caracterizacion_id=${id}`,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        setInversionData(inversionResponse.data);
 
         setLoading(false);
       } catch (error) {
@@ -214,6 +222,7 @@ export default function GenerarPDF({ id }) {
       vidaUtil: item["Vida util"] || 'No disponible',
       frecuenciaUso: item["Frecuencia de uso (media alta, baja)"] || 'No disponible',
       elementoReposicion: item["Elemento para reposicion (SI NO)"] || 'No disponible',
+      valorEstimado: item["Valor estimado"] || 'No disponible'
     }));
 
     // Definir columnas para la tabla de Activos
@@ -224,6 +233,7 @@ export default function GenerarPDF({ id }) {
       { header: 'Vida Útil', dataKey: 'vidaUtil' },
       { header: 'Frecuencia de Uso', dataKey: 'frecuenciaUso' },
       { header: 'Elemento para Reposición', dataKey: 'elementoReposicion' },
+      { header: 'Valor Estimado', dataKey: 'valorEstimado' }
     ];
 
     // Agregar la tabla de Activos
@@ -255,15 +265,17 @@ export default function GenerarPDF({ id }) {
       dimensiones: item["Dimensiones del espacio disponible"] || 'No disponible',
       dimensionesDelBien: item["Dimensiones del bien (referencias del catalogo)"] || 'No disponible',
       otrasCaracteristicas: item["Otras caracteristicas (tipo de voltaje requerido, entre otros)"] || 'No disponible',
+      valorReferencia: item["Valor de referencia"] || 'No disponible'
     }));
 
     // Definir columnas para la tabla de Características
     const caracteristicasColumns = [
       { header: 'No.', dataKey: 'index' },
       { header: 'Tipo de Bien', dataKey: 'tipoBien' },
+      { header: 'Cantidad', dataKey: 'cantidad' },
       { header: 'Dimensiones del espacio disponible', dataKey: 'dimensiones' },
       { header: 'Dimensiones del bien', dataKey: 'dimensionesDelBien' },
-      { header: 'Otras Características', dataKey: 'otrasCaracteristicas' },
+      { header: 'Valor de Referencia', dataKey: 'valorReferencia' }
     ];
 
     // Agregar la tabla de Características
@@ -271,6 +283,47 @@ export default function GenerarPDF({ id }) {
       startY: yPosition,
       head: [caracteristicasColumns.map(col => col.header)],
       body: caracteristicasTableData.map(row => caracteristicasColumns.map(col => row[col.dataKey])),
+      theme: 'grid',
+      styles: { fontSize: 8 },
+      headStyles: { fillColor: [200, 200, 200] },
+      margin: { left: 40, right: 40 },
+      didDrawPage: (data) => { yPosition = data.cursor.y; },
+    });
+
+    yPosition = doc.lastAutoTable.finalY + 20 || yPosition + 20;
+
+    // DESCRIPCIÓN DE LAS NECESIDADES DE INVERSIÓN Y VALOR
+    doc.setFillColor(200, 200, 200);
+    doc.rect(40, yPosition, 515, 20, 'F');
+    doc.text("DESCRIPCIÓN DE LAS NECESIDADES DE INVERSIÓN Y VALOR", 250, yPosition + 15, { align: 'center' });
+
+    yPosition += 30;
+
+    // Preparar datos para la tabla de Inversión
+    const inversionTableData = inversionData.map((item, index) => ({
+      index: index + 1,
+      elemento: item.providerData?.["Elemento"] || 'No disponible',
+      descripcion: item.providerData?.["Descripcion corta"] || 'No disponible',
+      cantidad: item["Cantidad"] || 'No disponible',
+      precioUnitario: item.providerData?.["Precio"] || 'No disponible',
+      total: item["Cantidad"] * (item.providerData?.["Precio"] || 0) || 'No disponible'
+    }));
+
+    // Definir columnas para la tabla de Inversión
+    const inversionColumns = [
+      { header: 'No.', dataKey: 'index' },
+      { header: 'Elemento', dataKey: 'elemento' },
+      { header: 'Descripción', dataKey: 'descripcion' },
+      { header: 'Cantidad', dataKey: 'cantidad' },
+      { header: 'Precio Unitario', dataKey: 'precioUnitario' },
+      { header: 'Total', dataKey: 'total' }
+    ];
+
+    // Agregar la tabla de Inversión
+    doc.autoTable({
+      startY: yPosition,
+      head: [inversionColumns.map(col => col.header)],
+      body: inversionTableData.map(row => inversionColumns.map(col => row[col.dataKey])),
       theme: 'grid',
       styles: { fontSize: 8 },
       headStyles: { fillColor: [200, 200, 200] },
