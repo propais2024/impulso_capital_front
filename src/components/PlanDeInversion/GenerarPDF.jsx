@@ -117,21 +117,26 @@ export default function GenerarPDF({ id }) {
     doc.setTextColor(0, 0, 0);
     doc.text("PLAN DE INVERSIÓN", 250, 332, { align: 'center' });
 
-    // Datos de la tabla `pi_datos`
+    // Datos de la tabla `pi_datos` con nombres exactos proporcionados
     doc.setFontSize(10);
-    doc.text(`Descripción general del negocio: ${datosTab["Descripción general del negocio"] || 'No disponible'}`, 40, 360);
-    doc.text(`Descripción del lugar donde desarrolla la actividad: ${datosTab["Descripción del lugar donde desarrolla la actividad"] || 'No disponible'}`, 40, 380);
-    doc.text(`Descripción de los activos del negocio: ${datosTab["Descripción de los activos del negocio equipos - maquinaria - mobiliario"] || 'No disponible'}`, 40, 400);
-    doc.text(`Valor aproximado de los activos del negocio: ${datosTab["Valor aproximado de los activos del negocio"] || 'No disponible'}`, 40, 420);
-    doc.text(`Total costos fijos mensuales: ${datosTab["Total costos fijos mensuales"] || 'No disponible'}`, 40, 440);
-    doc.text(`Total costos variables: ${datosTab["Total costos variables"] || 'No disponible'}`, 40, 460);
-    doc.text(`Total gastos mensuales: ${datosTab["Total gastos mensuales"] || 'No disponible'}`, 40, 480);
-    doc.text(`Total ventas mensuales del negocio: ${datosTab["Total ventas mensuales del negocio"] || 'No disponible'}`, 40, 500);
-    doc.text(`Descripción de la capacidad de producción: ${datosTab["Descripción de la capacidad de producción"] || 'No disponible'}`, 40, 520);
-    doc.text(`Valor de los gastos familiares mensuales promedio: ${datosTab["Valor de los gastos familiares mensuales promedio"] || 'No disponible'}`, 40, 540);
-    doc.text(`Lleva registros separados de las finanzas personales y las del negocio: ${datosTab["Lleva registros separados de las finanzas personales y las del negocio"] || 'No disponible'}`, 40, 560);
-    doc.text(`Usa billeteras móviles: ${datosTab["Usa billeteras móviles"] || 'No disponible'}`, 40, 580);
-    doc.text(`¿Cuál?: ${datosTab["Cuál"] || 'No disponible'}`, 40, 600);
+    doc.text(`Tiempo de dedicacion al negocio (Parcial o Completo): ${datosTab["Tiempo de dedicacion al negocio (Parcial o Completo)"] || 'No disponible'}`, 40, 360);
+    doc.text(`Descripcion general del negocio: ${datosTab["Descripcion general del negocio"] || 'No disponible'}`, 40, 380);
+    doc.text(`Descripcion de el lugar donde desarrolla la actividad: ${datosTab["Descripcion de el lugar donde desarrolla la actividad"] || 'No disponible'}`, 40, 400);
+    doc.text(`Descripcion de los activos del negocio: ${datosTab["Descripcion de los activos del negocio"] || 'No disponible'}`, 40, 420);
+    doc.text(`Valor aproximado de los activos del negocio: ${datosTab["Valor aproximado de los activos del negocio"] || 'No disponible'}`, 40, 440);
+    doc.text(`Total costos fijos mensuales: ${datosTab["Total costos fijos mensuales"] || 'No disponible'}`, 40, 460);
+    doc.text(`Total costos variables: ${datosTab["Total costos variables"] || 'No disponible'}`, 40, 480);
+    doc.text(`Total gastos mensuales: ${datosTab["Total gastos mensuales"] || 'No disponible'}`, 40, 500);
+    doc.text(`Total ventas mensuales del negocio: ${datosTab["Total ventas mensuales del negocio"] || 'No disponible'}`, 40, 520);
+    doc.text(`Descripcion de la capacidad de produccion: ${datosTab["Descripcion de la capacidad de produccion"] || 'No disponible'}`, 40, 540);
+    doc.text(`Valor de los gastos familiares mensuales promedio: ${datosTab["Valor de los gastos familiares mensuales promedio"] || 'No disponible'}`, 40, 560);
+    doc.text(`Lleva registros separados de finanzas personales y del negocio: ${datosTab["Lleva registros separados de finanzas personales y del negocio"] || 'No disponible'}`, 40, 580);
+    doc.text(`Usa billeteras moviles: ${datosTab["Usa billeteras moviles"] || 'No disponible'}`, 40, 600);
+    doc.text(`Cual: ${datosTab["Cual"] || 'No disponible'}`, 40, 620);
+    doc.text(`Concepto y justificacion del valor de la capitalizacion: ${datosTab["Concepto y justificacion del valor de la capitalizacion"] || 'No disponible'}`, 40, 640);
+    doc.text(`Como contribuira la inversion a la mejora productiva del negocio: ${datosTab["Como contribuira la inversion a la mejora productiva del negoci"] || 'No disponible'}`, 40, 660);
+    doc.text(`El negocio es sujeto de participacion en espacios de conexion: ${datosTab["El negocio es sujeto de participacion en espacios de conexion"] || 'No disponible'}`, 40, 680);
+    doc.text(`Recomendaciones tecnica, administrativas y financieras: ${datosTab["Recomendaciones tecnica, administrativas y financieras"] || 'No disponible'}`, 40, 700);
 
     // Descarga el PDF
     doc.save('Informe_Emprendimiento.pdf');
@@ -151,5 +156,6 @@ export default function GenerarPDF({ id }) {
     </div>
   );
 }
+
 
 
