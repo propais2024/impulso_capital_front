@@ -53,6 +53,7 @@ export default function DiagnosticoTab({ id }) {
 
       const recordData = { ...data, caracterizacion_id: id };
 
+      // Realizar una solicitud POST para crear un nuevo registro
       await axios.post(
         `https://impulso-capital-back.onrender.com/api/inscriptions/pi/tables/${tableName}/record`,
         recordData,
@@ -61,7 +62,7 @@ export default function DiagnosticoTab({ id }) {
 
       alert('Datos guardados exitosamente');
       setData({ caracterizacion_id: id }); // Limpiar formulario para agregar un nuevo registro
-      await fetchRecords(); // Actualizar la lista de registros
+      await fetchRecords(); // Actualizar la lista de registros después de guardar
     } catch (error) {
       console.error('Error guardando los datos:', error);
       setError('Error guardando los datos');
@@ -93,7 +94,7 @@ export default function DiagnosticoTab({ id }) {
         { headers: { Authorization: `Bearer ${token}` } }
       );
       alert('Registro eliminado exitosamente');
-      await fetchRecords(); // Actualizar la lista de registros
+      await fetchRecords(); // Actualizar la lista de registros después de eliminar
     } catch (error) {
       console.error('Error eliminando el registro:', error);
       setError('Error eliminando el registro');
