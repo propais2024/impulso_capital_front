@@ -9,7 +9,9 @@ export default function GenerarPDF({ id }) {
   const [diagnosticoData, setDiagnosticoData] = useState([]);
   const [activosData, setActivosData] = useState([]);
   const [caracteristicasData, setCaracteristicasData] = useState([]);
-  const [inversionData, setInversionData] = useState([]);
+  const [piFormulacionRecords, setPiFormulacionRecords] = useState([]);
+  const [groupedRubros, setGroupedRubros] = useState([]);
+  const [totalInversion, setTotalInversion] = useState(0);
   const [relatedData, setRelatedData] = useState({});
   const [loading, setLoading] = useState(true);
 
@@ -68,12 +70,71 @@ export default function GenerarPDF({ id }) {
         );
         setCaracteristicasData(caracteristicasResponse.data);
 
-        // Obtener datos de `pi_formulacion` para la tabla de inversión
-        const inversionResponse = await axios.get(
-          `https://impulso-capital-back.onrender.com/api/inscriptions/pi/tables/pi_formulacion/records?caracterizacion_id=${id}`,
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
-        setInversionData(inversionResponse.data);
+        // Obtener datos de pi_formulacion y proveedores asociados
+        const piFormulacionUrl = `https://impulso-capital-back.onrender.com/api/inscriptions/pi/tables/pi_formulacion/records?caracterizacion_id=${id}&Seleccion=true`;
+        const piFormulacionResponse = await axios.get(piFormulacionUrl, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const piRecords = piFormulacionResponse.data;
+
+        // Obtener IDs de proveedores
+        const providerIds = piRecords.map((piRecord) => piRecord.rel_id_prov);
+
+        // Obtener detalles de proveedores
+        const providerPromises = providerIds.map((providerId) => {
+          const providerUrl = `https://impulso-capital-back.onrender.com/api/inscriptions/tables/provider_proveedores/record/${providerId}`;
+          return axios.get(providerUrl, {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+        });
+
+        const providersResponses = await Promise.all(providerPromises);
+        const providersData = providersResponses.map((res) => res.data.record);
+
+        // Combinar pi_formulacion y proveedores
+        const combinedData = piRecords.map((piRecord) => {
+          const providerData = providersData.find(
+            (provider) => String(provider.id) === String(piRecord.rel_id_prov)
+          );
+          return {
+            ...piRecord,
+            providerData,
+          };
+        });
+
+        setPiFormulacionRecords(combinedData);
+
+        // Agrupar Rubros y calcular total inversión
+        const rubroMap = {};
+
+        combinedData.forEach((piRecord) => {
+          const provider = piRecord.providerData;
+          if (provider) {
+            const rubroName = provider.Rubro;
+            const precio = parseFloat(provider.Precio) || 0;
+            const cantidad = parseFloat(piRecord.Cantidad) || 1;
+            const totalPrice = precio * cantidad;
+
+            if (rubroMap[rubroName]) {
+              rubroMap[rubroName] += totalPrice;
+            } else {
+              rubroMap[rubroName] = totalPrice;
+            }
+          }
+        });
+
+        const groupedRubrosArray = Object.entries(rubroMap).map(([rubro, total]) => ({
+          rubro,
+          total: total.toFixed(2),
+        }));
+
+        const totalInv = groupedRubrosArray.reduce(
+          (acc, record) => acc + parseFloat(record.total || 0),
+          0
+        ).toFixed(2);
+
+        setGroupedRubros(groupedRubrosArray);
+        setTotalInversion(totalInv);
 
         setLoading(false);
       } catch (error) {
@@ -169,8 +230,92 @@ export default function GenerarPDF({ id }) {
     doc.text(`El negocio es sujeto de participación en espacios de conexión: ${datosTab["El negocio es sujeto de participacion en espacios de conexion"] || 'No disponible'}`, 40, yPosition += 15);
     doc.text(`Recomendaciones técnicas, administrativas y financieras: ${datosTab["Recomendaciones tecnica, administrativas y financieras"] || 'No disponible'}`, 40, yPosition += 15);
 
-    // DIAGNÓSTICO DEL NEGOCIO Y PROPUESTA DE MEJORA
+    // Productos Seleccionados
     yPosition += 30;
+    doc.setFillColor(200, 200, 200);
+    doc.rect(40, yPosition, 515, 20, 'F');
+    doc.text("PRODUCTOS SELECCIONADOS", 250, yPosition + 15, { align: 'center' });
+
+    yPosition += 30;
+
+    // Preparar datos para la tabla de Productos Seleccionados
+    const productosTableData = piFormulacionRecords.map((piRecord, index) => {
+      const provider = piRecord.providerData;
+      const cantidad = parseFloat(piRecord.Cantidad) || 1;
+      const precio = parseFloat(provider.Precio) || 0;
+      const total = (precio * cantidad).toFixed(2);
+
+      return {
+        index: index + 1,
+        nombreProveedor: provider["Nombre proveedor"] || 'No disponible',
+        rubro: provider.Rubro || 'No disponible',
+        elemento: provider.Elemento || 'No disponible',
+        descripcion: provider["Descripcion corta"] || 'No disponible',
+        precioUnitario: provider.Precio || '0',
+        cantidad: cantidad.toString(),
+        total,
+      };
+    });
+
+    // Definir columnas para la tabla de Productos Seleccionados
+    const productosColumns = [
+      { header: 'No.', dataKey: 'index' },
+      { header: 'Nombre Proveedor', dataKey: 'nombreProveedor' },
+      { header: 'Rubro', dataKey: 'rubro' },
+      { header: 'Elemento', dataKey: 'elemento' },
+      { header: 'Descripción', dataKey: 'descripcion' },
+      { header: 'Precio Unitario', dataKey: 'precioUnitario' },
+      { header: 'Cantidad', dataKey: 'cantidad' },
+      { header: 'Total', dataKey: 'total' },
+    ];
+
+    // Agregar la tabla de Productos Seleccionados
+    doc.autoTable({
+      startY: yPosition,
+      head: [productosColumns.map(col => col.header)],
+      body: productosTableData.map(row => productosColumns.map(col => row[col.dataKey])),
+      theme: 'grid',
+      styles: { fontSize: 8 },
+      headStyles: { fillColor: [200, 200, 200] },
+      margin: { left: 40, right: 40 },
+      didDrawPage: (data) => { yPosition = data.cursor.y; },
+    });
+
+    yPosition = doc.lastAutoTable.finalY + 20 || yPosition + 20;
+
+    // Resumen de la Inversión
+    doc.setFillColor(200, 200, 200);
+    doc.rect(40, yPosition, 515, 20, 'F');
+    doc.text("RESUMEN DE LA INVERSIÓN", 250, yPosition + 15, { align: 'center' });
+
+    yPosition += 30;
+
+    // Definir columnas para la tabla de Resumen de la Inversión
+    const resumenColumns = [
+      { header: 'Rubro', dataKey: 'rubro' },
+      { header: 'Valor', dataKey: 'total' },
+    ];
+
+    // Agregar la tabla de Resumen de la Inversión
+    doc.autoTable({
+      startY: yPosition,
+      head: [resumenColumns.map(col => col.header)],
+      body: groupedRubros.map(row => resumenColumns.map(col => row[col.dataKey])),
+      theme: 'grid',
+      styles: { fontSize: 10 },
+      headStyles: { fillColor: [200, 200, 200] },
+      margin: { left: 40, right: 40 },
+      didDrawPage: (data) => { yPosition = data.cursor.y; },
+    });
+
+    // Total Inversión
+    yPosition = doc.lastAutoTable.finalY + 10 || yPosition + 10;
+    doc.setFontSize(12);
+    doc.text(`Total Inversión: ${totalInversion}`, 450, yPosition);
+
+    yPosition += 20;
+
+    // DIAGNÓSTICO DEL NEGOCIO Y PROPUESTA DE MEJORA
     doc.setFillColor(200, 200, 200);
     doc.rect(40, yPosition, 515, 20, 'F');
     doc.text("DIAGNÓSTICO DEL NEGOCIO Y PROPUESTA DE MEJORA", 250, yPosition + 15, { align: 'center' });
@@ -222,7 +367,6 @@ export default function GenerarPDF({ id }) {
       vidaUtil: item["Vida util"] || 'No disponible',
       frecuenciaUso: item["Frecuencia de uso (media alta, baja)"] || 'No disponible',
       elementoReposicion: item["Elemento para reposicion (SI NO)"] || 'No disponible',
-      valorEstimado: item["Valor estimado"] || 'No disponible'
     }));
 
     // Definir columnas para la tabla de Activos
@@ -233,7 +377,6 @@ export default function GenerarPDF({ id }) {
       { header: 'Vida Útil', dataKey: 'vidaUtil' },
       { header: 'Frecuencia de Uso', dataKey: 'frecuenciaUso' },
       { header: 'Elemento para Reposición', dataKey: 'elementoReposicion' },
-      { header: 'Valor Estimado', dataKey: 'valorEstimado' }
     ];
 
     // Agregar la tabla de Activos
@@ -265,17 +408,15 @@ export default function GenerarPDF({ id }) {
       dimensiones: item["Dimensiones del espacio disponible"] || 'No disponible',
       dimensionesDelBien: item["Dimensiones del bien (referencias del catalogo)"] || 'No disponible',
       otrasCaracteristicas: item["Otras caracteristicas (tipo de voltaje requerido, entre otros)"] || 'No disponible',
-      valorReferencia: item["Valor de referencia"] || 'No disponible'
     }));
 
     // Definir columnas para la tabla de Características
     const caracteristicasColumns = [
       { header: 'No.', dataKey: 'index' },
       { header: 'Tipo de Bien', dataKey: 'tipoBien' },
-      { header: 'Cantidad', dataKey: 'cantidad' },
       { header: 'Dimensiones del espacio disponible', dataKey: 'dimensiones' },
       { header: 'Dimensiones del bien', dataKey: 'dimensionesDelBien' },
-      { header: 'Valor de Referencia', dataKey: 'valorReferencia' }
+      { header: 'Otras Características', dataKey: 'otrasCaracteristicas' },
     ];
 
     // Agregar la tabla de Características
@@ -287,51 +428,7 @@ export default function GenerarPDF({ id }) {
       styles: { fontSize: 8 },
       headStyles: { fillColor: [200, 200, 200] },
       margin: { left: 40, right: 40 },
-      didDrawPage: (data) => { yPosition = data.cursor.y; },
     });
-
-    yPosition = doc.lastAutoTable.finalY + 20 || yPosition + 20;
-
-    // DESCRIPCIÓN DE LAS NECESIDADES DE INVERSIÓN Y VALOR
-    doc.setFillColor(200, 200, 200);
-    doc.rect(40, yPosition, 515, 20, 'F');
-    doc.text("DESCRIPCIÓN DE LAS NECESIDADES DE INVERSIÓN Y VALOR", 250, yPosition + 15, { align: 'center' });
-
-    yPosition += 30;
-
-    // Preparar datos para la tabla de Inversión
-    const inversionTableData = inversionData.map((item, index) => ({
-      index: index + 1,
-      elemento: item.providerData?.["Elemento"] || 'No disponible',
-      descripcion: item.providerData?.["Descripcion corta"] || 'No disponible',
-      cantidad: item["Cantidad"] || 'No disponible',
-      precioUnitario: item.providerData?.["Precio"] || 'No disponible',
-      total: item["Cantidad"] * (item.providerData?.["Precio"] || 0) || 'No disponible'
-    }));
-
-    // Definir columnas para la tabla de Inversión
-    const inversionColumns = [
-      { header: 'No.', dataKey: 'index' },
-      { header: 'Elemento', dataKey: 'elemento' },
-      { header: 'Descripción', dataKey: 'descripcion' },
-      { header: 'Cantidad', dataKey: 'cantidad' },
-      { header: 'Precio Unitario', dataKey: 'precioUnitario' },
-      { header: 'Total', dataKey: 'total' }
-    ];
-
-    // Agregar la tabla de Inversión
-    doc.autoTable({
-      startY: yPosition,
-      head: [inversionColumns.map(col => col.header)],
-      body: inversionTableData.map(row => inversionColumns.map(col => row[col.dataKey])),
-      theme: 'grid',
-      styles: { fontSize: 8 },
-      headStyles: { fillColor: [200, 200, 200] },
-      margin: { left: 40, right: 40 },
-      didDrawPage: (data) => { yPosition = data.cursor.y; },
-    });
-
-    yPosition = doc.lastAutoTable.finalY + 20 || yPosition + 20;
 
     // Descargar PDF
     doc.save('Informe_Emprendimiento.pdf');
