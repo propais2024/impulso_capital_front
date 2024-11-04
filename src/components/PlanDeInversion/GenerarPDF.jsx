@@ -177,6 +177,7 @@ export default function GenerarPDF({ id }) {
   const generatePDF = () => {
     const doc = new jsPDF('p', 'pt', 'a4');
     const pageWidth = doc.internal.pageSize.getWidth();
+    const pageHeight = doc.internal.pageSize.getHeight();
     const margin = 40;
     const maxLineWidth = pageWidth - margin * 2;
     let yPosition = 100;
@@ -217,6 +218,7 @@ export default function GenerarPDF({ id }) {
 
     infoEmprendimiento.forEach(text => {
       const lines = doc.splitTextToSize(text, maxLineWidth);
+      checkPageEnd(doc, yPosition, lines.length * 12);
       doc.text(lines, margin, yPosition);
       yPosition += lines.length * 12;
     });
@@ -246,6 +248,7 @@ export default function GenerarPDF({ id }) {
 
     infoEmprendedor.forEach(text => {
       const lines = doc.splitTextToSize(text, maxLineWidth);
+      checkPageEnd(doc, yPosition, lines.length * 12);
       doc.text(lines, margin, yPosition);
       yPosition += lines.length * 12;
     });
@@ -253,10 +256,15 @@ export default function GenerarPDF({ id }) {
     // Plan de Inversión
     doc.setFontSize(fontSizes.title);
     yPosition += 20;
+
+    const planInversionHeader = "PLAN DE INVERSIÓN";
+    const planInversionHeaderHeight = 25;
+
+    checkPageEnd(doc, yPosition, planInversionHeaderHeight);
     doc.setFillColor(200, 200, 200);
-    doc.rect(margin, yPosition, maxLineWidth, 25, 'F');
+    doc.rect(margin, yPosition, maxLineWidth, planInversionHeaderHeight, 'F');
     doc.setTextColor(0, 0, 0);
-    doc.text("PLAN DE INVERSIÓN", pageWidth / 2, yPosition + 18, { align: 'center' });
+    doc.text(planInversionHeader, pageWidth / 2, yPosition + 18, { align: 'center' });
 
     // Datos de pi_datos
     doc.setFontSize(fontSizes.normal);
@@ -287,6 +295,7 @@ export default function GenerarPDF({ id }) {
       const value = datosTab[key] || 'No disponible';
       const fullText = `${label} ${value}`;
       const lines = doc.splitTextToSize(fullText, maxLineWidth);
+      checkPageEnd(doc, yPosition, lines.length * 12);
       doc.text(lines, margin, yPosition);
       yPosition += lines.length * 12;
     });
@@ -294,11 +303,16 @@ export default function GenerarPDF({ id }) {
     // DIAGNÓSTICO DEL NEGOCIO Y PROPUESTA DE MEJORA
     doc.setFontSize(fontSizes.title);
     yPosition += 20;
-    doc.setFillColor(200, 200, 200);
-    doc.rect(margin, yPosition, maxLineWidth, 25, 'F');
-    doc.text("DIAGNÓSTICO DEL NEGOCIO Y PROPUESTA DE MEJORA", pageWidth / 2, yPosition + 18, { align: 'center' });
 
-    yPosition += 35;
+    const diagnosticoHeader = "DIAGNÓSTICO DEL NEGOCIO Y PROPUESTA DE MEJORA";
+    const diagnosticoHeaderHeight = 25;
+
+    checkPageEnd(doc, yPosition, diagnosticoHeaderHeight);
+    doc.setFillColor(200, 200, 200);
+    doc.rect(margin, yPosition, maxLineWidth, diagnosticoHeaderHeight, 'F');
+    doc.text(diagnosticoHeader, pageWidth / 2, yPosition + 18, { align: 'center' });
+
+    yPosition += diagnosticoHeaderHeight + 10;
 
     // Preparar datos para la tabla de Diagnóstico
     const diagnosticoTableData = diagnosticoData.map((item, index) => ({
@@ -323,18 +337,25 @@ export default function GenerarPDF({ id }) {
       styles: { fontSize: 8, cellPadding: 4 },
       headStyles: { fillColor: [41, 128, 185], textColor: 255, fontStyle: 'bold' },
       margin: { left: margin, right: margin },
-      didDrawPage: (data) => { yPosition = data.cursor.y; },
+      didDrawPage: (data) => {
+        yPosition = data.cursor.y;
+      },
     });
 
     yPosition = doc.lastAutoTable.finalY + 20 || yPosition + 20;
 
     // DESCRIPCIÓN ACTIVOS ACTUALES
     doc.setFontSize(fontSizes.title);
-    doc.setFillColor(200, 200, 200);
-    doc.rect(margin, yPosition, maxLineWidth, 25, 'F');
-    doc.text("DESCRIPCIÓN ACTIVOS ACTUALES", pageWidth / 2, yPosition + 18, { align: 'center' });
 
-    yPosition += 35;
+    const activosHeader = "DESCRIPCIÓN ACTIVOS ACTUALES";
+    const activosHeaderHeight = 25;
+
+    checkPageEnd(doc, yPosition, activosHeaderHeight);
+    doc.setFillColor(200, 200, 200);
+    doc.rect(margin, yPosition, maxLineWidth, activosHeaderHeight, 'F');
+    doc.text(activosHeader, pageWidth / 2, yPosition + 18, { align: 'center' });
+
+    yPosition += activosHeaderHeight + 10;
 
     const activosTableData = activosData.map((item, index) => ({
       index: index + 1,
@@ -362,18 +383,27 @@ export default function GenerarPDF({ id }) {
       styles: { fontSize: 8, cellPadding: 4 },
       headStyles: { fillColor: [41, 128, 185], textColor: 255, fontStyle: 'bold' },
       margin: { left: margin, right: margin },
-      didDrawPage: (data) => { yPosition = data.cursor.y; },
+      didDrawPage: (data) => {
+        yPosition = data.cursor.y;
+      },
     });
 
     yPosition = doc.lastAutoTable.finalY + 20 || yPosition + 20;
 
     // DESCRIPCIÓN DE LAS CARACTERÍSTICAS DEL ESPACIO
     doc.setFontSize(fontSizes.title);
-    doc.setFillColor(200, 200, 200);
-    doc.rect(margin, yPosition, maxLineWidth, 25, 'F');
-    doc.text("DESCRIPCIÓN DE LAS CARACTERÍSTICAS DEL ESPACIO DISPONIBLE PARA LA INSTALACIÓN Y/O UTILIZACIÓN DEL (LOS) BIEN(ES) DE INVERSIÓN", pageWidth / 2, yPosition + 18, { align: 'center' });
 
-    yPosition += 35;
+    const caracteristicasHeaderText = "DESCRIPCIÓN DE LAS CARACTERÍSTICAS DEL ESPACIO DISPONIBLE PARA LA INSTALACIÓN Y/O UTILIZACIÓN DEL (LOS) BIEN(ES) DE INVERSIÓN";
+    const caracteristicasHeaderLines = doc.splitTextToSize(caracteristicasHeaderText, maxLineWidth);
+    const caracteristicasHeaderHeight = caracteristicasHeaderLines.length * 12 + 10;
+
+    checkPageEnd(doc, yPosition, caracteristicasHeaderHeight);
+
+    doc.setFillColor(200, 200, 200);
+    doc.rect(margin, yPosition, maxLineWidth, caracteristicasHeaderHeight, 'F');
+    doc.text(caracteristicasHeaderLines, pageWidth / 2, yPosition + 15, { align: 'center' });
+
+    yPosition += caracteristicasHeaderHeight + 10;
 
     const caracteristicasTableData = caracteristicasData.map((item, index) => ({
       index: index + 1,
@@ -401,18 +431,25 @@ export default function GenerarPDF({ id }) {
       styles: { fontSize: 8, cellPadding: 4 },
       headStyles: { fillColor: [41, 128, 185], textColor: 255, fontStyle: 'bold' },
       margin: { left: margin, right: margin },
-      didDrawPage: (data) => { yPosition = data.cursor.y; },
+      didDrawPage: (data) => {
+        yPosition = data.cursor.y;
+      },
     });
 
     yPosition = doc.lastAutoTable.finalY + 20 || yPosition + 20;
 
     // Productos Seleccionados
     doc.setFontSize(fontSizes.title);
-    doc.setFillColor(200, 200, 200);
-    doc.rect(margin, yPosition, maxLineWidth, 25, 'F');
-    doc.text("PRODUCTOS SELECCIONADOS", pageWidth / 2, yPosition + 18, { align: 'center' });
 
-    yPosition += 35;
+    const productosHeader = "PRODUCTOS SELECCIONADOS";
+    const productosHeaderHeight = 25;
+
+    checkPageEnd(doc, yPosition, productosHeaderHeight);
+    doc.setFillColor(200, 200, 200);
+    doc.rect(margin, yPosition, maxLineWidth, productosHeaderHeight, 'F');
+    doc.text(productosHeader, pageWidth / 2, yPosition + 18, { align: 'center' });
+
+    yPosition += productosHeaderHeight + 10;
 
     const productosTableData = piFormulacionRecords.map((piRecord, index) => {
       const provider = piRecord.providerData;
@@ -454,18 +491,25 @@ export default function GenerarPDF({ id }) {
       styles: { fontSize: 8, cellPadding: 4 },
       headStyles: { fillColor: [41, 128, 185], textColor: 255, fontStyle: 'bold' },
       margin: { left: margin, right: margin },
-      didDrawPage: (data) => { yPosition = data.cursor.y; },
+      didDrawPage: (data) => {
+        yPosition = data.cursor.y;
+      },
     });
 
     yPosition = doc.lastAutoTable.finalY + 20 || yPosition + 20;
 
     // Resumen de la Inversión
     doc.setFontSize(fontSizes.title);
-    doc.setFillColor(200, 200, 200);
-    doc.rect(margin, yPosition, maxLineWidth, 25, 'F');
-    doc.text("RESUMEN DE LA INVERSIÓN", pageWidth / 2, yPosition + 18, { align: 'center' });
 
-    yPosition += 35;
+    const resumenHeader = "RESUMEN DE LA INVERSIÓN";
+    const resumenHeaderHeight = 25;
+
+    checkPageEnd(doc, yPosition, resumenHeaderHeight);
+    doc.setFillColor(200, 200, 200);
+    doc.rect(margin, yPosition, maxLineWidth, resumenHeaderHeight, 'F');
+    doc.text(resumenHeader, pageWidth / 2, yPosition + 18, { align: 'center' });
+
+    yPosition += resumenHeaderHeight + 10;
 
     const resumenColumns = [
       { header: 'Rubro', dataKey: 'rubro' },
@@ -480,6 +524,9 @@ export default function GenerarPDF({ id }) {
       styles: { fontSize: 10, cellPadding: 4 },
       headStyles: { fillColor: [41, 128, 185], textColor: 255, fontStyle: 'bold' },
       margin: { left: margin, right: margin },
+      didDrawPage: (data) => {
+        yPosition = data.cursor.y;
+      },
     });
 
     yPosition = doc.lastAutoTable.finalY + 10 || yPosition + 10;
@@ -505,6 +552,7 @@ export default function GenerarPDF({ id }) {
 
     textoViabilidad.forEach(parrafo => {
       const lines = doc.splitTextToSize(parrafo, maxLineWidth);
+      checkPageEnd(doc, yPosition, lines.length * 12);
       doc.text(lines, margin, yPosition);
       yPosition += lines.length * 12 + 10; // Añadimos un espacio adicional entre párrafos
     });
@@ -538,6 +586,15 @@ export default function GenerarPDF({ id }) {
 
     // Descargar PDF
     doc.save('Informe_Emprendimiento.pdf');
+  };
+
+  // Función para verificar el final de la página y agregar una nueva si es necesario
+  const checkPageEnd = (doc, currentY, addedHeight) => {
+    const pageHeight = doc.internal.pageSize.getHeight();
+    if (currentY + addedHeight > pageHeight - 40) { // Dejamos un margen inferior de 40
+      doc.addPage();
+      currentY = 40; // Reiniciamos yPosition al margen superior después de agregar una nueva página
+    }
   };
 
   return (
