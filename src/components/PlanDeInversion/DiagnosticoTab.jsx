@@ -7,7 +7,8 @@ export default function DiagnosticoTab({ id }) {
   const [data, setData] = useState({ caracterizacion_id: id });
   const [tableName] = useState('pi_diagnostico');
   const [loading, setLoading] = useState(false);
-  const [recordId, setRecordId] = useState(null);
+  const [records, setRecords] = useState([]);
+  const [selectedRecordId, setSelectedRecordId] = useState(null);
   const [error, setError] = useState(null);
 
   useEffect(() => {
@@ -24,19 +25,12 @@ export default function DiagnosticoTab({ id }) {
         );
         setFields(fieldsResponse.data);
 
-        // Obtener registro existente filtrado por caracterizacion_id
+        // Obtener todos los registros filtrados por caracterizacion_id
         const recordsResponse = await axios.get(
           `https://impulso-capital-back.onrender.com/api/inscriptions/pi/tables/${tableName}/records?caracterizacion_id=${id}`,
           { headers: { Authorization: `Bearer ${token}` } }
         );
-
-        if (recordsResponse.data.length > 0) {
-          const existingRecord = recordsResponse.data[0];
-          setData(existingRecord);
-          setRecordId(existingRecord.id);
-        } else {
-          setData((prevData) => ({ ...prevData, caracterizacion_id: id }));
-        }
+        setRecords(recordsResponse.data);
         setLoading(false);
       } catch (error) {
         console.error('Error obteniendo los campos o datos:', error);
@@ -60,9 +54,9 @@ export default function DiagnosticoTab({ id }) {
 
       const recordData = { ...data, caracterizacion_id: id };
 
-      if (recordId) {
+      if (selectedRecordId) {
         await axios.put(
-          `https://impulso-capital-back.onrender.com/api/inscriptions/pi/tables/${tableName}/record/${recordId}`,
+          `https://impulso-capital-back.onrender.com/api/inscriptions/pi/tables/${tableName}/record/${selectedRecordId}`,
           recordData,
           { headers: { Authorization: `Bearer ${token}` } }
         );
@@ -75,10 +69,51 @@ export default function DiagnosticoTab({ id }) {
         );
         alert('Datos guardados exitosamente');
       }
+
+      setSelectedRecordId(null);
+      setData({ caracterizacion_id: id });
+      await fetchRecords(); // Actualizar la lista de registros
     } catch (error) {
       console.error('Error guardando los datos:', error);
       setError('Error guardando los datos');
     }
+  };
+
+  const fetchRecords = async () => {
+    setLoading(true);
+    try {
+      const token = localStorage.getItem('token');
+      const recordsResponse = await axios.get(
+        `https://impulso-capital-back.onrender.com/api/inscriptions/pi/tables/${tableName}/records?caracterizacion_id=${id}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      setRecords(recordsResponse.data);
+      setLoading(false);
+    } catch (error) {
+      console.error('Error obteniendo los registros:', error);
+      setError('Error obteniendo los registros');
+      setLoading(false);
+    }
+  };
+
+  const handleDelete = async (recordId) => {
+    try {
+      const token = localStorage.getItem('token');
+      await axios.delete(
+        `https://impulso-capital-back.onrender.com/api/inscriptions/pi/tables/${tableName}/record/${recordId}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      alert('Registro eliminado exitosamente');
+      await fetchRecords(); // Actualizar la lista de registros
+    } catch (error) {
+      console.error('Error eliminando el registro:', error);
+      setError('Error eliminando el registro');
+    }
+  };
+
+  const handleEdit = (record) => {
+    setData(record);
+    setSelectedRecordId(record.id);
   };
 
   return (
@@ -89,26 +124,69 @@ export default function DiagnosticoTab({ id }) {
       ) : error ? (
         <div className="alert alert-danger">{error}</div>
       ) : (
-        <form onSubmit={handleSubmit}>
-          {fields
-            .filter((field) => field.column_name !== 'id')
-            .map((field) => (
-              <div className="form-group" key={field.column_name}>
-                <label>{field.column_name}</label>
-                <input
-                  type="text"
-                  name={field.column_name}
-                  className="form-control"
-                  value={data[field.column_name] || ''}
-                  onChange={handleChange}
-                  readOnly={field.column_name === 'caracterizacion_id'}
-                />
-              </div>
-            ))}
-          <button type="submit" className="btn btn-primary">
-            {recordId ? 'Actualizar' : 'Guardar'}
-          </button>
-        </form>
+        <div>
+          <form onSubmit={handleSubmit}>
+            {fields
+              .filter((field) => field.column_name !== 'id')
+              .map((field) => (
+                <div className="form-group" key={field.column_name}>
+                  <label>{field.column_name}</label>
+                  <input
+                    type="text"
+                    name={field.column_name}
+                    className="form-control"
+                    value={data[field.column_name] || ''}
+                    onChange={handleChange}
+                    readOnly={field.column_name === 'caracterizacion_id'}
+                  />
+                </div>
+              ))}
+            <button type="submit" className="btn btn-primary">
+              {selectedRecordId ? 'Actualizar' : 'Guardar'}
+            </button>
+          </form>
+
+          <hr />
+
+          <h4>Registros de Diagnóstico</h4>
+          <table className="table table-bordered">
+            <thead>
+              <tr>
+                {fields
+                  .filter((field) => field.column_name !== 'id')
+                  .map((field) => (
+                    <th key={field.column_name}>{field.column_name}</th>
+                  ))}
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              {records.map((record) => (
+                <tr key={record.id}>
+                  {fields
+                    .filter((field) => field.column_name !== 'id')
+                    .map((field) => (
+                      <td key={field.column_name}>{record[field.column_name] || ''}</td>
+                    ))}
+                  <td>
+                    <button
+                      className="btn btn-sm btn-secondary mr-2"
+                      onClick={() => handleEdit(record)}
+                    >
+                      Editar
+                    </button>
+                    <button
+                      className="btn btn-sm btn-danger"
+                      onClick={() => handleDelete(record.id)}
+                    >
+                      Eliminar
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       )}
     </div>
   );
