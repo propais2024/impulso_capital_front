@@ -173,7 +173,7 @@ export default function GenerarPDF({ id }) {
     const diagnosticoTableData = diagnosticoData.map((item, index) => ({
       index: index + 1,
       area: item["Area de fortalecimiento"] || 'No disponible',
-      descripcion: item["Descripcion de la problematica"] || 'No disponible',
+      descripcion: item["Descripcion del area critica por area de fortalecimiento"] || 'No disponible',
       propuesta: item["Propuesta de mejora"] || 'No disponible',
     }));
 
