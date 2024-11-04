@@ -12,6 +12,7 @@ export default function FormulacionTab({ id }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [piFormulacionRecords, setPiFormulacionRecords] = useState([]);
+  const [selectedProducts, setSelectedProducts] = useState([]);
   const tableName = 'provider_proveedores';
   const rubroTableName = 'provider_rubro';
   const elementoTableName = 'provider_elemento';
@@ -78,7 +79,7 @@ export default function FormulacionTab({ id }) {
       setLoading(true);
       try {
         const token = localStorage.getItem('token');
-        let recordsUrl = `https://impulso-capital-back.onrender.com/api/inscriptions/tables/${tableName}/records?caracterizacion_id=${id}&Rubro=${selectedRubro}`;
+        let recordsUrl = `https://impulso-capital-back.onrender.com/api/inscriptions/tables/${tableName}/records?Rubro=${selectedRubro}`;
         if (selectedElemento) {
           recordsUrl += `&Elemento=${selectedElemento}`;
         }
@@ -104,9 +105,9 @@ export default function FormulacionTab({ id }) {
     };
 
     fetchRecords();
-  }, [id, selectedRubro, selectedElemento]);
+  }, [selectedRubro, selectedElemento]);
 
-  // Hook para obtener los registros de pi_formulacion
+  // Hook para obtener los registros de pi_formulacion y los proveedores asociados
   useEffect(() => {
     const fetchPiFormulacionRecords = async () => {
       try {
@@ -115,7 +116,34 @@ export default function FormulacionTab({ id }) {
         const response = await axios.get(piFormulacionUrl, {
           headers: { Authorization: `Bearer ${token}` },
         });
-        setPiFormulacionRecords(response.data);
+        const piRecords = response.data;
+
+        // Obtener los IDs de proveedores
+        const providerIds = piRecords.map((piRecord) => piRecord.rel_id_prov);
+
+        // Obtener detalles de los proveedores
+        const providerPromises = providerIds.map((providerId) => {
+          const providerUrl = `https://impulso-capital-back.onrender.com/api/inscriptions/tables/${tableName}/record/${providerId}`;
+          return axios.get(providerUrl, {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+        });
+
+        const providersResponses = await Promise.all(providerPromises);
+        const providersData = providersResponses.map((res) => res.data.record);
+
+        // Combinar pi_formulacion y proveedores
+        const combinedData = piRecords.map((piRecord) => {
+          const providerData = providersData.find(
+            (provider) => String(provider.id) === String(piRecord.rel_id_prov)
+          );
+          return {
+            ...piRecord,
+            providerData,
+          };
+        });
+
+        setPiFormulacionRecords(combinedData);
       } catch (error) {
         console.error('Error obteniendo los registros de pi_formulacion:', error);
       }
@@ -183,13 +211,32 @@ export default function FormulacionTab({ id }) {
       }
 
       // Actualizar estado
-      setPiFormulacionRecords((prevRecords) =>
-        prevRecords.map((rec) =>
-          rec.rel_id_prov === recordId
-            ? { ...rec, Cantidad: cantidad }
-            : rec
-        )
-      );
+      setPiFormulacionRecords((prevRecords) => {
+        const index = prevRecords.findIndex(
+          (rec) => String(rec.rel_id_prov) === String(recordId)
+        );
+        if (index !== -1) {
+          const updatedRecord = { ...prevRecords[index], Cantidad: cantidad };
+          return [
+            ...prevRecords.slice(0, index),
+            updatedRecord,
+            ...prevRecords.slice(index + 1),
+          ];
+        } else {
+          // Necesitamos obtener los datos del proveedor
+          const providerUrl = `https://impulso-capital-back.onrender.com/api/inscriptions/tables/${tableName}/record/${recordId}`;
+          axios.get(providerUrl, {
+            headers: { Authorization: `Bearer ${token}` },
+          }).then((res) => {
+            const providerData = res.data.record;
+            setPiFormulacionRecords((prev) => [
+              ...prev,
+              { ...recordData, providerData },
+            ]);
+          });
+          return prevRecords;
+        }
+      });
     } catch (error) {
       console.error('Error al cambiar la cantidad:', error);
     }
@@ -223,9 +270,10 @@ export default function FormulacionTab({ id }) {
 
       // Actualizar estado
       setPiFormulacionRecords((prevRecords) => {
-        const index = prevRecords.findIndex((rec) => rec.rel_id_prov === record.id);
+        const index = prevRecords.findIndex(
+          (rec) => String(rec.rel_id_prov) === String(record.id)
+        );
         if (index !== -1) {
-          // Actualizar existente
           const updatedRecord = { ...prevRecords[index], [field]: value };
           return [
             ...prevRecords.slice(0, index),
@@ -233,8 +281,18 @@ export default function FormulacionTab({ id }) {
             ...prevRecords.slice(index + 1),
           ];
         } else {
-          // Agregar nuevo
-          return [...prevRecords, { ...recordData }];
+          // Necesitamos obtener los datos del proveedor
+          const providerUrl = `https://impulso-capital-back.onrender.com/api/inscriptions/tables/${tableName}/record/${record.id}`;
+          axios.get(providerUrl, {
+            headers: { Authorization: `Bearer ${token}` },
+          }).then((res) => {
+            const providerData = res.data.record;
+            setPiFormulacionRecords((prev) => [
+              ...prev,
+              { ...recordData, providerData },
+            ]);
+          });
+          return prevRecords;
         }
       });
     } catch (error) {
@@ -246,12 +304,12 @@ export default function FormulacionTab({ id }) {
   const groupedRubros = useMemo(() => {
     const rubroMap = {};
 
-    piFormulacionRecords.forEach(piRecord => {
+    piFormulacionRecords.forEach((piRecord) => {
       if (piRecord["Seleccion"]) {
-        const record = records.find(rec => String(rec.id) === String(piRecord.rel_id_prov));
-        if (record) {
-          const rubroName = getRubroName(record.Rubro);
-          const precio = parseFloat(record.Precio) || 0;
+        const provider = piRecord.providerData;
+        if (provider) {
+          const rubroName = getRubroName(provider.Rubro);
+          const precio = parseFloat(provider.Precio) || 0;
           const cantidad = parseFloat(piRecord.Cantidad) || 1;
           const totalPrice = precio * cantidad;
 
@@ -266,9 +324,9 @@ export default function FormulacionTab({ id }) {
 
     return Object.entries(rubroMap).map(([rubro, total]) => ({
       rubro,
-      total: total.toFixed(2)
+      total: total.toFixed(2),
     }));
-  }, [piFormulacionRecords, records]);
+  }, [piFormulacionRecords]);
 
   // Calcular el total de la inversión a partir de los rubros agrupados
   const totalInversion = groupedRubros.reduce(
@@ -277,10 +335,9 @@ export default function FormulacionTab({ id }) {
   ).toFixed(2);
 
   // Obtener registros seleccionados
-  const selectedRecords = records.filter(record => {
-    const piData = getPiFormulacionData(record.id);
-    return piData["Seleccion"];
-  });
+  const selectedRecords = piFormulacionRecords.filter(
+    (piRecord) => piRecord["Seleccion"]
+  );
 
   return (
     <div>
@@ -316,11 +373,13 @@ export default function FormulacionTab({ id }) {
               disabled={!selectedRubro}
             >
               <option value="">-- Selecciona un elemento --</option>
-              {elementos.map((elemento) => (
-                <option key={elemento.id} value={elemento.id}>
-                  {elemento.Elemento}
-                </option>
-              ))}
+              {elementos
+                .filter((el) => String(el.Rubro) === String(selectedRubro))
+                .map((elemento) => (
+                  <option key={elemento.id} value={elemento.id}>
+                    {elemento.Elemento}
+                  </option>
+                ))}
             </select>
           </div>
 
@@ -350,8 +409,8 @@ export default function FormulacionTab({ id }) {
                           {field.column_name === 'Elemento'
                             ? getElementoName(record.Elemento)
                             : field.column_name === 'Rubro'
-                              ? getRubroName(record.Rubro)
-                              : record[field.column_name]}
+                            ? getRubroName(record.Rubro)
+                            : record[field.column_name]}
                         </td>
                       ))}
                       <td>
@@ -433,19 +492,21 @@ export default function FormulacionTab({ id }) {
                   </tr>
                 </thead>
                 <tbody>
-                  {selectedRecords.map((record) => {
-                    const piData = getPiFormulacionData(record.id);
-                    const cantidad = parseFloat(piData.Cantidad) || 1;
-                    const precio = parseFloat(record.Precio) || 0;
+                  {selectedRecords.map((piRecord) => {
+                    const provider = piRecord.providerData;
+                    if (!provider) return null;
+
+                    const cantidad = parseFloat(piRecord.Cantidad) || 1;
+                    const precio = parseFloat(provider.Precio) || 0;
                     const total = (precio * cantidad).toFixed(2);
 
                     return (
-                      <tr key={record.id}>
-                        <td>{record["Nombre Proveedor"]}</td>
-                        <td>{getRubroName(record.Rubro)}</td>
-                        <td>{getElementoName(record.Elemento)}</td>
-                        <td>{record["Descripción producto"]}</td>
-                        <td>{record.Precio}</td>
+                      <tr key={piRecord.rel_id_prov}>
+                        <td>{provider["Nombre Proveedor"]}</td>
+                        <td>{getRubroName(provider.Rubro)}</td>
+                        <td>{getElementoName(provider.Elemento)}</td>
+                        <td>{provider["Descripción producto"]}</td>
+                        <td>{provider.Precio}</td>
                         <td>{cantidad}</td>
                         <td>{total}</td>
                       </tr>
