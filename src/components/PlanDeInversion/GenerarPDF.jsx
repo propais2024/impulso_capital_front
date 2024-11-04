@@ -110,9 +110,15 @@ export default function GenerarPDF({ id }) {
       caracterizacionData["Segundo apellido"] || ''
     ].filter(Boolean).join(' ');
 
+    const tipoDocumento = getColumnDisplayValue("Tipo de documento", caracterizacionData["Tipo de documento"]);
+    const numeroDocumento = caracterizacionData["Numero de documento de identificacion ciudadano"] || 'No disponible';
+
+    console.log("Tipo de documento:", tipoDocumento);
+    console.log("Número de documento:", numeroDocumento);
+
     doc.text(`Nombre emprendedor: ${nombreEmprendedor || 'No disponible'}`, 40, 240);
-    doc.text(`Tipo documento identidad: ${caracterizacionData.tipo_documento || 'No disponible'}`, 40, 255);
-    doc.text(`Número documento identidad: ${caracterizacionData.numero_documento || 'No disponible'}`, 40, 270);
+    doc.text(`Tipo documento identidad: ${tipoDocumento || 'No disponible'}`, 40, 255);
+    doc.text(`Número documento identidad: ${numeroDocumento}`, 40, 270);
     doc.text(`Tiempo dedicación al negocio: ${caracterizacionData.tiempo_dedicacion || 'No disponible'}`, 40, 285);
 
     // Plan de Inversión - Información de `pi_datos`
@@ -154,4 +160,5 @@ export default function GenerarPDF({ id }) {
     </div>
   );
 }
+
 
