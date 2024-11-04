@@ -230,92 +230,8 @@ export default function GenerarPDF({ id }) {
     doc.text(`El negocio es sujeto de participación en espacios de conexión: ${datosTab["El negocio es sujeto de participacion en espacios de conexion"] || 'No disponible'}`, 40, yPosition += 15);
     doc.text(`Recomendaciones técnicas, administrativas y financieras: ${datosTab["Recomendaciones tecnica, administrativas y financieras"] || 'No disponible'}`, 40, yPosition += 15);
 
-    // Productos Seleccionados
-    yPosition += 30;
-    doc.setFillColor(200, 200, 200);
-    doc.rect(40, yPosition, 515, 20, 'F');
-    doc.text("PRODUCTOS SELECCIONADOS", 250, yPosition + 15, { align: 'center' });
-
-    yPosition += 30;
-
-    // Preparar datos para la tabla de Productos Seleccionados
-    const productosTableData = piFormulacionRecords.map((piRecord, index) => {
-      const provider = piRecord.providerData;
-      const cantidad = parseFloat(piRecord.Cantidad) || 1;
-      const precio = parseFloat(provider.Precio) || 0;
-      const total = (precio * cantidad).toFixed(2);
-
-      return {
-        index: index + 1,
-        nombreProveedor: provider["Nombre proveedor"] || 'No disponible',
-        rubro: provider.Rubro || 'No disponible',
-        elemento: provider.Elemento || 'No disponible',
-        descripcion: provider["Descripcion corta"] || 'No disponible',
-        precioUnitario: provider.Precio || '0',
-        cantidad: cantidad.toString(),
-        total,
-      };
-    });
-
-    // Definir columnas para la tabla de Productos Seleccionados
-    const productosColumns = [
-      { header: 'No.', dataKey: 'index' },
-      { header: 'Nombre Proveedor', dataKey: 'nombreProveedor' },
-      { header: 'Rubro', dataKey: 'rubro' },
-      { header: 'Elemento', dataKey: 'elemento' },
-      { header: 'Descripción', dataKey: 'descripcion' },
-      { header: 'Precio Unitario', dataKey: 'precioUnitario' },
-      { header: 'Cantidad', dataKey: 'cantidad' },
-      { header: 'Total', dataKey: 'total' },
-    ];
-
-    // Agregar la tabla de Productos Seleccionados
-    doc.autoTable({
-      startY: yPosition,
-      head: [productosColumns.map(col => col.header)],
-      body: productosTableData.map(row => productosColumns.map(col => row[col.dataKey])),
-      theme: 'grid',
-      styles: { fontSize: 8 },
-      headStyles: { fillColor: [200, 200, 200] },
-      margin: { left: 40, right: 40 },
-      didDrawPage: (data) => { yPosition = data.cursor.y; },
-    });
-
-    yPosition = doc.lastAutoTable.finalY + 20 || yPosition + 20;
-
-    // Resumen de la Inversión
-    doc.setFillColor(200, 200, 200);
-    doc.rect(40, yPosition, 515, 20, 'F');
-    doc.text("RESUMEN DE LA INVERSIÓN", 250, yPosition + 15, { align: 'center' });
-
-    yPosition += 30;
-
-    // Definir columnas para la tabla de Resumen de la Inversión
-    const resumenColumns = [
-      { header: 'Rubro', dataKey: 'rubro' },
-      { header: 'Valor', dataKey: 'total' },
-    ];
-
-    // Agregar la tabla de Resumen de la Inversión
-    doc.autoTable({
-      startY: yPosition,
-      head: [resumenColumns.map(col => col.header)],
-      body: groupedRubros.map(row => resumenColumns.map(col => row[col.dataKey])),
-      theme: 'grid',
-      styles: { fontSize: 10 },
-      headStyles: { fillColor: [200, 200, 200] },
-      margin: { left: 40, right: 40 },
-      didDrawPage: (data) => { yPosition = data.cursor.y; },
-    });
-
-    // Total Inversión
-    yPosition = doc.lastAutoTable.finalY + 10 || yPosition + 10;
-    doc.setFontSize(12);
-    doc.text(`Total Inversión: ${totalInversion}`, 450, yPosition);
-
-    yPosition += 20;
-
     // DIAGNÓSTICO DEL NEGOCIO Y PROPUESTA DE MEJORA
+    yPosition += 30;
     doc.setFillColor(200, 200, 200);
     doc.rect(40, yPosition, 515, 20, 'F');
     doc.text("DIAGNÓSTICO DEL NEGOCIO Y PROPUESTA DE MEJORA", 250, yPosition + 15, { align: 'center' });
@@ -336,7 +252,7 @@ export default function GenerarPDF({ id }) {
       { header: 'Área de Fortalecimiento', dataKey: 'area' },
       { header: 'Descripción', dataKey: 'descripcion' },
       { header: 'Propuesta de Mejora', dataKey: 'propuesta' },
-    ];
+    ]);
 
     // Agregar la tabla de Diagnóstico
     doc.autoTable({
@@ -428,7 +344,91 @@ export default function GenerarPDF({ id }) {
       styles: { fontSize: 8 },
       headStyles: { fillColor: [200, 200, 200] },
       margin: { left: 40, right: 40 },
+      didDrawPage: (data) => { yPosition = data.cursor.y; },
     });
+
+    yPosition = doc.lastAutoTable.finalY + 20 || yPosition + 20;
+
+    // Productos Seleccionados
+    doc.setFillColor(200, 200, 200);
+    doc.rect(40, yPosition, 515, 20, 'F');
+    doc.text("PRODUCTOS SELECCIONADOS", 250, yPosition + 15, { align: 'center' });
+
+    yPosition += 30;
+
+    // Preparar datos para la tabla de Productos Seleccionados
+    const productosTableData = piFormulacionRecords.map((piRecord, index) => {
+      const provider = piRecord.providerData;
+      const cantidad = parseFloat(piRecord.Cantidad) || 1;
+      const precio = parseFloat(provider.Precio) || 0;
+      const total = (precio * cantidad).toFixed(2);
+
+      return {
+        index: index + 1,
+        nombreProveedor: provider["Nombre proveedor"] || 'No disponible',
+        rubro: provider.Rubro || 'No disponible',
+        elemento: provider.Elemento || 'No disponible',
+        descripcion: provider["Descripcion corta"] || 'No disponible',
+        precioUnitario: provider.Precio || '0',
+        cantidad: cantidad.toString(),
+        total,
+      };
+    });
+
+    // Definir columnas para la tabla de Productos Seleccionados
+    const productosColumns = [
+      { header: 'No.', dataKey: 'index' },
+      { header: 'Nombre Proveedor', dataKey: 'nombreProveedor' },
+      { header: 'Rubro', dataKey: 'rubro' },
+      { header: 'Elemento', dataKey: 'elemento' },
+      { header: 'Descripción', dataKey: 'descripcion' },
+      { header: 'Precio Unitario', dataKey: 'precioUnitario' },
+      { header: 'Cantidad', dataKey: 'cantidad' },
+      { header: 'Total', dataKey: 'total' },
+    ];
+
+    // Agregar la tabla de Productos Seleccionados
+    doc.autoTable({
+      startY: yPosition,
+      head: [productosColumns.map(col => col.header)],
+      body: productosTableData.map(row => productosColumns.map(col => row[col.dataKey])),
+      theme: 'grid',
+      styles: { fontSize: 8 },
+      headStyles: { fillColor: [200, 200, 200] },
+      margin: { left: 40, right: 40 },
+      didDrawPage: (data) => { yPosition = data.cursor.y; },
+    });
+
+    yPosition = doc.lastAutoTable.finalY + 20 || yPosition + 20;
+
+    // Resumen de la Inversión
+    doc.setFillColor(200, 200, 200);
+    doc.rect(40, yPosition, 515, 20, 'F');
+    doc.text("RESUMEN DE LA INVERSIÓN", 250, yPosition + 15, { align: 'center' });
+
+    yPosition += 30;
+
+    // Definir columnas para la tabla de Resumen de la Inversión
+    const resumenColumns = [
+      { header: 'Rubro', dataKey: 'rubro' },
+      { header: 'Valor', dataKey: 'total' },
+    ];
+
+    // Agregar la tabla de Resumen de la Inversión
+    doc.autoTable({
+      startY: yPosition,
+      head: [resumenColumns.map(col => col.header)],
+      body: groupedRubros.map(row => resumenColumns.map(col => row[col.dataKey])),
+      theme: 'grid',
+      styles: { fontSize: 10 },
+      headStyles: { fillColor: [200, 200, 200] },
+      margin: { left: 40, right: 40 },
+    });
+
+    // Total Inversión
+    yPosition = doc.lastAutoTable.finalY + 10 || yPosition + 10;
+    doc.setFontSize(12);
+    doc.text(`Total Inversión: ${totalInversion}`, 450, yPosition);
 
     // Descargar PDF
     doc.save('Informe_Emprendimiento.pdf');
