@@ -30,10 +30,10 @@ export default function DiagnosticoTab({ id }) {
           { headers: { Authorization: `Bearer ${token}` } }
         );
         setRecords(recordsResponse.data);
-        setLoading(false);
       } catch (error) {
         console.error('Error obteniendo los campos o datos:', error);
         setError('Error obteniendo los campos o datos');
+      } finally {
         setLoading(false);
       }
     };
@@ -62,6 +62,7 @@ export default function DiagnosticoTab({ id }) {
       
       alert('Datos guardados exitosamente');
       setData({ caracterizacion_id: id }); // Limpiar el formulario después de guardar
+
       // Actualizar los registros después de agregar un nuevo registro
       const updatedRecords = await axios.get(
         `https://impulso-capital-back.onrender.com/api/inscriptions/pi/tables/${tableName}/records?caracterizacion_id=${id}`,
