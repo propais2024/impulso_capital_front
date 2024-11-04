@@ -373,10 +373,18 @@ export default function FormulacionTab({ id }) {
             >
               <option value="">-- Selecciona un elemento --</option>
               {elementos
-                .filter((el) => String(el.Rubro) === String(selectedRubro) || String(el.Rubro_id) === String(selectedRubro))
+                .filter((el) => {
+                  // Asegúrate de que el campo que relaciona el elemento con el rubro es el correcto
+                  return (
+                    String(el.Rubro) === String(selectedRubro) ||
+                    String(el.Rubro_id) === String(selectedRubro) ||
+                    String(el.rubro_id) === String(selectedRubro) ||
+                    String(el.id_rubro) === String(selectedRubro)
+                  );
+                })
                 .map((elemento) => (
                   <option key={elemento.id} value={elemento.id}>
-                    {elemento["Descripcion"] || elemento["Elemento"] || elemento["Descripcion corta"]}
+                    {elemento["Descripcion"] || elemento["Elemento"] || elemento["Descripcion corta"] || elemento["Nombre"]}
                   </option>
                 ))}
             </select>
