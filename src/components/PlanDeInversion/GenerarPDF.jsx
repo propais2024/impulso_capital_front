@@ -184,7 +184,7 @@ export default function GenerarPDF({ id }) {
 
     // Estilos de fuente
     const fontSizes = {
-      title: 12,      // Reducido de 14 a 12
+      title: 12,      // Tamaño de fuente de los títulos
       subtitle: 11,
       normal: 10,
     };
@@ -194,7 +194,7 @@ export default function GenerarPDF({ id }) {
     doc.setFillColor(200, 200, 200);
     doc.rect(margin, 40, maxLineWidth, 25, 'F');
     doc.setTextColor(0, 0, 0);
-    doc.text("ESPACIO PARA HEADER", pageWidth / 2, 58, { align: 'center' });
+    doc.text("Espacio para Header", pageWidth / 2, 58, { align: 'center' });
 
     // Información del emprendimiento
     doc.setFontSize(fontSizes.subtitle);
@@ -218,7 +218,7 @@ export default function GenerarPDF({ id }) {
 
     infoEmprendimiento.forEach(text => {
       const lines = doc.splitTextToSize(text, maxLineWidth);
-      checkPageEnd(doc, yPosition, lines.length * 12);
+      yPosition = checkPageEnd(doc, yPosition, lines.length * 12);
       doc.text(lines, margin, yPosition);
       yPosition += lines.length * 12;
     });
@@ -248,7 +248,7 @@ export default function GenerarPDF({ id }) {
 
     infoEmprendedor.forEach(text => {
       const lines = doc.splitTextToSize(text, maxLineWidth);
-      checkPageEnd(doc, yPosition, lines.length * 12);
+      yPosition = checkPageEnd(doc, yPosition, lines.length * 12);
       doc.text(lines, margin, yPosition);
       yPosition += lines.length * 12;
     });
@@ -257,10 +257,10 @@ export default function GenerarPDF({ id }) {
     doc.setFontSize(fontSizes.title);
     yPosition += 20;
 
-    const planInversionHeader = "PLAN DE INVERSIÓN";
+    const planInversionHeader = "Plan de Inversión";
     const planInversionHeaderHeight = 25;
 
-    checkPageEnd(doc, yPosition, planInversionHeaderHeight);
+    yPosition = checkPageEnd(doc, yPosition, planInversionHeaderHeight);
     doc.setFillColor(200, 200, 200);
     doc.rect(margin, yPosition, maxLineWidth, planInversionHeaderHeight, 'F');
     doc.setTextColor(0, 0, 0);
@@ -268,7 +268,7 @@ export default function GenerarPDF({ id }) {
 
     // Datos de pi_datos
     doc.setFontSize(fontSizes.normal);
-    yPosition += 40;
+    yPosition += planInversionHeaderHeight + 15;
     const datosKeys = [
       "Tiempo de dedicacion al negocio (Parcial o Completo)",
       "Descripcion general del negocio",
@@ -297,14 +297,14 @@ export default function GenerarPDF({ id }) {
       // Texto en negrita para el label
       doc.setFont(undefined, 'bold');
       const labelLines = doc.splitTextToSize(label, maxLineWidth);
-      checkPageEnd(doc, yPosition, labelLines.length * 12);
+      yPosition = checkPageEnd(doc, yPosition, labelLines.length * 12);
       doc.text(labelLines, margin, yPosition);
       yPosition += labelLines.length * 12;
 
       // Salto de línea y texto normal para el valor
       doc.setFont(undefined, 'normal');
       const valueLines = doc.splitTextToSize(value, maxLineWidth);
-      checkPageEnd(doc, yPosition, valueLines.length * 12);
+      yPosition = checkPageEnd(doc, yPosition, valueLines.length * 12);
       doc.text(valueLines, margin, yPosition);
       yPosition += valueLines.length * 12 + 5; // Espacio adicional entre entradas
     });
@@ -313,10 +313,10 @@ export default function GenerarPDF({ id }) {
     doc.setFontSize(fontSizes.title);
     yPosition += 20;
 
-    const diagnosticoHeader = "DIAGNÓSTICO DEL NEGOCIO Y PROPUESTA DE MEJORA";
+    const diagnosticoHeader = "Diagnóstico del Negocio y Propuesta de Mejora";
     const diagnosticoHeaderHeight = 25;
 
-    checkPageEnd(doc, yPosition, diagnosticoHeaderHeight);
+    yPosition = checkPageEnd(doc, yPosition, diagnosticoHeaderHeight);
     doc.setFillColor(200, 200, 200);
     doc.rect(margin, yPosition, maxLineWidth, diagnosticoHeaderHeight, 'F');
     doc.text(diagnosticoHeader, pageWidth / 2, yPosition + 18, { align: 'center' });
@@ -344,7 +344,7 @@ export default function GenerarPDF({ id }) {
       body: diagnosticoTableData.map(row => diagnosticoColumns.map(col => row[col.dataKey])),
       theme: 'striped',
       styles: { fontSize: 8, cellPadding: 4 },
-      headStyles: { fillColor: [41, 128, 185], textColor: 255, fontStyle: 'bold' },
+      headStyles: { fillColor: [200, 200, 200], textColor: 0, fontStyle: 'bold' },
       margin: { left: margin, right: margin },
       didDrawPage: (data) => {
         yPosition = data.cursor.y;
@@ -356,10 +356,10 @@ export default function GenerarPDF({ id }) {
     // DESCRIPCIÓN ACTIVOS ACTUALES
     doc.setFontSize(fontSizes.title);
 
-    const activosHeader = "DESCRIPCIÓN ACTIVOS ACTUALES";
+    const activosHeader = "Descripción de Activos Actuales";
     const activosHeaderHeight = 25;
 
-    checkPageEnd(doc, yPosition, activosHeaderHeight);
+    yPosition = checkPageEnd(doc, yPosition, activosHeaderHeight);
     doc.setFillColor(200, 200, 200);
     doc.rect(margin, yPosition, maxLineWidth, activosHeaderHeight, 'F');
     doc.text(activosHeader, pageWidth / 2, yPosition + 18, { align: 'center' });
@@ -390,7 +390,7 @@ export default function GenerarPDF({ id }) {
       body: activosTableData.map(row => activosColumns.map(col => row[col.dataKey])),
       theme: 'striped',
       styles: { fontSize: 8, cellPadding: 4 },
-      headStyles: { fillColor: [41, 128, 185], textColor: 255, fontStyle: 'bold' },
+      headStyles: { fillColor: [200, 200, 200], textColor: 0, fontStyle: 'bold' },
       margin: { left: margin, right: margin },
       didDrawPage: (data) => {
         yPosition = data.cursor.y;
@@ -402,11 +402,11 @@ export default function GenerarPDF({ id }) {
     // DESCRIPCIÓN DE LAS CARACTERÍSTICAS DEL ESPACIO
     doc.setFontSize(fontSizes.title);
 
-    const caracteristicasHeaderText = "DESCRIPCIÓN DE LAS CARACTERÍSTICAS DEL ESPACIO DISPONIBLE PARA LA INSTALACIÓN Y/O UTILIZACIÓN DEL (LOS) BIEN(ES) DE INVERSIÓN";
+    const caracteristicasHeaderText = "Descripción de las Características del Espacio Disponible para la Instalación y/o Utilización del (los) Bien(es) de Inversión";
     const caracteristicasHeaderLines = doc.splitTextToSize(caracteristicasHeaderText, maxLineWidth);
     const caracteristicasHeaderHeight = caracteristicasHeaderLines.length * 12 + 10;
 
-    checkPageEnd(doc, yPosition, caracteristicasHeaderHeight);
+    yPosition = checkPageEnd(doc, yPosition, caracteristicasHeaderHeight);
 
     doc.setFillColor(200, 200, 200);
     doc.rect(margin, yPosition, maxLineWidth, caracteristicasHeaderHeight, 'F');
@@ -438,7 +438,7 @@ export default function GenerarPDF({ id }) {
       body: caracteristicasTableData.map(row => caracteristicasColumns.map(col => row[col.dataKey])),
       theme: 'striped',
       styles: { fontSize: 8, cellPadding: 4 },
-      headStyles: { fillColor: [41, 128, 185], textColor: 255, fontStyle: 'bold' },
+      headStyles: { fillColor: [200, 200, 200], textColor: 0, fontStyle: 'bold' },
       margin: { left: margin, right: margin },
       didDrawPage: (data) => {
         yPosition = data.cursor.y;
@@ -450,10 +450,10 @@ export default function GenerarPDF({ id }) {
     // Productos Seleccionados
     doc.setFontSize(fontSizes.title);
 
-    const productosHeader = "PRODUCTOS SELECCIONADOS";
+    const productosHeader = "Productos Seleccionados";
     const productosHeaderHeight = 25;
 
-    checkPageEnd(doc, yPosition, productosHeaderHeight);
+    yPosition = checkPageEnd(doc, yPosition, productosHeaderHeight);
     doc.setFillColor(200, 200, 200);
     doc.rect(margin, yPosition, maxLineWidth, productosHeaderHeight, 'F');
     doc.text(productosHeader, pageWidth / 2, yPosition + 18, { align: 'center' });
@@ -498,7 +498,7 @@ export default function GenerarPDF({ id }) {
       body: productosTableData.map(row => productosColumns.map(col => row[col.dataKey])),
       theme: 'striped',
       styles: { fontSize: 8, cellPadding: 4 },
-      headStyles: { fillColor: [41, 128, 185], textColor: 255, fontStyle: 'bold' },
+      headStyles: { fillColor: [200, 200, 200], textColor: 0, fontStyle: 'bold' },
       margin: { left: margin, right: margin },
       didDrawPage: (data) => {
         yPosition = data.cursor.y;
@@ -510,10 +510,10 @@ export default function GenerarPDF({ id }) {
     // Resumen de la Inversión
     doc.setFontSize(fontSizes.title);
 
-    const resumenHeader = "RESUMEN DE LA INVERSIÓN";
+    const resumenHeader = "Resumen de la Inversión";
     const resumenHeaderHeight = 25;
 
-    checkPageEnd(doc, yPosition, resumenHeaderHeight);
+    yPosition = checkPageEnd(doc, yPosition, resumenHeaderHeight);
     doc.setFillColor(200, 200, 200);
     doc.rect(margin, yPosition, maxLineWidth, resumenHeaderHeight, 'F');
     doc.text(resumenHeader, pageWidth / 2, yPosition + 18, { align: 'center' });
@@ -531,7 +531,7 @@ export default function GenerarPDF({ id }) {
       body: groupedRubros.map(row => resumenColumns.map(col => row[col.dataKey])),
       theme: 'striped',
       styles: { fontSize: 10, cellPadding: 4 },
-      headStyles: { fillColor: [41, 128, 185], textColor: 255, fontStyle: 'bold' },
+      headStyles: { fillColor: [200, 200, 200], textColor: 0, fontStyle: 'bold' },
       margin: { left: margin, right: margin },
       didDrawPage: (data) => {
         yPosition = data.cursor.y;
@@ -545,7 +545,9 @@ export default function GenerarPDF({ id }) {
     yPosition += 30;
     doc.setFontSize(fontSizes.title);
     doc.setTextColor(0, 0, 0);
-    doc.text("CONCEPTO DE VIABILIDAD", pageWidth / 2, yPosition, { align: 'center' });
+    const conceptoHeader = "Concepto de Viabilidad";
+    yPosition = checkPageEnd(doc, yPosition, 25);
+    doc.text(conceptoHeader, pageWidth / 2, yPosition, { align: 'center' });
 
     yPosition += 20;
     doc.setFontSize(fontSizes.normal);
@@ -561,14 +563,15 @@ export default function GenerarPDF({ id }) {
 
     textoViabilidad.forEach(parrafo => {
       const lines = doc.splitTextToSize(parrafo, maxLineWidth);
-      checkPageEnd(doc, yPosition, lines.length * 12);
+      yPosition = checkPageEnd(doc, yPosition, lines.length * 12);
       doc.text(lines, margin, yPosition);
       yPosition += lines.length * 12 + 10; // Añadimos un espacio adicional entre párrafos
     });
 
     yPosition += 20;
     doc.setFontSize(fontSizes.subtitle);
-    doc.text("FIRMAS", pageWidth / 2, yPosition, { align: 'center' });
+    yPosition = checkPageEnd(doc, yPosition, 20);
+    doc.text("Firmas", pageWidth / 2, yPosition, { align: 'center' });
 
     yPosition += 30;
     doc.setFontSize(fontSizes.normal);
@@ -604,6 +607,7 @@ export default function GenerarPDF({ id }) {
       doc.addPage();
       currentY = 40; // Reiniciamos yPosition al margen superior después de agregar una nueva página
     }
+    return currentY;
   };
 
   return (
