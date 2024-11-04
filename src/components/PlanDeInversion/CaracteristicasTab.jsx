@@ -4,14 +4,14 @@ import axios from 'axios';
 
 export default function CaracteristicasTab({ id }) {
   const [fields, setFields] = useState([]);
+  const [records, setRecords] = useState([]);
   const [data, setData] = useState({ caracterizacion_id: id });
-  const [tableName] = useState('pi_caracteristicas'); // Nombre de la tabla pi_caracteristicas
+  const [tableName] = useState('pi_caracteristicas');
   const [loading, setLoading] = useState(false);
-  const [recordId, setRecordId] = useState(null);
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    const fetchFieldsAndData = async () => {
+    const fetchFieldsAndRecords = async () => {
       setLoading(true);
       try {
         const token = localStorage.getItem('token');
@@ -24,28 +24,21 @@ export default function CaracteristicasTab({ id }) {
         );
         setFields(fieldsResponse.data);
 
-        // Obtener registro existente filtrado por caracterizacion_id
+        // Obtener todos los registros con el mismo `caracterizacion_id`
         const recordsResponse = await axios.get(
           `https://impulso-capital-back.onrender.com/api/inscriptions/pi/tables/${tableName}/records?caracterizacion_id=${id}`,
           { headers: { Authorization: `Bearer ${token}` } }
         );
-
-        if (recordsResponse.data.length > 0) {
-          const existingRecord = recordsResponse.data[0];
-          setData(existingRecord);
-          setRecordId(existingRecord.id);
-        } else {
-          setData((prevData) => ({ ...prevData, caracterizacion_id: id }));
-        }
-        setLoading(false);
+        setRecords(recordsResponse.data);
       } catch (error) {
         console.error('Error obteniendo los campos o datos:', error);
         setError('Error obteniendo los campos o datos');
+      } finally {
         setLoading(false);
       }
     };
 
-    fetchFieldsAndData();
+    fetchFieldsAndRecords();
   }, [tableName, id]);
 
   const handleChange = (e) => {
@@ -60,24 +53,40 @@ export default function CaracteristicasTab({ id }) {
 
       const recordData = { ...data, caracterizacion_id: id };
 
-      if (recordId) {
-        await axios.put(
-          `https://impulso-capital-back.onrender.com/api/inscriptions/pi/tables/${tableName}/record/${recordId}`,
-          recordData,
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
-        alert('Datos actualizados exitosamente');
-      } else {
-        await axios.post(
-          `https://impulso-capital-back.onrender.com/api/inscriptions/pi/tables/${tableName}/record`,
-          recordData,
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
-        alert('Datos guardados exitosamente');
-      }
+      // Crear un nuevo registro sin actualizar
+      await axios.post(
+        `https://impulso-capital-back.onrender.com/api/inscriptions/pi/tables/${tableName}/record`,
+        recordData,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      alert('Datos guardados exitosamente');
+      setData({ caracterizacion_id: id });
+
+      // Actualizar los registros después de agregar un nuevo registro
+      const updatedRecords = await axios.get(
+        `https://impulso-capital-back.onrender.com/api/inscriptions/pi/tables/${tableName}/records?caracterizacion_id=${id}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      setRecords(updatedRecords.data);
     } catch (error) {
       console.error('Error guardando los datos:', error);
       setError('Error guardando los datos');
+    }
+  };
+
+  const handleDelete = async (recordId) => {
+    try {
+      const token = localStorage.getItem('token');
+      await axios.delete(
+        `https://impulso-capital-back.onrender.com/api/inscriptions/pi/tables/${tableName}/record/${recordId}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      setRecords((prevRecords) => prevRecords.filter((record) => record.id !== recordId));
+      alert('Registro eliminado exitosamente');
+    } catch (error) {
+      console.error('Error eliminando el registro:', error);
+      setError('Error eliminando el registro');
     }
   };
 
@@ -89,32 +98,62 @@ export default function CaracteristicasTab({ id }) {
       ) : error ? (
         <div className="alert alert-danger">{error}</div>
       ) : (
-        <form onSubmit={handleSubmit}>
-          {fields
-            .filter((field) => field.column_name !== 'id')
-            .map((field) => (
-              <div className="form-group" key={field.column_name}>
-                <label>{field.column_name}</label>
-                <input
-                  type="text"
-                  name={field.column_name}
-                  className="form-control"
-                  value={data[field.column_name] || ''}
-                  onChange={handleChange}
-                  readOnly={field.column_name === 'caracterizacion_id'}
-                />
-              </div>
-            ))}
-          <button type="submit" className="btn btn-primary">
-            {recordId ? 'Actualizar' : 'Guardar'}
-          </button>
-        </form>
+        <>
+          <form onSubmit={handleSubmit}>
+            {fields
+              .filter((field) => field.column_name !== 'id')
+              .map((field) => (
+                <div className="form-group" key={field.column_name}>
+                  <label>{field.column_name}</label>
+                  <input
+                    type="text"
+                    name={field.column_name}
+                    className="form-control"
+                    value={data[field.column_name] || ''}
+                    onChange={handleChange}
+                    readOnly={field.column_name === 'caracterizacion_id'}
+                  />
+                </div>
+              ))}
+            <button type="submit" className="btn btn-primary">
+              Guardar
+            </button>
+          </form>
+
+          <h4 className="mt-4">Registros guardados</h4>
+          <table className="table">
+            <thead>
+              <tr>
+                {fields.map((field) => (
+                  <th key={field.column_name}>{field.column_name}</th>
+                ))}
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              {records.map((record) => (
+                <tr key={record.id}>
+                  {fields.map((field) => (
+                    <td key={field.column_name}>{record[field.column_name]}</td>
+                  ))}
+                  <td>
+                    <button
+                      className="btn btn-danger btn-sm"
+                      onClick={() => handleDelete(record.id)}
+                    >
+                      Eliminar
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </>
       )}
     </div>
   );
 }
 
-// Definir las validaciones de propiedades
 CaracteristicasTab.propTypes = {
   id: PropTypes.string.isRequired,
 };
