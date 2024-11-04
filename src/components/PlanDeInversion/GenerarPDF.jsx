@@ -36,7 +36,7 @@ export default function GenerarPDF({ id }) {
         setRelatedData(fieldsResponse.data.relatedData || {});
         console.log("Datos relacionados de claves foráneas:", fieldsResponse.data.relatedData);
 
-        // Obtener datos de `pi_datos`
+        // Obtener datos de `pi_datos` para el caracterizacion_id
         const datosResponse = await axios.get(
           `https://impulso-capital-back.onrender.com/api/inscriptions/pi/tables/pi_datos/records?caracterizacion_id=${id}`,
           { headers: { Authorization: `Bearer ${token}` } }
@@ -86,12 +86,6 @@ export default function GenerarPDF({ id }) {
     const direccion = caracterizacionData["Direccion unidad RIC"] || 'No disponible';
     const numeroContacto = caracterizacionData["Numero movil 1 ciudadano"] || 'No disponible';
 
-    console.log("Nombre comercial:", nombreComercial);
-    console.log("Localidad:", localidadNombre);
-    console.log("Barrio:", barrioNombre);
-    console.log("Dirección:", direccion);
-    console.log("Número de contacto:", numeroContacto);
-
     doc.text(`Nombre comercial: ${nombreComercial}`, 40, 120);
     doc.text(`Localidad: ${localidadNombre || 'No disponible'}`, 40, 135);
     doc.text(`Barrio: ${barrioNombre || 'No disponible'}`, 40, 150);
@@ -113,13 +107,9 @@ export default function GenerarPDF({ id }) {
     const tipoDocumento = getColumnDisplayValue("Tipo de documento", caracterizacionData["Tipo de documento"]);
     const numeroDocumento = caracterizacionData["Numero de documento de identificacion ciudadano"] || 'No disponible';
 
-    console.log("Tipo de documento:", tipoDocumento);
-    console.log("Número de documento:", numeroDocumento);
-
     doc.text(`Nombre emprendedor: ${nombreEmprendedor || 'No disponible'}`, 40, 240);
     doc.text(`Tipo documento identidad: ${tipoDocumento || 'No disponible'}`, 40, 255);
     doc.text(`Número documento identidad: ${numeroDocumento}`, 40, 270);
-    doc.text(`Tiempo dedicación al negocio: ${caracterizacionData.tiempo_dedicacion || 'No disponible'}`, 40, 285);
 
     // Plan de Inversión - Información de `pi_datos`
     doc.setFillColor(200, 200, 200);
@@ -127,6 +117,7 @@ export default function GenerarPDF({ id }) {
     doc.setTextColor(0, 0, 0);
     doc.text("PLAN DE INVERSIÓN", 250, 332, { align: 'center' });
 
+    // Datos de la tabla `pi_datos`
     doc.setFontSize(10);
     doc.text(`Descripción general del negocio: ${datosTab["Descripción general del negocio"] || 'No disponible'}`, 40, 360);
     doc.text(`Descripción del lugar donde desarrolla la actividad: ${datosTab["Descripción del lugar donde desarrolla la actividad"] || 'No disponible'}`, 40, 380);
