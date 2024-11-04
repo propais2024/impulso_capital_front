@@ -11,20 +11,20 @@ export default function FormulacionTab({ id }) {
   const [selectedElemento, setSelectedElemento] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [approvedRecords, setApprovedRecords] = useState([]);
+  const [piFormulacionRecords, setPiFormulacionRecords] = useState([]);
   const tableName = 'provider_proveedores';
   const rubroTableName = 'provider_rubro';
   const elementoTableName = 'provider_elemento';
   const piFormulacionTableName = 'pi_formulacion';
 
   const displayedFieldNames = [
-    "id",
     "Nombre Proveedor",
+    "Rubro",
     "Elemento",
-    "Precio",
+    "Descripción producto",
     "Valor Catalogo y/o referencia",
-    "Calificacion",
-    "Descripción producto"
+    "Precio",
+    "Calificacion"
   ];
 
   // Hook para obtener los campos y datos iniciales
@@ -54,7 +54,6 @@ export default function FormulacionTab({ id }) {
         setRubros(rubrosResponse.data);
         setElementos(elementosResponse.data);
 
-        console.log('Rubros cargados:', rubrosResponse.data);
         setLoading(false);
       } catch (error) {
         console.error('Error obteniendo los campos o datos:', error);
@@ -107,77 +106,25 @@ export default function FormulacionTab({ id }) {
     fetchRecords();
   }, [id, selectedRubro, selectedElemento]);
 
-  // Hook para obtener los registros aprobados y enriquecerlos con datos del proveedor
+  // Hook para obtener los registros de pi_formulacion
   useEffect(() => {
-    const fetchApprovedRecords = async () => {
-      // Asegurarse de que 'rubros' esté cargado
-      if (rubros.length === 0) {
-        console.log('Rubros aún no están cargados. Esperando...');
-        return;
-      }
-
+    const fetchPiFormulacionRecords = async () => {
       try {
         const token = localStorage.getItem('token');
-        const approvedUrl = `https://impulso-capital-back.onrender.com/api/inscriptions/pi/tables/${piFormulacionTableName}/records?caracterizacion_id=${id}&Aprobación comité=true`;
-        console.log('Fetching approved records:', approvedUrl);
-
-        const response = await axios.get(approvedUrl, {
+        const piFormulacionUrl = `https://impulso-capital-back.onrender.com/api/inscriptions/pi/tables/${piFormulacionTableName}/records?caracterizacion_id=${id}`;
+        const response = await axios.get(piFormulacionUrl, {
           headers: { Authorization: `Bearer ${token}` },
         });
-
-        console.log('Approved records fetched:', response.data);
-
-        // Obtener los detalles del proveedor para cada registro aprobado.
-        const enrichedRecords = await Promise.all(
-          response.data.map(async (record) => {
-            try {
-              const providerUrl = `https://impulso-capital-back.onrender.com/api/inscriptions/tables/${tableName}/record/${record.rel_id_prov}`;
-              console.log('Fetching provider details:', providerUrl);
-
-              const providerResponse = await axios.get(providerUrl, {
-                headers: { Authorization: `Bearer ${token}` },
-              });
-
-              console.log('Provider details fetched:', providerResponse.data);
-
-              // Ajustar según la estructura real de providerResponse.data
-              const providerData = providerResponse.data.record || providerResponse.data;
-              console.log('Provider data:', providerData);
-
-              const rubroId = providerData?.Rubro;
-              const precio = providerData?.Precio || 0;
-
-              // Obtener el nombre del rubro usando la función getRubroNameById
-              const rubro = getRubroNameById(rubroId) || 'Desconocido';
-
-              // Log para verificar los datos extraídos
-              console.log(`Rubro: ${rubro}, Precio: ${precio} para rel_id_prov: ${record.rel_id_prov}`);
-
-              return {
-                ...record,
-                Rubro: rubro,
-                Precio: precio,
-              };
-            } catch (error) {
-              console.error('Error obteniendo detalles del proveedor:', error);
-              return {
-                ...record,
-                Rubro: 'Desconocido',
-                Precio: 0,
-              };
-            }
-          })
-        );
-
-        console.log('Enriched records:', enrichedRecords);
-        setApprovedRecords(enrichedRecords);
+        setPiFormulacionRecords(response.data);
       } catch (error) {
-        console.error('Error obteniendo los registros aprobados:', error);
+        console.error('Error obteniendo los registros de pi_formulacion:', error);
       }
     };
 
-    fetchApprovedRecords();
-  }, [id, rubros]); // Asegurarse de que 'rubros' esté en las dependencias
+    if (id) {
+      fetchPiFormulacionRecords();
+    }
+  }, [id]);
 
   // Función para manejar cambios en el Rubro seleccionado
   const handleRubroChange = (e) => {
@@ -192,76 +139,148 @@ export default function FormulacionTab({ id }) {
 
   // Función para obtener el nombre del Elemento
   const getElementoName = (elementoId) => {
-    const elemento = elementos.find((el) => el.id === elementoId);
+    const elemento = elementos.find((el) => String(el.id) === String(elementoId));
     return elemento ? elemento.Elemento : 'Desconocido';
+  };
+
+  // Función para obtener el nombre del Rubro
+  const getRubroName = (rubroId) => {
+    const rubro = rubros.find((r) => String(r.id) === String(rubroId));
+    return rubro ? rubro.Rubro : 'Desconocido';
+  };
+
+  // Función para obtener datos de pi_formulacion para un proveedor
+  const getPiFormulacionData = (recordId) => {
+    return piFormulacionRecords.find(
+      (piRecord) => String(piRecord.rel_id_prov) === String(recordId)
+    ) || {};
+  };
+
+  // Función para manejar cambios en la cantidad
+  const handleCantidadChange = async (recordId, cantidad) => {
+    try {
+      const token = localStorage.getItem('token');
+      const existingPiData = getPiFormulacionData(recordId);
+
+      const recordData = {
+        caracterizacion_id: id,
+        rel_id_prov: recordId,
+        Cantidad: cantidad,
+      };
+
+      const endpoint = `https://impulso-capital-back.onrender.com/api/inscriptions/pi/tables/${piFormulacionTableName}/record`;
+
+      if (existingPiData.id) {
+        // Actualizar registro existente
+        await axios.put(`${endpoint}/${existingPiData.id}`, recordData, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+      } else {
+        // Crear nuevo registro
+        await axios.post(endpoint, recordData, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+      }
+
+      // Actualizar estado
+      setPiFormulacionRecords((prevRecords) =>
+        prevRecords.map((rec) =>
+          rec.rel_id_prov === recordId
+            ? { ...rec, Cantidad: cantidad }
+            : rec
+        )
+      );
+    } catch (error) {
+      console.error('Error al cambiar la cantidad:', error);
+    }
   };
 
   // Función para manejar cambios en la aprobación
   const handleApprovalChange = async (record, field, value) => {
     try {
       const token = localStorage.getItem('token');
-      const endpoint = `https://impulso-capital-back.onrender.com/api/inscriptions/pi/tables/${piFormulacionTableName}/record`;
+      const existingPiData = getPiFormulacionData(record.id);
+
       const recordData = {
         caracterizacion_id: id,
         rel_id_prov: record.id,
         [field]: value,
       };
 
-      await axios.post(endpoint, recordData, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const endpoint = `https://impulso-capital-back.onrender.com/api/inscriptions/pi/tables/${piFormulacionTableName}/record`;
 
-      if (field === "Aprobación comité") {
-        setApprovedRecords((prevRecords) =>
-          value
-            ? [...prevRecords, { ...record, "Aprobación comité": true }]
-            : prevRecords.filter((rec) => rec.rel_id_prov !== record.rel_id_prov)
-        );
+      if (existingPiData.id) {
+        // Actualizar registro existente
+        await axios.put(`${endpoint}/${existingPiData.id}`, recordData, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+      } else {
+        // Crear nuevo registro
+        await axios.post(endpoint, recordData, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
       }
 
-      setRecords((prevRecords) =>
-        prevRecords.map((rec) =>
-          rec.id === record.id ? { ...rec, [field]: value } : rec
-        )
-      );
+      // Actualizar estado
+      setPiFormulacionRecords((prevRecords) => {
+        const index = prevRecords.findIndex((rec) => rec.rel_id_prov === record.id);
+        if (index !== -1) {
+          // Actualizar existente
+          const updatedRecord = { ...prevRecords[index], [field]: value };
+          return [
+            ...prevRecords.slice(0, index),
+            updatedRecord,
+            ...prevRecords.slice(index + 1),
+          ];
+        } else {
+          // Agregar nuevo
+          return [...prevRecords, { ...recordData }];
+        }
+      });
     } catch (error) {
       console.error('Error al cambiar la aprobación:', error);
     }
-  };
-
-  // Función para obtener el nombre del Rubro por su ID
-  const getRubroNameById = (rubroId) => {
-    const rubro = rubros.find((r) => String(r.id) === String(rubroId));
-    return rubro ? rubro.Rubro : 'Desconocido';
   };
 
   // Agrupar Rubros y sumar los Valores
   const groupedRubros = useMemo(() => {
     const rubroMap = {};
 
-    approvedRecords.forEach(record => {
-      const rubro = record.Rubro;
-      const precio = parseFloat(record.Precio) || 0;
+    piFormulacionRecords.forEach(piRecord => {
+      if (piRecord["Seleccion"]) {
+        const record = records.find(rec => String(rec.id) === String(piRecord.rel_id_prov));
+        if (record) {
+          const rubroName = getRubroName(record.Rubro);
+          const precio = parseFloat(record.Precio) || 0;
+          const cantidad = parseFloat(piRecord.Cantidad) || 1;
+          const totalPrice = precio * cantidad;
 
-      if (rubroMap[rubro]) {
-        rubroMap[rubro] += precio;
-      } else {
-        rubroMap[rubro] = precio;
+          if (rubroMap[rubroName]) {
+            rubroMap[rubroName] += totalPrice;
+          } else {
+            rubroMap[rubroName] = totalPrice;
+          }
+        }
       }
     });
 
-    // Convertir el mapa a un array de objetos
     return Object.entries(rubroMap).map(([rubro, total]) => ({
       rubro,
-      total: total.toFixed(2) // Opcional: Formatear a 2 decimales
+      total: total.toFixed(2)
     }));
-  }, [approvedRecords]);
+  }, [piFormulacionRecords, records]);
 
   // Calcular el total de la inversión a partir de los rubros agrupados
   const totalInversion = groupedRubros.reduce(
     (acc, record) => acc + parseFloat(record.total || 0),
     0
   ).toFixed(2);
+
+  // Obtener registros seleccionados
+  const selectedRecords = records.filter(record => {
+    const piData = getPiFormulacionData(record.id);
+    return piData["Seleccion"];
+  });
 
   return (
     <div>
@@ -313,69 +332,131 @@ export default function FormulacionTab({ id }) {
                     {field.column_name.replace('_', ' ')}
                   </th>
                 ))}
+                <th>Cantidad</th>
                 <th>Pre-selección</th>
+                <th>Selección</th>
                 <th>Aprobación Comité</th>
-                <th>Acciones</th>
               </tr>
             </thead>
             <tbody>
               {records.length > 0 ? (
-                records.map((record) => (
-                  <tr
-                    key={record.id}
-                    style={{
-                      backgroundColor: record["Aprobación comité"]
-                        ? '#d4edda'
-                        : 'transparent',
-                    }}
-                  >
-                    {fields.map((field) => (
-                      <td key={field.column_name}>
-                        {field.column_name === 'Elemento'
-                          ? getElementoName(record.Elemento)
-                          : record[field.column_name]}
+                records.map((record) => {
+                  const piData = getPiFormulacionData(record.id);
+
+                  return (
+                    <tr key={record.id}>
+                      {fields.map((field) => (
+                        <td key={field.column_name}>
+                          {field.column_name === 'Elemento'
+                            ? getElementoName(record.Elemento)
+                            : field.column_name === 'Rubro'
+                              ? getRubroName(record.Rubro)
+                              : record[field.column_name]}
+                        </td>
+                      ))}
+                      <td>
+                        <input
+                          type="number"
+                          min="1"
+                          value={piData.Cantidad || 1}
+                          onChange={(e) =>
+                            handleCantidadChange(record.id, e.target.value)
+                          }
+                          style={{ width: '60px' }}
+                        />
                       </td>
-                    ))}
-                    <td>
-                      <input
-                        type="checkbox"
-                        checked={record["pre-Selección"] || false}
-                        onChange={(e) =>
-                          handleApprovalChange(
-                            record,
-                            "pre-Selección",
-                            e.target.checked
-                          )
-                        }
-                      />
-                    </td>
-                    <td>
-                      <input
-                        type="checkbox"
-                        checked={record["Aprobación comité"] || false}
-                        onChange={(e) =>
-                          handleApprovalChange(
-                            record,
-                            "Aprobación comité",
-                            e.target.checked
-                          )
-                        }
-                      />
-                    </td>
-                    <td>
-                      <button className="btn btn-secondary">Ver</button>
-                    </td>
-                  </tr>
-                ))
+                      <td>
+                        <input
+                          type="checkbox"
+                          checked={piData["pre-Seleccion"] || false}
+                          onChange={(e) =>
+                            handleApprovalChange(
+                              record,
+                              "pre-Seleccion",
+                              e.target.checked
+                            )
+                          }
+                        />
+                      </td>
+                      <td>
+                        <input
+                          type="checkbox"
+                          checked={piData["Seleccion"] || false}
+                          onChange={(e) =>
+                            handleApprovalChange(
+                              record,
+                              "Seleccion",
+                              e.target.checked
+                            )
+                          }
+                        />
+                      </td>
+                      <td>
+                        <input
+                          type="checkbox"
+                          checked={piData["Aprobación comité"] || false}
+                          onChange={(e) =>
+                            handleApprovalChange(
+                              record,
+                              "Aprobación comité",
+                              e.target.checked
+                            )
+                          }
+                        />
+                      </td>
+                    </tr>
+                  );
+                })
               ) : (
                 <tr>
-                  <td colSpan={fields.length + 3} className="text-center">
+                  <td colSpan={fields.length + 4} className="text-center">
                     No hay coincidencias.
                   </td>
                 </tr>
               )}
             </tbody>
           </table>
+
+          <div className="mt-4">
+            <h5>Productos Seleccionados</h5>
+            {selectedRecords.length > 0 ? (
+              <table className="table">
+                <thead>
+                  <tr>
+                    <th>Nombre Proveedor</th>
+                    <th>Rubro</th>
+                    <th>Elemento</th>
+                    <th>Descripción</th>
+                    <th>Precio Unitario</th>
+                    <th>Cantidad</th>
+                    <th>Total</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {selectedRecords.map((record) => {
+                    const piData = getPiFormulacionData(record.id);
+                    const cantidad = parseFloat(piData.Cantidad) || 1;
+                    const precio = parseFloat(record.Precio) || 0;
+                    const total = (precio * cantidad).toFixed(2);
+
+                    return (
+                      <tr key={record.id}>
+                        <td>{record["Nombre Proveedor"]}</td>
+                        <td>{getRubroName(record.Rubro)}</td>
+                        <td>{getElementoName(record.Elemento)}</td>
+                        <td>{record["Descripción producto"]}</td>
+                        <td>{record.Precio}</td>
+                        <td>{cantidad}</td>
+                        <td>{total}</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            ) : (
+              <p>No hay productos seleccionados.</p>
+            )}
+          </div>
 
           <div className="mt-4">
             <h5>Resumen de la Inversión</h5>
@@ -403,7 +484,7 @@ export default function FormulacionTab({ id }) {
                 </tfoot>
               </table>
             ) : (
-              <p>No hay productos aprobados para el comité.</p>
+              <p>No hay productos seleccionados para inversión.</p>
             )}
           </div>
         </>
