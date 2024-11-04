@@ -243,7 +243,7 @@ export default function GenerarPDF({ id }) {
     // DESCRIPCIÓN DE LAS CARACTERÍSTICAS DEL ESPACIO
     doc.setFillColor(200, 200, 200);
     doc.rect(40, yPosition, 515, 20, 'F');
-    doc.text("DESCRIPCIÓN DE LAS CARACTERÍSTICAS DEL ESPACIO DISPONIBLE PARA LA INSTALACIÓN Y/O UTILIZACIÓN DEL (LOS) BIEN(ES) DE INVERSIÓN  ", 250, yPosition + 15, { align: 'center' });
+    doc.text("DESCRIPCIÓN DE LAS CARACTERÍSTICAS DEL ESPACIO DISPONIBLE PARA LA INSTALACIÓN Y/O UTILIZACIÓN DEL (LOS) BIEN(ES) DE INVERSIÓN", 250, yPosition + 15, { align: 'center' });
 
     yPosition += 30;
 
@@ -251,16 +251,19 @@ export default function GenerarPDF({ id }) {
     const caracteristicasTableData = caracteristicasData.map((item, index) => ({
       index: index + 1,
       tipoBien: item["Tipo de bien"] || 'No disponible',
-      dimensiones: item["Dimension del espacio disponible"] || 'No disponible',
-      valorReferencia: item["Valor de referencia"] || 'No disponible',
+      cantidad: item["Cantidad"] || 'No disponible',
+      dimensiones: item["Dimensiones del espacio disponible"] || 'No disponible',
+      dimensionesDelBien: item["Dimensiones del bien (referencias del catalogo)"] || 'No disponible',
+      otrasCaracteristicas: item["Otras caracteristicas (tipo de voltaje requerido, entre otros)"] || 'No disponible',
     }));
 
     // Definir columnas para la tabla de Características
     const caracteristicasColumns = [
       { header: 'No.', dataKey: 'index' },
       { header: 'Tipo de Bien', dataKey: 'tipoBien' },
-      { header: 'Dimensiones', dataKey: 'dimensiones' },
-      { header: 'Valor de Referencia', dataKey: 'valorReferencia' },
+      { header: 'Dimensiones del espacio disponible', dataKey: 'dimensiones' },
+      { header: 'Dimensiones del bien', dataKey: 'dimensionesDelBien' },
+      { header: 'Otras Características', dataKey: 'otrasCaracteristicas' },
     ];
 
     // Agregar la tabla de Características
