@@ -4,7 +4,7 @@ import 'jspdf-autotable';
 import axios from 'axios';
 
 // Importar la imagen
-import bannerImage from '../assets/img/Banner_Impulso_Capital_logos.jpg';
+import bannerImage from '../../assets/img/Banner_Impulso_Capital_logos.jpg';
 
 export default function GenerarPDF({ id }) {
   const [caracterizacionData, setCaracterizacionData] = useState({});
