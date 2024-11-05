@@ -258,7 +258,7 @@ export default function GenerarPDF({ id }) {
     // Plan de Inversión
     doc.setFontSize(fontSizes.title);
     yPosition += 20;
-    doc.setFillColor(...blueColor);
+    doc.setFillColor(255, 255, 255);
     doc.rect(margin, yPosition, maxLineWidth, 25, 'F');
     doc.text("Plan de Inversión", pageWidth / 2, yPosition + 18, { align: 'center' });
 
@@ -346,7 +346,7 @@ export default function GenerarPDF({ id }) {
 
     // DESCRIPCIÓN ACTIVOS ACTUALES
     doc.setFontSize(fontSizes.title);
-    doc.setFillColor(...blueColor);
+    doc.setFillColor(255, 255, 255);
     doc.rect(margin, yPosition, maxLineWidth, 25, 'F');
     doc.text("Descripción de Activos Actuales", pageWidth / 2, yPosition + 18, { align: 'center' });
 
@@ -387,9 +387,9 @@ export default function GenerarPDF({ id }) {
 
     // DESCRIPCIÓN DE LAS CARACTERÍSTICAS DEL ESPACIO
     doc.setFontSize(fontSizes.title);
-    doc.setFillColor(...blueColor);
+    doc.setFillColor(255, 255, 255);
     doc.rect(margin, yPosition, maxLineWidth, 25, 'F');
-    doc.text("Descripción de las Características del Espacio", pageWidth / 2, yPosition + 18, { align: 'center' });
+    doc.text("Descripción de las Características del Espacio Disponible para la Instalación y/o Utilización de los Bienes", pageWidth / 2, yPosition + 18, { align: 'center' });
 
     yPosition += 30;
 
@@ -428,9 +428,9 @@ export default function GenerarPDF({ id }) {
 
     // Productos Seleccionados
     doc.setFontSize(fontSizes.title);
-    doc.setFillColor(...blueColor);
+    doc.setFillColor(255, 255, 255);
     doc.rect(margin, yPosition, maxLineWidth, 25, 'F');
-    doc.text("Productos Seleccionados", pageWidth / 2, yPosition + 18, { align: 'center' });
+    doc.text("Descripción de las Necesidades de Inversión y Valor", pageWidth / 2, yPosition + 18, { align: 'center' });
 
     yPosition += 30;
 
@@ -483,7 +483,7 @@ export default function GenerarPDF({ id }) {
 
     // Resumen de la Inversión
     doc.setFontSize(fontSizes.title);
-    doc.setFillColor(...blueColor);
+    doc.setFillColor(255, 255, 255);
     doc.rect(margin, yPosition, maxLineWidth, 25, 'F');
     doc.text("Resumen de la Inversión", pageWidth / 2, yPosition + 18, { align: 'center' });
 
