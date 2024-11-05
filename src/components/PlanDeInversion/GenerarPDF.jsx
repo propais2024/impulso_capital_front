@@ -27,18 +27,21 @@ export default function GenerarPDF({ id }) {
         setLoading(true);
         const token = localStorage.getItem('token');
 
+        // Obtener datos de `inscription_caracterizacion`
         const caracterizacionResponse = await axios.get(
           `https://impulso-capital-back.onrender.com/api/inscriptions/tables/inscription_caracterizacion/record/${id}`,
           { headers: { Authorization: `Bearer ${token}` } }
         );
         setCaracterizacionData(caracterizacionResponse.data.record);
 
+        // Obtener datos relacionados para claves foráneas
         const fieldsResponse = await axios.get(
           `https://impulso-capital-back.onrender.com/api/inscriptions/pi/tables/inscription_caracterizacion/related-data`,
           { headers: { Authorization: `Bearer ${token}` } }
         );
         setRelatedData(fieldsResponse.data.relatedData || {});
 
+        // Obtener datos de `pi_datos` para el caracterizacion_id
         const datosResponse = await axios.get(
           `https://impulso-capital-back.onrender.com/api/inscriptions/pi/tables/pi_datos/records?caracterizacion_id=${id}`,
           { headers: { Authorization: `Bearer ${token}` } }
@@ -47,32 +50,38 @@ export default function GenerarPDF({ id }) {
           setDatosTab(datosResponse.data[0]);
         }
 
+        // Obtener datos de `pi_diagnostico`
         const diagnosticoResponse = await axios.get(
           `https://impulso-capital-back.onrender.com/api/inscriptions/pi/tables/pi_diagnostico/records?caracterizacion_id=${id}`,
           { headers: { Authorization: `Bearer ${token}` } }
         );
         setDiagnosticoData(diagnosticoResponse.data);
 
+        // Obtener datos de `pi_activos`
         const activosResponse = await axios.get(
           `https://impulso-capital-back.onrender.com/api/inscriptions/pi/tables/pi_activos/records?caracterizacion_id=${id}`,
           { headers: { Authorization: `Bearer ${token}` } }
         );
         setActivosData(activosResponse.data);
 
+        // Obtener datos de `pi_caracteristicas`
         const caracteristicasResponse = await axios.get(
           `https://impulso-capital-back.onrender.com/api/inscriptions/pi/tables/pi_caracteristicas/records?caracterizacion_id=${id}`,
           { headers: { Authorization: `Bearer ${token}` } }
         );
         setCaracteristicasData(caracteristicasResponse.data);
 
+        // Obtener datos de pi_formulacion y proveedores asociados
         const piFormulacionUrl = `https://impulso-capital-back.onrender.com/api/inscriptions/pi/tables/pi_formulacion/records?caracterizacion_id=${id}&Seleccion=true`;
         const piFormulacionResponse = await axios.get(piFormulacionUrl, {
           headers: { Authorization: `Bearer ${token}` },
         });
         const piRecords = piFormulacionResponse.data;
 
+        // Obtener IDs de proveedores
         const providerIds = piRecords.map((piRecord) => piRecord.rel_id_prov);
 
+        // Obtener detalles de proveedores
         const providerPromises = providerIds.map((providerId) => {
           const providerUrl = `https://impulso-capital-back.onrender.com/api/inscriptions/tables/provider_proveedores/record/${providerId}`;
           return axios.get(providerUrl, {
@@ -83,12 +92,14 @@ export default function GenerarPDF({ id }) {
         const providersResponses = await Promise.all(providerPromises);
         const providersData = providersResponses.map((res) => res.data.record);
 
+        // Obtener datos relacionados para proveedores (Rubro y Elemento)
         const providerFieldsResponse = await axios.get(
           `https://impulso-capital-back.onrender.com/api/inscriptions/pi/tables/provider_proveedores/related-data`,
           { headers: { Authorization: `Bearer ${token}` } }
         );
         setProviderRelatedData(providerFieldsResponse.data.relatedData || {});
 
+        // Combinar pi_formulacion y proveedores
         const combinedData = piRecords.map((piRecord) => {
           const providerData = providersData.find(
             (provider) => String(provider.id) === String(piRecord.rel_id_prov)
@@ -101,6 +112,7 @@ export default function GenerarPDF({ id }) {
 
         setPiFormulacionRecords(combinedData);
 
+        // Agrupar Rubros y calcular total inversión
         const rubroMap = {};
 
         combinedData.forEach((piRecord) => {
@@ -170,26 +182,27 @@ export default function GenerarPDF({ id }) {
     const maxLineWidth = pageWidth - margin * 2;
     let yPosition = 100;
 
+    // Estilos de fuente y color
     const fontSizes = {
       title: 12,
       subtitle: 11,
       normal: 10,
     };
+    const blueColor = [77, 20, 140]; // Color #4D148C
 
-    const blueColor = [0, 102, 204];
-
+    // Encabezado
     doc.setFontSize(fontSizes.title);
     doc.setFillColor(...blueColor);
     doc.rect(margin, 40, maxLineWidth, 25, 'F');
     doc.setTextColor(255, 255, 255);
     doc.text("Espacio para Header", pageWidth / 2, 58, { align: 'center' });
 
+    // Información del emprendimiento
     doc.setFontSize(fontSizes.subtitle);
-    doc.setTextColor(...blueColor);
+    doc.setTextColor(0, 0, 0);
     doc.text("Información del Emprendimiento", margin, yPosition);
 
     doc.setFontSize(fontSizes.normal);
-    doc.setTextColor(0, 0, 0);
     const nombreComercial = caracterizacionData["Nombre comercial"] || 'No disponible';
     const localidadNombre = getColumnDisplayValue("Localidad unidad RIC", caracterizacionData["Localidad unidad RIC"]);
     const barrioNombre = getColumnDisplayValue("Barrio de residencia", caracterizacionData["Barrio de residencia"]);
@@ -212,13 +225,12 @@ export default function GenerarPDF({ id }) {
       yPosition += lines.length * 12;
     });
 
+    // Información del emprendedor
     doc.setFontSize(fontSizes.subtitle);
-    doc.setTextColor(...blueColor);
     yPosition += 10;
     doc.text("Información del Emprendedor", margin, yPosition);
 
     doc.setFontSize(fontSizes.normal);
-    doc.setTextColor(0, 0, 0);
     const nombreEmprendedor = [
       caracterizacionData["Primer nombre"] || '',
       caracterizacionData["Otros nombres"] || '',
@@ -243,16 +255,15 @@ export default function GenerarPDF({ id }) {
       yPosition += lines.length * 12;
     });
 
+    // Plan de Inversión
     doc.setFontSize(fontSizes.title);
     yPosition += 20;
-    yPosition = checkPageEnd(doc, yPosition, 25);
     doc.setFillColor(...blueColor);
     doc.rect(margin, yPosition, maxLineWidth, 25, 'F');
-    doc.setTextColor(255, 255, 255);
     doc.text("Plan de Inversión", pageWidth / 2, yPosition + 18, { align: 'center' });
 
+    // Datos de pi_datos
     doc.setFontSize(fontSizes.normal);
-    doc.setTextColor(0, 0, 0);
     yPosition += 40;
     const datosKeys = [
       "Tiempo de dedicacion al negocio (Parcial o Completo)",
@@ -279,29 +290,31 @@ export default function GenerarPDF({ id }) {
       const label = key.replace(/_/g, ' ') + ':';
       const value = datosTab[key] || 'No disponible';
 
+      // Texto en negrita para el label
       doc.setFont(undefined, 'bold');
       const labelLines = doc.splitTextToSize(label, maxLineWidth);
       yPosition = checkPageEnd(doc, yPosition, labelLines.length * 12);
       doc.text(labelLines, margin, yPosition);
       yPosition += labelLines.length * 12;
 
+      // Salto de línea y texto normal para el valor
       doc.setFont(undefined, 'normal');
       const valueLines = doc.splitTextToSize(value, maxLineWidth);
       yPosition = checkPageEnd(doc, yPosition, valueLines.length * 12);
       doc.text(valueLines, margin, yPosition);
-      yPosition += valueLines.length * 12 + 5;
+      yPosition += valueLines.length * 12 + 5; // Espacio adicional entre entradas
     });
 
+    // DIAGNÓSTICO DEL NEGOCIO Y PROPUESTA DE MEJORA
     doc.setFontSize(fontSizes.title);
     yPosition += 20;
-    yPosition = checkPageEnd(doc, yPosition, 25);
     doc.setFillColor(...blueColor);
     doc.rect(margin, yPosition, maxLineWidth, 25, 'F');
-    doc.setTextColor(255, 255, 255);
     doc.text("Diagnóstico del Negocio y Propuesta de Mejora", pageWidth / 2, yPosition + 18, { align: 'center' });
 
     yPosition += 30;
 
+    // Preparar datos para la tabla de Diagnóstico
     const diagnosticoTableData = diagnosticoData.map((item, index) => ({
       index: index + 1,
       area: item["Area de fortalecimiento"] || 'No disponible',
@@ -331,8 +344,8 @@ export default function GenerarPDF({ id }) {
 
     yPosition = doc.lastAutoTable.finalY + 20 || yPosition + 20;
 
+    // DESCRIPCIÓN ACTIVOS ACTUALES
     doc.setFontSize(fontSizes.title);
-    yPosition = checkPageEnd(doc, yPosition, 25);
     doc.setFillColor(...blueColor);
     doc.rect(margin, yPosition, maxLineWidth, 25, 'F');
     doc.text("Descripción de Activos Actuales", pageWidth / 2, yPosition + 18, { align: 'center' });
@@ -372,11 +385,11 @@ export default function GenerarPDF({ id }) {
 
     yPosition = doc.lastAutoTable.finalY + 20 || yPosition + 20;
 
+    // DESCRIPCIÓN DE LAS CARACTERÍSTICAS DEL ESPACIO
     doc.setFontSize(fontSizes.title);
-    yPosition = checkPageEnd(doc, yPosition, 25);
     doc.setFillColor(...blueColor);
     doc.rect(margin, yPosition, maxLineWidth, 25, 'F');
-    doc.text("Descripción de las Características del Espacio Disponible para la Instalación y/o Utilización del (los) Bien(es) de Inversión", pageWidth / 2, yPosition + 18, { align: 'center' });
+    doc.text("Descripción de las Características del Espacio", pageWidth / 2, yPosition + 18, { align: 'center' });
 
     yPosition += 30;
 
@@ -413,8 +426,8 @@ export default function GenerarPDF({ id }) {
 
     yPosition = doc.lastAutoTable.finalY + 20 || yPosition + 20;
 
+    // Productos Seleccionados
     doc.setFontSize(fontSizes.title);
-    yPosition = checkPageEnd(doc, yPosition, 25);
     doc.setFillColor(...blueColor);
     doc.rect(margin, yPosition, maxLineWidth, 25, 'F');
     doc.text("Productos Seleccionados", pageWidth / 2, yPosition + 18, { align: 'center' });
@@ -468,8 +481,8 @@ export default function GenerarPDF({ id }) {
 
     yPosition = doc.lastAutoTable.finalY + 20 || yPosition + 20;
 
+    // Resumen de la Inversión
     doc.setFontSize(fontSizes.title);
-    yPosition = checkPageEnd(doc, yPosition, 25);
     doc.setFillColor(...blueColor);
     doc.rect(margin, yPosition, maxLineWidth, 25, 'F');
     doc.text("Resumen de la Inversión", pageWidth / 2, yPosition + 18, { align: 'center' });
@@ -489,6 +502,9 @@ export default function GenerarPDF({ id }) {
       styles: { fontSize: 10, cellPadding: 4 },
       headStyles: { fillColor: blueColor, textColor: [255, 255, 255], fontStyle: 'bold' },
       margin: { left: margin, right: margin },
+      didDrawPage: (data) => {
+        yPosition = data.cursor.y;
+      },
     });
 
     yPosition = doc.lastAutoTable.finalY + 10 || yPosition + 10;
@@ -505,6 +521,7 @@ export default function GenerarPDF({ id }) {
     yPosition += 20;
     doc.setFontSize(fontSizes.normal);
 
+    // Texto de la sección CONCEPTO DE VIABILIDAD
     const textoViabilidad = [
       "Yo, Nombre del asesor, identificado con documento de identidad 123456789 expedido en la ciudad de BOGOTÁ, en mi calidad de asesor empresarial del micronegocio denominado Nombre del emprendimiento y haciendo parte del equipo ejecutor del programa “Impulso Capital” suscrito entre la Corporación para el Desarrollo de las Microempresas - Propaís y la Secretaría de Desarrollo Económico - SDDE, emito concepto de VIABILIDAD para que el emprendedor pueda acceder a los recursos de capitalización proporcionados por el citado programa.",
       "",
@@ -517,7 +534,7 @@ export default function GenerarPDF({ id }) {
       const lines = doc.splitTextToSize(parrafo, maxLineWidth);
       yPosition = checkPageEnd(doc, yPosition, lines.length * 12);
       doc.text(lines, margin, yPosition);
-      yPosition += lines.length * 12 + 10;
+      yPosition += lines.length * 12 + 10; // Añadimos un espacio adicional entre párrafos
     });
 
     yPosition += 20;
@@ -548,14 +565,16 @@ export default function GenerarPDF({ id }) {
     yPosition += 15;
     doc.text(fecha.toLocaleDateString() + ' ' + fecha.toLocaleTimeString(), pageWidth / 2, yPosition, { align: 'center' });
 
+    // Descargar PDF
     doc.save('Informe_Emprendimiento.pdf');
   };
 
+  // Función para verificar el final de la página y agregar una nueva si es necesario
   const checkPageEnd = (doc, currentY, addedHeight) => {
     const pageHeight = doc.internal.pageSize.getHeight();
-    if (currentY + addedHeight > pageHeight - 40) {
+    if (currentY + addedHeight > pageHeight - 40) { // Dejamos un margen inferior de 40
       doc.addPage();
-      currentY = 40;
+      currentY = 40; // Reiniciamos yPosition al margen superior después de agregar una nueva página
     }
     return currentY;
   };
@@ -570,6 +589,7 @@ export default function GenerarPDF({ id }) {
     </div>
   );
 }
+
 
 
 
