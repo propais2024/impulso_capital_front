@@ -3,6 +3,9 @@ import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 import axios from 'axios';
 
+// Importar la imagen
+import bannerImage from '../assets/img/Banner_Impulso_Capital_logos.jpg';
+
 export default function GenerarPDF({ id }) {
   const [caracterizacionData, setCaracterizacionData] = useState({});
   const [datosTab, setDatosTab] = useState({});
@@ -218,11 +221,28 @@ export default function GenerarPDF({ id }) {
     const blueColor = [77, 20, 140]; // Color #4D148C
 
     // Encabezado
-    doc.setFontSize(fontSizes.title);
-    doc.setFillColor(...blueColor);
-    doc.rect(margin, 40, maxLineWidth, 25, 'F');
-    doc.setTextColor(255, 255, 255);
-    doc.text("Espacio para Header", pageWidth / 2, 58, { align: 'center' });
+     // Función para convertir imagen a base64
+     const getImageDataUrl = (img) => {
+        const canvas = document.createElement('canvas');
+        canvas.width = img.width;
+        canvas.height = img.height;
+  
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0);
+  
+        return canvas.toDataURL('image/jpeg');
+      };
+  
+      // Cargar la imagen y generar el PDF después
+      const img = new Image();
+      img.src = bannerImage;
+      img.onload = () => {
+        const imgData = getImageDataUrl(img);
+  
+        // Encabezado con imagen
+        doc.addImage(imgData, 'JPEG', margin, 40, maxLineWidth, 60);
+  
+        yPosition = 110; // Ajustar la posición vertical después del encabezado
 
     // Información del emprendimiento
     doc.setFontSize(fontSizes.subtitle);
