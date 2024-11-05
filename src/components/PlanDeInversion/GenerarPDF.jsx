@@ -220,394 +220,394 @@ export default function GenerarPDF({ id }) {
     };
     const blueColor = [77, 20, 140]; // Color #4D148C
 
-    // Encabezado
-     // Función para convertir imagen a base64
-     const getImageDataUrl = (img) => {
-        const canvas = document.createElement('canvas');
-        canvas.width = img.width;
-        canvas.height = img.height;
-  
-        const ctx = canvas.getContext('2d');
-        ctx.drawImage(img, 0, 0);
-  
-        return canvas.toDataURL('image/jpeg');
-      };
-  
-      // Cargar la imagen y generar el PDF después
-      const img = new Image();
-      img.src = bannerImage;
-      img.onload = () => {
-        const imgData = getImageDataUrl(img);
-  
-        // Encabezado con imagen
-        doc.addImage(imgData, 'JPEG', margin, 40, maxLineWidth, 60);
-  
-        yPosition = 110; // Ajustar la posición vertical después del encabezado
+    // Función para convertir imagen a base64
+    const getImageDataUrl = (img) => {
+      const canvas = document.createElement('canvas');
+      canvas.width = img.width;
+      canvas.height = img.height;
 
-    // Información del emprendimiento
-    doc.setFontSize(fontSizes.subtitle);
-    doc.setTextColor(0, 0, 0);
-    doc.text("Información del Emprendimiento", margin, yPosition);
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0);
 
-    doc.setFontSize(fontSizes.normal);
-    const nombreComercial = caracterizacionData["Nombre comercial"] || 'No disponible';
-    const localidadNombre = getColumnDisplayValue("Localidad unidad RIC", caracterizacionData["Localidad unidad RIC"]);
-    const barrioNombre = getColumnDisplayValue("Barrio de residencia", caracterizacionData["Barrio de residencia"]);
-    const direccion = caracterizacionData["Direccion unidad RIC"] || 'No disponible';
-    const numeroContacto = caracterizacionData["Numero movil 1 ciudadano"] || 'No disponible';
+      return canvas.toDataURL('image/jpeg');
+    };
 
-    yPosition += 20;
-    const infoEmprendimiento = [
-      `Nombre comercial: ${nombreComercial}`,
-      `Localidad: ${localidadNombre || 'No disponible'}`,
-      `Barrio: ${barrioNombre || 'No disponible'}`,
-      `Dirección: ${direccion}`,
-      `Número de contacto: ${numeroContacto}`,
-    ];
+    // Cargar la imagen y generar el PDF después
+    const img = new Image();
+    img.src = bannerImage;
+    img.onload = () => {
+      const imgData = getImageDataUrl(img);
 
-    infoEmprendimiento.forEach(text => {
-      const lines = doc.splitTextToSize(text, maxLineWidth);
-      yPosition = checkPageEnd(doc, yPosition, lines.length * 12);
-      doc.text(lines, margin, yPosition);
-      yPosition += lines.length * 12;
-    });
+      // Encabezado con imagen
+      doc.addImage(imgData, 'JPEG', margin, 40, maxLineWidth, 60);
 
-    // Información del emprendedor
-    doc.setFontSize(fontSizes.subtitle);
-    yPosition += 10;
-    doc.text("Información del Emprendedor", margin, yPosition);
+      yPosition = 110; // Ajustar la posición vertical después del encabezado
 
-    doc.setFontSize(fontSizes.normal);
-    const tipoDocumento = getColumnDisplayValue("Tipo de documento", caracterizacionData["Tipo de documento"]);
-    const numeroDocumento = caracterizacionData["Numero de documento de identificacion ciudadano"] || 'No disponible';
+      // Información del emprendimiento
+      doc.setFontSize(fontSizes.subtitle);
+      doc.setTextColor(0, 0, 0);
+      doc.text("Información del Emprendimiento", margin, yPosition);
 
-    yPosition += 20;
-    const infoEmprendedor = [
-      `Nombre emprendedor: ${emprendedorNombre}`,
-      `Tipo documento identidad: ${tipoDocumento || 'No disponible'}`,
-      `Número documento identidad: ${numeroDocumento}`,
-    ];
+      doc.setFontSize(fontSizes.normal);
+      const nombreComercial = caracterizacionData["Nombre comercial"] || 'No disponible';
+      const localidadNombre = getColumnDisplayValue("Localidad unidad RIC", caracterizacionData["Localidad unidad RIC"]);
+      const barrioNombre = getColumnDisplayValue("Barrio de residencia", caracterizacionData["Barrio de residencia"]);
+      const direccion = caracterizacionData["Direccion unidad RIC"] || 'No disponible';
+      const numeroContacto = caracterizacionData["Numero movil 1 ciudadano"] || 'No disponible';
 
-    infoEmprendedor.forEach(text => {
-      const lines = doc.splitTextToSize(text, maxLineWidth);
-      yPosition = checkPageEnd(doc, yPosition, lines.length * 12);
-      doc.text(lines, margin, yPosition);
-      yPosition += lines.length * 12;
-    });
+      yPosition += 20;
+      const infoEmprendimiento = [
+        `Nombre comercial: ${nombreComercial}`,
+        `Localidad: ${localidadNombre || 'No disponible'}`,
+        `Barrio: ${barrioNombre || 'No disponible'}`,
+        `Dirección: ${direccion}`,
+        `Número de contacto: ${numeroContacto}`,
+      ];
 
-    // Plan de Inversión
-    doc.setFontSize(fontSizes.title);
-    yPosition += 20;
-    doc.setFillColor(255, 255, 255);
-    doc.rect(margin, yPosition, maxLineWidth, 25, 'F');
-    doc.text("Plan de Inversión", pageWidth / 2, yPosition + 18, { align: 'center' });
+      infoEmprendimiento.forEach(text => {
+        const lines = doc.splitTextToSize(text, maxLineWidth);
+        yPosition = checkPageEnd(doc, yPosition, lines.length * 12);
+        doc.text(lines, margin, yPosition);
+        yPosition += lines.length * 12;
+      });
 
-    // Datos de pi_datos
-    doc.setFontSize(fontSizes.normal);
-    yPosition += 40;
-    const datosKeys = [
-      "Tiempo de dedicacion al negocio (Parcial o Completo)",
-      "Descripcion general del negocio",
-      "Descripcion de el lugar donde desarrolla la actividad",
-      "Descripcion de los activos del negocio",
-      "Valor aproximado de los activos del negocio",
-      "Total costos fijos mensuales",
-      "Total costos variables",
-      "Total gastos mensuales",
-      "Total ventas mensuales del negocio",
-      "Descripcion de la capacidad de produccion",
-      "Valor de los gastos familiares mensuales promedio",
-      "Lleva registros separados de finanzas personales y del negocio",
-      "Usa billeteras moviles",
-      "Cual",
-      "Concepto y justificacion del valor de la capitalizacion",
-      "Como contribuira la inversion a la mejora productiva del negoci",
-      "El negocio es sujeto de participacion en espacios de conexion",
-      "Recomendaciones tecnica, administrativas y financieras"
-    ];
+      // Información del emprendedor
+      doc.setFontSize(fontSizes.subtitle);
+      yPosition += 10;
+      doc.text("Información del Emprendedor", margin, yPosition);
 
-    datosKeys.forEach(key => {
-      const label = key.replace(/_/g, ' ') + ':';
-      const value = datosTab[key] || 'No disponible';
+      doc.setFontSize(fontSizes.normal);
+      const tipoDocumento = getColumnDisplayValue("Tipo de documento", caracterizacionData["Tipo de documento"]);
+      const numeroDocumento = caracterizacionData["Numero de documento de identificacion ciudadano"] || 'No disponible';
 
-      // Texto en negrita para el label
-      doc.setFont(undefined, 'bold');
-      const labelLines = doc.splitTextToSize(label, maxLineWidth);
-      yPosition = checkPageEnd(doc, yPosition, labelLines.length * 12);
-      doc.text(labelLines, margin, yPosition);
-      yPosition += labelLines.length * 12;
+      yPosition += 20;
+      const infoEmprendedor = [
+        `Nombre emprendedor: ${emprendedorNombre}`,
+        `Tipo documento identidad: ${tipoDocumento || 'No disponible'}`,
+        `Número documento identidad: ${numeroDocumento}`,
+      ];
 
-      // Salto de línea y texto normal para el valor
-      doc.setFont(undefined, 'normal');
-      const valueLines = doc.splitTextToSize(value, maxLineWidth);
-      yPosition = checkPageEnd(doc, yPosition, valueLines.length * 12);
-      doc.text(valueLines, margin, yPosition);
-      yPosition += valueLines.length * 12 + 5; // Espacio adicional entre entradas
-    });
+      infoEmprendedor.forEach(text => {
+        const lines = doc.splitTextToSize(text, maxLineWidth);
+        yPosition = checkPageEnd(doc, yPosition, lines.length * 12);
+        doc.text(lines, margin, yPosition);
+        yPosition += lines.length * 12;
+      });
 
-    // DIAGNÓSTICO DEL NEGOCIO Y PROPUESTA DE MEJORA
-    doc.setFontSize(fontSizes.title);
-    yPosition += 20;
-    doc.setFillColor(255, 255, 255);
-    doc.rect(margin, yPosition, maxLineWidth, 25, 'F');
-    doc.text("Diagnóstico del Negocio y Propuesta de Mejora", pageWidth / 2, yPosition + 18, { align: 'center' });
+      // Plan de Inversión
+      doc.setFontSize(fontSizes.title);
+      yPosition += 20;
+      doc.setFillColor(255, 255, 255);
+      doc.rect(margin, yPosition, maxLineWidth, 25, 'F');
+      doc.text("Plan de Inversión", pageWidth / 2, yPosition + 18, { align: 'center' });
 
-    yPosition += 30;
+      // Datos de pi_datos
+      doc.setFontSize(fontSizes.normal);
+      yPosition += 40;
+      const datosKeys = [
+        "Tiempo de dedicacion al negocio (Parcial o Completo)",
+        "Descripcion general del negocio",
+        "Descripcion de el lugar donde desarrolla la actividad",
+        "Descripcion de los activos del negocio",
+        "Valor aproximado de los activos del negocio",
+        "Total costos fijos mensuales",
+        "Total costos variables",
+        "Total gastos mensuales",
+        "Total ventas mensuales del negocio",
+        "Descripcion de la capacidad de produccion",
+        "Valor de los gastos familiares mensuales promedio",
+        "Lleva registros separados de finanzas personales y del negocio",
+        "Usa billeteras moviles",
+        "Cual",
+        "Concepto y justificacion del valor de la capitalizacion",
+        "Como contribuira la inversion a la mejora productiva del negoci",
+        "El negocio es sujeto de participacion en espacios de conexion",
+        "Recomendaciones tecnica, administrativas y financieras"
+      ];
 
-    // Preparar datos para la tabla de Diagnóstico
-    const diagnosticoTableData = diagnosticoData.map((item, index) => ({
-      index: index + 1,
-      area: item["Area de fortalecimiento"] || 'No disponible',
-      descripcion: item["Descripcion del area critica por area de fortalecimiento"] || 'No disponible',
-      propuesta: item["Propuesta de mejora"] || 'No disponible',
-    }));
+      datosKeys.forEach(key => {
+        const label = key.replace(/_/g, ' ') + ':';
+        const value = datosTab[key] || 'No disponible';
 
-    const diagnosticoColumns = [
-      { header: 'No.', dataKey: 'index' },
-      { header: 'Área de Fortalecimiento', dataKey: 'area' },
-      { header: 'Descripción', dataKey: 'descripcion' },
-      { header: 'Propuesta de Mejora', dataKey: 'propuesta' },
-    ];
+        // Texto en negrita para el label
+        doc.setFont(undefined, 'bold');
+        const labelLines = doc.splitTextToSize(label, maxLineWidth);
+        yPosition = checkPageEnd(doc, yPosition, labelLines.length * 12);
+        doc.text(labelLines, margin, yPosition);
+        yPosition += labelLines.length * 12;
 
-    doc.autoTable({
-      startY: yPosition,
-      head: [diagnosticoColumns.map(col => col.header)],
-      body: diagnosticoTableData.map(row => diagnosticoColumns.map(col => row[col.dataKey])),
-      theme: 'striped',
-      styles: { fontSize: 8, cellPadding: 4 },
-      headStyles: { fillColor: blueColor, textColor: [255, 255, 255], fontStyle: 'bold' },
-      margin: { left: margin, right: margin },
-      didDrawPage: (data) => {
-        yPosition = data.cursor.y;
-      },
-    });
+        // Salto de línea y texto normal para el valor
+        doc.setFont(undefined, 'normal');
+        const valueLines = doc.splitTextToSize(value, maxLineWidth);
+        yPosition = checkPageEnd(doc, yPosition, valueLines.length * 12);
+        doc.text(valueLines, margin, yPosition);
+        yPosition += valueLines.length * 12 + 5; // Espacio adicional entre entradas
+      });
 
-    yPosition = doc.lastAutoTable.finalY + 20 || yPosition + 20;
+      // DIAGNÓSTICO DEL NEGOCIO Y PROPUESTA DE MEJORA
+      doc.setFontSize(fontSizes.title);
+      yPosition += 20;
+      doc.setFillColor(255, 255, 255);
+      doc.rect(margin, yPosition, maxLineWidth, 25, 'F');
+      doc.text("Diagnóstico del Negocio y Propuesta de Mejora", pageWidth / 2, yPosition + 18, { align: 'center' });
 
-    // DESCRIPCIÓN ACTIVOS ACTUALES
-    doc.setFontSize(fontSizes.title);
-    doc.setFillColor(255, 255, 255);
-    doc.rect(margin, yPosition, maxLineWidth, 25, 'F');
-    doc.text("Descripción de Activos Actuales", pageWidth / 2, yPosition + 18, { align: 'center' });
+      yPosition += 30;
 
-    yPosition += 30;
-
-    const activosTableData = activosData.map((item, index) => ({
-      index: index + 1,
-      equipo: item["Equipo"] || 'No disponible',
-      descripcion: item["Descripcion"] || 'No disponible',
-      vidaUtil: item["Vida util"] || 'No disponible',
-      frecuenciaUso: item["Frecuencia de uso (media alta, baja)"] || 'No disponible',
-      elementoReposicion: item["Elemento para reposicion (SI NO)"] || 'No disponible',
-    }));
-
-    const activosColumns = [
-      { header: 'No.', dataKey: 'index' },
-      { header: 'Equipo', dataKey: 'equipo' },
-      { header: 'Descripción', dataKey: 'descripcion' },
-      { header: 'Vida Útil', dataKey: 'vidaUtil' },
-      { header: 'Frecuencia de Uso', dataKey: 'frecuenciaUso' },
-      { header: 'Elemento para Reposición', dataKey: 'elementoReposicion' },
-    ];
-
-    doc.autoTable({
-      startY: yPosition,
-      head: [activosColumns.map(col => col.header)],
-      body: activosTableData.map(row => activosColumns.map(col => row[col.dataKey])),
-      theme: 'striped',
-      styles: { fontSize: 8, cellPadding: 4 },
-      headStyles: { fillColor: blueColor, textColor: [255, 255, 255], fontStyle: 'bold' },
-      margin: { left: margin, right: margin },
-      didDrawPage: (data) => {
-        yPosition = data.cursor.y;
-      },
-    });
-
-    yPosition = doc.lastAutoTable.finalY + 20 || yPosition + 20;
-
-    // DESCRIPCIÓN DE LAS CARACTERÍSTICAS DEL ESPACIO
-    doc.setFontSize(fontSizes.title);
-    doc.setFillColor(255, 255, 255);
-    doc.rect(margin, yPosition, maxLineWidth, 25, 'F');
-    doc.text("Descripción de las Características del Espacio Disponible para la Instalación y/o Utilización de los Bienes", pageWidth / 2, yPosition + 18, { align: 'center' });
-
-    yPosition += 30;
-
-    const caracteristicasTableData = caracteristicasData.map((item, index) => ({
-      index: index + 1,
-      tipoBien: item["Tipo de bien"] || 'No disponible',
-      cantidad: item["Cantidad"] || 'No disponible',
-      dimensiones: item["Dimensiones del espacio disponible"] || 'No disponible',
-      dimensionesDelBien: item["Dimensiones del bien (referencias del catalogo)"] || 'No disponible',
-      otrasCaracteristicas: item["Otras caracteristicas (tipo de voltaje requerido, entre otros)"] || 'No disponible',
-    }));
-
-    const caracteristicasColumns = [
-      { header: 'No.', dataKey: 'index' },
-      { header: 'Tipo de Bien', dataKey: 'tipoBien' },
-      { header: 'Cantidad', dataKey: 'cantidad' },
-      { header: 'Dimensiones del espacio disponible', dataKey: 'dimensiones' },
-      { header: 'Dimensiones del bien', dataKey: 'dimensionesDelBien' },
-      { header: 'Otras Características', dataKey: 'otrasCaracteristicas' },
-    ];
-
-    doc.autoTable({
-      startY: yPosition,
-      head: [caracteristicasColumns.map(col => col.header)],
-      body: caracteristicasTableData.map(row => caracteristicasColumns.map(col => row[col.dataKey])),
-      theme: 'striped',
-      styles: { fontSize: 8, cellPadding: 4 },
-      headStyles: { fillColor: blueColor, textColor: [255, 255, 255], fontStyle: 'bold' },
-      margin: { left: margin, right: margin },
-      didDrawPage: (data) => {
-        yPosition = data.cursor.y;
-      },
-    });
-
-    yPosition = doc.lastAutoTable.finalY + 20 || yPosition + 20;
-
-    // Productos Seleccionados
-    doc.setFontSize(fontSizes.title);
-    doc.setFillColor(255, 255, 255);
-    doc.rect(margin, yPosition, maxLineWidth, 25, 'F');
-    doc.text("Descripción de las Necesidades de Inversión y Valor", pageWidth / 2, yPosition + 18, { align: 'center' });
-
-    yPosition += 30;
-
-    const productosTableData = piFormulacionRecords.map((piRecord, index) => {
-      const provider = piRecord.providerData;
-      const cantidad = parseFloat(piRecord.Cantidad) || 1;
-      const precio = parseFloat(provider.Precio) || 0;
-      const total = (precio * cantidad).toFixed(2);
-
-      const rubroName = getProviderColumnDisplayValue('Rubro', provider.Rubro);
-      const elementoName = getProviderColumnDisplayValue('Elemento', provider.Elemento);
-
-      return {
+      // Preparar datos para la tabla de Diagnóstico
+      const diagnosticoTableData = diagnosticoData.map((item, index) => ({
         index: index + 1,
-        nombreProveedor: provider["Nombre proveedor"] || 'No disponible',
-        rubro: rubroName || 'No disponible',
-        elemento: elementoName || 'No disponible',
-        descripcion: provider["Descripcion corta"] || 'No disponible',
-        precioUnitario: provider.Precio || '0',
-        cantidad: cantidad.toString(),
-        total,
-      };
-    });
+        area: item["Area de fortalecimiento"] || 'No disponible',
+        descripcion: item["Descripcion del area critica por area de fortalecimiento"] || 'No disponible',
+        propuesta: item["Propuesta de mejora"] || 'No disponible',
+      }));
 
-    const productosColumns = [
-      { header: 'No.', dataKey: 'index' },
-      { header: 'Nombre Proveedor', dataKey: 'nombreProveedor' },
-      { header: 'Rubro', dataKey: 'rubro' },
-      { header: 'Elemento', dataKey: 'elemento' },
-      { header: 'Descripción', dataKey: 'descripcion' },
-      { header: 'Precio Unitario', dataKey: 'precioUnitario' },
-      { header: 'Cantidad', dataKey: 'cantidad' },
-      { header: 'Total', dataKey: 'total' },
-    ];
+      const diagnosticoColumns = [
+        { header: 'No.', dataKey: 'index' },
+        { header: 'Área de Fortalecimiento', dataKey: 'area' },
+        { header: 'Descripción', dataKey: 'descripcion' },
+        { header: 'Propuesta de Mejora', dataKey: 'propuesta' },
+      ];
 
-    doc.autoTable({
-      startY: yPosition,
-      head: [productosColumns.map(col => col.header)],
-      body: productosTableData.map(row => productosColumns.map(col => row[col.dataKey])),
-      theme: 'striped',
-      styles: { fontSize: 8, cellPadding: 4 },
-      headStyles: { fillColor: blueColor, textColor: [255, 255, 255], fontStyle: 'bold' },
-      margin: { left: margin, right: margin },
-      didDrawPage: (data) => {
-        yPosition = data.cursor.y;
-      },
-    });
+      doc.autoTable({
+        startY: yPosition,
+        head: [diagnosticoColumns.map(col => col.header)],
+        body: diagnosticoTableData.map(row => diagnosticoColumns.map(col => row[col.dataKey])),
+        theme: 'striped',
+        styles: { fontSize: 8, cellPadding: 4 },
+        headStyles: { fillColor: blueColor, textColor: [255, 255, 255], fontStyle: 'bold' },
+        margin: { left: margin, right: margin },
+        didDrawPage: (data) => {
+          yPosition = data.cursor.y;
+        },
+      });
 
-    yPosition = doc.lastAutoTable.finalY + 20 || yPosition + 20;
+      yPosition = doc.lastAutoTable.finalY + 20 || yPosition + 20;
 
-    // Resumen de la Inversión
-    doc.setFontSize(fontSizes.title);
-    doc.setFillColor(255, 255, 255);
-    doc.rect(margin, yPosition, maxLineWidth, 25, 'F');
-    doc.text("Resumen de la Inversión", pageWidth / 2, yPosition + 18, { align: 'center' });
+      // DESCRIPCIÓN ACTIVOS ACTUALES
+      doc.setFontSize(fontSizes.title);
+      doc.setFillColor(255, 255, 255);
+      doc.rect(margin, yPosition, maxLineWidth, 25, 'F');
+      doc.text("Descripción de Activos Actuales", pageWidth / 2, yPosition + 18, { align: 'center' });
 
-    yPosition += 30;
+      yPosition += 30;
 
-    const resumenColumns = [
-      { header: 'Rubro', dataKey: 'rubro' },
-      { header: 'Valor', dataKey: 'total' },
-    ];
+      const activosTableData = activosData.map((item, index) => ({
+        index: index + 1,
+        equipo: item["Equipo"] || 'No disponible',
+        descripcion: item["Descripcion"] || 'No disponible',
+        vidaUtil: item["Vida util"] || 'No disponible',
+        frecuenciaUso: item["Frecuencia de uso (media alta, baja)"] || 'No disponible',
+        elementoReposicion: item["Elemento para reposicion (SI NO)"] || 'No disponible',
+      }));
 
-    doc.autoTable({
-      startY: yPosition,
-      head: [resumenColumns.map(col => col.header)],
-      body: groupedRubros.map(row => resumenColumns.map(col => row[col.dataKey])),
-      theme: 'striped',
-      styles: { fontSize: 10, cellPadding: 4 },
-      headStyles: { fillColor: blueColor, textColor: [255, 255, 255], fontStyle: 'bold' },
-      margin: { left: margin, right: margin },
-      didDrawPage: (data) => {
-        yPosition = data.cursor.y;
-      },
-    });
+      const activosColumns = [
+        { header: 'No.', dataKey: 'index' },
+        { header: 'Equipo', dataKey: 'equipo' },
+        { header: 'Descripción', dataKey: 'descripcion' },
+        { header: 'Vida Útil', dataKey: 'vidaUtil' },
+        { header: 'Frecuencia de Uso', dataKey: 'frecuenciaUso' },
+        { header: 'Elemento para Reposición', dataKey: 'elementoReposicion' },
+      ];
 
-    yPosition = doc.lastAutoTable.finalY + 10 || yPosition + 10;
-    doc.setFontSize(fontSizes.subtitle);
-    doc.text(`Total Inversión: $${totalInversion}`, pageWidth - margin, yPosition, { align: 'right' });
+      doc.autoTable({
+        startY: yPosition,
+        head: [activosColumns.map(col => col.header)],
+        body: activosTableData.map(row => activosColumns.map(col => row[col.dataKey])),
+        theme: 'striped',
+        styles: { fontSize: 8, cellPadding: 4 },
+        headStyles: { fillColor: blueColor, textColor: [255, 255, 255], fontStyle: 'bold' },
+        margin: { left: margin, right: margin },
+        didDrawPage: (data) => {
+          yPosition = data.cursor.y;
+        },
+      });
 
-    yPosition += 30;
-    doc.setFontSize(fontSizes.title);
-    doc.setTextColor(0, 0, 0);
-    const conceptoHeader = "Concepto de Viabilidad";
-    yPosition = checkPageEnd(doc, yPosition, 25);
-    doc.text(conceptoHeader, pageWidth / 2, yPosition, { align: 'center' });
+      yPosition = doc.lastAutoTable.finalY + 20 || yPosition + 20;
 
-    yPosition += 20;
-    doc.setFontSize(fontSizes.normal);
+      // DESCRIPCIÓN DE LAS CARACTERÍSTICAS DEL ESPACIO
+      doc.setFontSize(fontSizes.title);
+      doc.setFillColor(255, 255, 255);
+      doc.rect(margin, yPosition, maxLineWidth, 25, 'F');
+      doc.text("Descripción de las Características del Espacio Disponible para la Instalación y/o Utilización de los Bienes", pageWidth / 2, yPosition + 18, { align: 'center' });
 
-    // Texto de la sección CONCEPTO DE VIABILIDAD
-    const textoViabilidad = [
-      `Yo, ${asesorNombre}, identificado con documento de identidad 123456789 expedido en la ciudad de BOGOTÁ, en mi calidad de asesor empresarial del micronegocio denominado ${nombreComercial} y haciendo parte del equipo ejecutor del programa “Impulso Capital” suscrito entre la Corporación para el Desarrollo de las Microempresas - Propaís y la Secretaría de Desarrollo Económico - SDDE, emito concepto de VIABILIDAD para que el emprendedor pueda acceder a los recursos de capitalización proporcionados por el citado programa.`,
-      "",
-      "Nota: El valor detallado en el presente documento corresponde a la planeación de las inversiones que requiere cada negocio local, sin embargo, es preciso aclarar que el programa Impulso Capital no capitalizará este valor en su totalidad, sino que fortalecerá cada unidad productiva con algunos de estos bienes hasta por $3.000.000 de pesos en total, de acuerdo con la disponibilidad de los mismos y la mayor eficiencia en el uso de los recursos públicos.",
-      "",
-      "Nota: Declaro que toda la información sobre el plan de inversión aquí consignada fue diligenciada en conjunto con el asesor empresarial a cargo, está de acuerdo con las condiciones del negocio, es verdadera, completa y correcta, la cual puede ser verificada en cualquier momento."
-    ];
+      yPosition += 30;
 
-    textoViabilidad.forEach(parrafo => {
-      const lines = doc.splitTextToSize(parrafo, maxLineWidth);
-      yPosition = checkPageEnd(doc, yPosition, lines.length * 12);
-      doc.text(lines, margin, yPosition);
-      yPosition += lines.length * 12 + 10; // Añadimos un espacio adicional entre párrafos
-    });
+      const caracteristicasTableData = caracteristicasData.map((item, index) => ({
+        index: index + 1,
+        tipoBien: item["Tipo de bien"] || 'No disponible',
+        cantidad: item["Cantidad"] || 'No disponible',
+        dimensiones: item["Dimensiones del espacio disponible"] || 'No disponible',
+        dimensionesDelBien: item["Dimensiones del bien (referencias del catalogo)"] || 'No disponible',
+        otrasCaracteristicas: item["Otras caracteristicas (tipo de voltaje requerido, entre otros)"] || 'No disponible',
+      }));
 
-    yPosition += 20;
-    doc.setFontSize(fontSizes.subtitle);
-    yPosition = checkPageEnd(doc, yPosition, 20);
-    doc.text("Firmas", pageWidth / 2, yPosition, { align: 'center' });
+      const caracteristicasColumns = [
+        { header: 'No.', dataKey: 'index' },
+        { header: 'Tipo de Bien', dataKey: 'tipoBien' },
+        { header: 'Cantidad', dataKey: 'cantidad' },
+        { header: 'Dimensiones del espacio disponible', dataKey: 'dimensiones' },
+        { header: 'Dimensiones del bien', dataKey: 'dimensionesDelBien' },
+        { header: 'Otras Características', dataKey: 'otrasCaracteristicas' },
+      ];
 
-    yPosition += 30;
-    doc.setFontSize(fontSizes.normal);
-    doc.text("Emprendedor", margin + 70, yPosition);
-    doc.text("Asesor", pageWidth - margin - 70, yPosition, { align: 'right' });
+      doc.autoTable({
+        startY: yPosition,
+        head: [caracteristicasColumns.map(col => col.header)],
+        body: caracteristicasTableData.map(row => caracteristicasColumns.map(col => row[col.dataKey])),
+        theme: 'striped',
+        styles: { fontSize: 8, cellPadding: 4 },
+        headStyles: { fillColor: blueColor, textColor: [255, 255, 255], fontStyle: 'bold' },
+        margin: { left: margin, right: margin },
+        didDrawPage: (data) => {
+          yPosition = data.cursor.y;
+        },
+      });
 
-    yPosition += 10;
-    doc.rect(margin + 30, yPosition, 150, 40);
-    doc.rect(pageWidth - margin - 180, yPosition, 150, 40);
+      yPosition = doc.lastAutoTable.finalY + 20 || yPosition + 20;
 
-    yPosition += 55;
-    doc.text(emprendedorNombre, margin + 40, yPosition);
-    doc.text(asesorNombre, pageWidth - margin - 170, yPosition);
+      // Productos Seleccionados
+      doc.setFontSize(fontSizes.title);
+      doc.setFillColor(255, 255, 255);
+      doc.rect(margin, yPosition, maxLineWidth, 25, 'F');
+      doc.text("Descripción de las Necesidades de Inversión y Valor", pageWidth / 2, yPosition + 18, { align: 'center' });
 
-    yPosition += 15;
-    const emprendedorCC = caracterizacionData["Numero de documento de identificacion ciudadano"] || 'No disponible';
-    doc.text(`C.C. ${emprendedorCC}`, margin + 70, yPosition);
-    doc.text("C.C. 123456789", pageWidth - margin - 140, yPosition); // Reemplaza con el CC real del asesor si lo tienes
+      yPosition += 30;
 
-    yPosition += 40;
-    const fecha = new Date();
-    doc.text(`Fecha y hora de generación`, pageWidth / 2, yPosition, { align: 'center' });
-    yPosition += 15;
-    doc.text(fecha.toLocaleDateString() + ' ' + fecha.toLocaleTimeString(), pageWidth / 2, yPosition, { align: 'center' });
+      const productosTableData = piFormulacionRecords.map((piRecord, index) => {
+        const provider = piRecord.providerData;
+        const cantidad = parseFloat(piRecord.Cantidad) || 1;
+        const precio = parseFloat(provider.Precio) || 0;
+        const total = (precio * cantidad).toFixed(2);
 
-    // Descargar PDF
-    doc.save('Informe_Emprendimiento.pdf');
+        const rubroName = getProviderColumnDisplayValue('Rubro', provider.Rubro);
+        const elementoName = getProviderColumnDisplayValue('Elemento', provider.Elemento);
+
+        return {
+          index: index + 1,
+          nombreProveedor: provider["Nombre proveedor"] || 'No disponible',
+          rubro: rubroName || 'No disponible',
+          elemento: elementoName || 'No disponible',
+          descripcion: provider["Descripcion corta"] || 'No disponible',
+          precioUnitario: provider.Precio || '0',
+          cantidad: cantidad.toString(),
+          total,
+        };
+      });
+
+      const productosColumns = [
+        { header: 'No.', dataKey: 'index' },
+        { header: 'Nombre Proveedor', dataKey: 'nombreProveedor' },
+        { header: 'Rubro', dataKey: 'rubro' },
+        { header: 'Elemento', dataKey: 'elemento' },
+        { header: 'Descripción', dataKey: 'descripcion' },
+        { header: 'Precio Unitario', dataKey: 'precioUnitario' },
+        { header: 'Cantidad', dataKey: 'cantidad' },
+        { header: 'Total', dataKey: 'total' },
+      ];
+
+      doc.autoTable({
+        startY: yPosition,
+        head: [productosColumns.map(col => col.header)],
+        body: productosTableData.map(row => productosColumns.map(col => row[col.dataKey])),
+        theme: 'striped',
+        styles: { fontSize: 8, cellPadding: 4 },
+        headStyles: { fillColor: blueColor, textColor: [255, 255, 255], fontStyle: 'bold' },
+        margin: { left: margin, right: margin },
+        didDrawPage: (data) => {
+          yPosition = data.cursor.y;
+        },
+      });
+
+      yPosition = doc.lastAutoTable.finalY + 20 || yPosition + 20;
+
+      // Resumen de la Inversión
+      doc.setFontSize(fontSizes.title);
+      doc.setFillColor(255, 255, 255);
+      doc.rect(margin, yPosition, maxLineWidth, 25, 'F');
+      doc.text("Resumen de la Inversión", pageWidth / 2, yPosition + 18, { align: 'center' });
+
+      yPosition += 30;
+
+      const resumenColumns = [
+        { header: 'Rubro', dataKey: 'rubro' },
+        { header: 'Valor', dataKey: 'total' },
+      ];
+
+      doc.autoTable({
+        startY: yPosition,
+        head: [resumenColumns.map(col => col.header)],
+        body: groupedRubros.map(row => resumenColumns.map(col => row[col.dataKey])),
+        theme: 'striped',
+        styles: { fontSize: 10, cellPadding: 4 },
+        headStyles: { fillColor: blueColor, textColor: [255, 255, 255], fontStyle: 'bold' },
+        margin: { left: margin, right: margin },
+        didDrawPage: (data) => {
+          yPosition = data.cursor.y;
+        },
+      });
+
+      yPosition = doc.lastAutoTable.finalY + 10 || yPosition + 10;
+      doc.setFontSize(fontSizes.subtitle);
+      doc.text(`Total Inversión: $${totalInversion}`, pageWidth - margin, yPosition, { align: 'right' });
+
+      yPosition += 30;
+      doc.setFontSize(fontSizes.title);
+      doc.setTextColor(0, 0, 0);
+      const conceptoHeader = "Concepto de Viabilidad";
+      yPosition = checkPageEnd(doc, yPosition, 25);
+      doc.text(conceptoHeader, pageWidth / 2, yPosition, { align: 'center' });
+
+      yPosition += 20;
+      doc.setFontSize(fontSizes.normal);
+
+      // Texto de la sección CONCEPTO DE VIABILIDAD
+      const textoViabilidad = [
+        `Yo, ${asesorNombre}, identificado con documento de identidad 123456789 expedido en la ciudad de BOGOTÁ, en mi calidad de asesor empresarial del micronegocio denominado ${nombreComercial} y haciendo parte del equipo ejecutor del programa “Impulso Capital” suscrito entre la Corporación para el Desarrollo de las Microempresas - Propaís y la Secretaría de Desarrollo Económico - SDDE, emito concepto de VIABILIDAD para que el emprendedor pueda acceder a los recursos de capitalización proporcionados por el citado programa.`,
+        "",
+        "Nota: El valor detallado en el presente documento corresponde a la planeación de las inversiones que requiere cada negocio local, sin embargo, es preciso aclarar que el programa Impulso Capital no capitalizará este valor en su totalidad, sino que fortalecerá cada unidad productiva con algunos de estos bienes hasta por $3.000.000 de pesos en total, de acuerdo con la disponibilidad de los mismos y la mayor eficiencia en el uso de los recursos públicos.",
+        "",
+        "Nota: Declaro que toda la información sobre el plan de inversión aquí consignada fue diligenciada en conjunto con el asesor empresarial a cargo, está de acuerdo con las condiciones del negocio, es verdadera, completa y correcta, la cual puede ser verificada en cualquier momento."
+      ];
+
+      textoViabilidad.forEach(parrafo => {
+        const lines = doc.splitTextToSize(parrafo, maxLineWidth);
+        yPosition = checkPageEnd(doc, yPosition, lines.length * 12);
+        doc.text(lines, margin, yPosition);
+        yPosition += lines.length * 12 + 10; // Añadimos un espacio adicional entre párrafos
+      });
+
+      yPosition += 20;
+      doc.setFontSize(fontSizes.subtitle);
+      yPosition = checkPageEnd(doc, yPosition, 20);
+      doc.text("Firmas", pageWidth / 2, yPosition, { align: 'center' });
+
+      yPosition += 30;
+      doc.setFontSize(fontSizes.normal);
+      doc.text("Emprendedor", margin + 70, yPosition);
+      doc.text("Asesor", pageWidth - margin - 70, yPosition, { align: 'right' });
+
+      yPosition += 10;
+      doc.rect(margin + 30, yPosition, 150, 40);
+      doc.rect(pageWidth - margin - 180, yPosition, 150, 40);
+
+      yPosition += 55;
+      doc.text(emprendedorNombre, margin + 40, yPosition);
+      doc.text(asesorNombre, pageWidth - margin - 170, yPosition);
+
+      yPosition += 15;
+      const emprendedorCC = caracterizacionData["Numero de documento de identificacion ciudadano"] || 'No disponible';
+      doc.text(`C.C. ${emprendedorCC}`, margin + 70, yPosition);
+      doc.text("C.C. 123456789", pageWidth - margin - 140, yPosition); // Reemplaza con el CC real del asesor si lo tienes
+
+      yPosition += 40;
+      const fecha = new Date();
+      doc.text(`Fecha y hora de generación`, pageWidth / 2, yPosition, { align: 'center' });
+      yPosition += 15;
+      doc.text(fecha.toLocaleDateString() + ' ' + fecha.toLocaleTimeString(), pageWidth / 2, yPosition, { align: 'center' });
+
+      // Descargar PDF
+      doc.save('Informe_Emprendimiento.pdf');
+    };
   };
 
   // Función para verificar el final de la página y agregar una nueva si es necesario
