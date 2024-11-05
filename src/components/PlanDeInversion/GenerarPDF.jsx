@@ -16,6 +16,10 @@ export default function GenerarPDF({ id }) {
   const [providerRelatedData, setProviderRelatedData] = useState({});
   const [loading, setLoading] = useState(true);
 
+  // Nuevos estados para almacenar los nombres
+  const [asesorNombre, setAsesorNombre] = useState('');
+  const [emprendedorNombre, setEmprendedorNombre] = useState('');
+
   useEffect(() => {
     const fetchData = async () => {
       if (!id) {
@@ -40,6 +44,29 @@ export default function GenerarPDF({ id }) {
           { headers: { Authorization: `Bearer ${token}` } }
         );
         setRelatedData(fieldsResponse.data.relatedData || {});
+
+        // Obtener datos del asesor
+        const asesorId = caracterizacionResponse.data.record.Asesor;
+        if (asesorId) {
+          const asesorResponse = await axios.get(
+            `https://impulso-capital-back.onrender.com/api/inscriptions/tables/users/record/${asesorId}`,
+            { headers: { Authorization: `Bearer ${token}` } }
+          );
+          const asesorData = asesorResponse.data.record;
+          const nombreAsesor = `${asesorData.first_name || ''} ${asesorData.last_name || ''}`.trim();
+          setAsesorNombre(nombreAsesor);
+        } else {
+          setAsesorNombre('No asignado');
+        }
+
+        // Obtener nombre del emprendedor
+        const nombreEmprendedor = [
+          caracterizacionResponse.data.record["Primer nombre"] || '',
+          caracterizacionResponse.data.record["Otros nombres"] || '',
+          caracterizacionResponse.data.record["Primer apellido"] || '',
+          caracterizacionResponse.data.record["Segundo apellido"] || ''
+        ].filter(Boolean).join(' ');
+        setEmprendedorNombre(nombreEmprendedor || 'No disponible');
 
         // Obtener datos de `pi_datos` para el caracterizacion_id
         const datosResponse = await axios.get(
@@ -231,19 +258,12 @@ export default function GenerarPDF({ id }) {
     doc.text("Información del Emprendedor", margin, yPosition);
 
     doc.setFontSize(fontSizes.normal);
-    const nombreEmprendedor = [
-      caracterizacionData["Primer nombre"] || '',
-      caracterizacionData["Otros nombres"] || '',
-      caracterizacionData["Primer apellido"] || '',
-      caracterizacionData["Segundo apellido"] || ''
-    ].filter(Boolean).join(' ');
-
     const tipoDocumento = getColumnDisplayValue("Tipo de documento", caracterizacionData["Tipo de documento"]);
     const numeroDocumento = caracterizacionData["Numero de documento de identificacion ciudadano"] || 'No disponible';
 
     yPosition += 20;
     const infoEmprendedor = [
-      `Nombre emprendedor: ${nombreEmprendedor || 'No disponible'}`,
+      `Nombre emprendedor: ${emprendedorNombre}`,
       `Tipo documento identidad: ${tipoDocumento || 'No disponible'}`,
       `Número documento identidad: ${numeroDocumento}`,
     ];
@@ -523,7 +543,7 @@ export default function GenerarPDF({ id }) {
 
     // Texto de la sección CONCEPTO DE VIABILIDAD
     const textoViabilidad = [
-      "Yo, Nombre del asesor, identificado con documento de identidad 123456789 expedido en la ciudad de BOGOTÁ, en mi calidad de asesor empresarial del micronegocio denominado Nombre del emprendimiento y haciendo parte del equipo ejecutor del programa “Impulso Capital” suscrito entre la Corporación para el Desarrollo de las Microempresas - Propaís y la Secretaría de Desarrollo Económico - SDDE, emito concepto de VIABILIDAD para que el emprendedor pueda acceder a los recursos de capitalización proporcionados por el citado programa.",
+      `Yo, ${asesorNombre}, identificado con documento de identidad 123456789 expedido en la ciudad de BOGOTÁ, en mi calidad de asesor empresarial del micronegocio denominado ${nombreComercial} y haciendo parte del equipo ejecutor del programa “Impulso Capital” suscrito entre la Corporación para el Desarrollo de las Microempresas - Propaís y la Secretaría de Desarrollo Económico - SDDE, emito concepto de VIABILIDAD para que el emprendedor pueda acceder a los recursos de capitalización proporcionados por el citado programa.`,
       "",
       "Nota: El valor detallado en el presente documento corresponde a la planeación de las inversiones que requiere cada negocio local, sin embargo, es preciso aclarar que el programa Impulso Capital no capitalizará este valor en su totalidad, sino que fortalecerá cada unidad productiva con algunos de estos bienes hasta por $3.000.000 de pesos en total, de acuerdo con la disponibilidad de los mismos y la mayor eficiencia en el uso de los recursos públicos.",
       "",
@@ -552,12 +572,13 @@ export default function GenerarPDF({ id }) {
     doc.rect(pageWidth - margin - 180, yPosition, 150, 40);
 
     yPosition += 55;
-    doc.text("Nombre del emprendedor", margin + 40, yPosition);
-    doc.text("Nombre del asesor", pageWidth - margin - 170, yPosition);
+    doc.text(emprendedorNombre, margin + 40, yPosition);
+    doc.text(asesorNombre, pageWidth - margin - 170, yPosition);
 
     yPosition += 15;
-    doc.text("C.C. 123456789", margin + 70, yPosition);
-    doc.text("C.C. 123456789", pageWidth - margin - 140, yPosition);
+    const emprendedorCC = caracterizacionData["Numero de documento de identificacion ciudadano"] || 'No disponible';
+    doc.text(`C.C. ${emprendedorCC}`, margin + 70, yPosition);
+    doc.text("C.C. 123456789", pageWidth - margin - 140, yPosition); // Reemplaza con el CC real del asesor si lo tienes
 
     yPosition += 40;
     const fecha = new Date();
