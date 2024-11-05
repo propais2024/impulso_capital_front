@@ -53,7 +53,7 @@ export default function GenerarPDF({ id }) {
             { headers: { Authorization: `Bearer ${token}` } }
           );
           const asesorData = asesorResponse.data.record;
-          const nombreAsesor = `${asesorData.first_name || ''} ${asesorData.last_name || ''}`.trim();
+          const nombreAsesor = asesorData.username || 'No asignado';
           setAsesorNombre(nombreAsesor);
         } else {
           setAsesorNombre('No asignado');
