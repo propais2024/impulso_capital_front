@@ -308,7 +308,7 @@ export default function GenerarPDF({ id }) {
     // DIAGNÓSTICO DEL NEGOCIO Y PROPUESTA DE MEJORA
     doc.setFontSize(fontSizes.title);
     yPosition += 20;
-    doc.setFillColor(...blueColor);
+    doc.setFillColor(255, 255, 255);
     doc.rect(margin, yPosition, maxLineWidth, 25, 'F');
     doc.text("Diagnóstico del Negocio y Propuesta de Mejora", pageWidth / 2, yPosition + 18, { align: 'center' });
 
