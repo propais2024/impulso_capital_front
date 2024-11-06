@@ -9,7 +9,7 @@ export default function FormulacionTab({ id }) {
   const [selectedRubro, setSelectedRubro] = useState('');
   const [elementos, setElementos] = useState([]);
   const [selectedElemento, setSelectedElemento] = useState('');
-  const [searchTerm, setSearchTerm] = useState(''); // Nuevo estado para el término de búsqueda
+  const [searchTerm, setSearchTerm] = useState(''); // Estado para el término de búsqueda
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [piFormulacionRecords, setPiFormulacionRecords] = useState([]);
@@ -88,12 +88,8 @@ export default function FormulacionTab({ id }) {
           headers: { Authorization: `Bearer ${token}` },
         });
 
-        const sortedRecords = recordsResponse.data.sort(
-          (a, b) => b["Puntuacion evaluacion"] - a["Puntuacion evaluacion"]
-        );
-        const topThreeRecords = sortedRecords.slice(0, 3);
-
-        setRecords(topThreeRecords);
+        // Aquí eliminamos la selección de los top 3, para hacerlo después de filtrar por descripción
+        setRecords(recordsResponse.data);
         setLoading(false);
       } catch (error) {
         console.error('Error obteniendo los registros:', error);
@@ -341,16 +337,27 @@ export default function FormulacionTab({ id }) {
     (piRecord) => piRecord["Seleccion"]
   );
 
-  // Filtrar registros basados en el término de búsqueda
+  // Filtrar registros basados en el término de búsqueda y obtener los top 3
   const filteredRecords = useMemo(() => {
-    if (!searchTerm) {
-      return records;
+    let filtered = records;
+
+    if (searchTerm) {
+      const lowercasedFilter = searchTerm.toLowerCase();
+      filtered = filtered.filter(record => {
+        const descripcionCorta = record['Descripcion corta'] || '';
+        return descripcionCorta.toLowerCase().includes(lowercasedFilter);
+      });
     }
-    const lowercasedFilter = searchTerm.toLowerCase();
-    return records.filter(record => {
-      const descripcionCorta = record['Descripcion corta'] || '';
-      return descripcionCorta.toLowerCase().includes(lowercasedFilter);
-    });
+
+    // Ordenar por "Puntuacion evaluacion"
+    const sortedRecords = filtered.sort(
+      (a, b) => b["Puntuacion evaluacion"] - a["Puntuacion evaluacion"]
+    );
+
+    // Tomar los primeros 3 registros
+    const topThreeRecords = sortedRecords.slice(0, 3);
+
+    return topThreeRecords;
   }, [records, searchTerm]);
 
   return (
