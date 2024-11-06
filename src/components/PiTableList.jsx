@@ -1,3 +1,4 @@
+// PiTableList.jsx
 import { useEffect, useState } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
@@ -19,6 +20,16 @@ export default function PiTableList() {
   const navigate = useNavigate();
   const tableName = 'inscription_caracterizacion';
 
+  // Función para obtener el ID del usuario logueado desde el localStorage
+  const getLoggedUserId = () => {
+    return localStorage.getItem('id') || null;
+  };
+
+  // Función para obtener el role_id del usuario logueado desde el localStorage
+  const getLoggedUserRoleId = () => {
+    return localStorage.getItem('role_id') || null;
+  };
+
   // Función para obtener columnas, registros y datos relacionados de la tabla
   const fetchTableData = async (savedVisibleColumns = null) => {
     try {
@@ -29,6 +40,10 @@ export default function PiTableList() {
         navigate('/login');
         return;
       }
+
+      // Obtener el ID y el role_id del usuario logueado
+      const loggedUserId = getLoggedUserId();
+      const loggedUserRoleId = getLoggedUserRoleId();
 
       // Obtener campos de la tabla
       const fieldsResponse = await axios.get(
@@ -65,7 +80,18 @@ export default function PiTableList() {
         }
       );
 
-      setRecords(recordsResponse.data);
+      let filteredRecords = recordsResponse.data;
+
+      // Filtrar los registros según el rol y el usuario
+      if (loggedUserRoleId !== '1' && loggedUserId) {
+        // Usuario NO es SuperAdmin y está logueado
+        filteredRecords = filteredRecords.filter(
+          (record) => String(record.Asesor) === String(loggedUserId)
+        );
+      }
+      // Si el usuario es 'SuperAdmin' (role_id '1'), no se aplica el filtro y se muestran todos los registros
+
+      setRecords(filteredRecords);
 
       // Obtener datos relacionados para llaves foráneas
       const relatedDataResponse = await axios.get(
@@ -147,11 +173,14 @@ export default function PiTableList() {
     }
   };
 
-  // Lógica de paginación
+  // Lógica de paginación y filtrado
   const filteredRecords = search
     ? records.filter((record) =>
         visibleColumns.some((column) =>
-          getColumnDisplayValue(record, column)?.toString().toLowerCase().includes(search.toLowerCase())
+          getColumnDisplayValue(record, column)
+            ?.toString()
+            .toLowerCase()
+            .includes(search.toLowerCase())
         )
       )
     : records;
@@ -232,28 +261,36 @@ export default function PiTableList() {
                     </tr>
                   </thead>
                   <tbody>
-                    {currentRecords.map((record) => (
-                      <tr key={record.id}>
-                        {visibleColumns.map((column) => (
-                          <td key={column}>{getColumnDisplayValue(record, column)}</td>
-                        ))}
-                        <td>
-                          <button
-                            className="btn btn-sm btn-primary mb-1"
-                            onClick={() => navigate(`/plan-inversion/${record.id}`)}
-                          >
-                            Plan de Inversión
-                          </button>
-                          <br />
-                          <button
-                            className="btn btn-sm btn-secondary"
-                            onClick={() => navigate(`/table/${tableName}/record/${record.id}`)}
-                          >
-                            Editar
-                          </button>
+                    {currentRecords.length > 0 ? (
+                      currentRecords.map((record) => (
+                        <tr key={record.id}>
+                          {visibleColumns.map((column) => (
+                            <td key={column}>{getColumnDisplayValue(record, column)}</td>
+                          ))}
+                          <td>
+                            <button
+                              className="btn btn-sm btn-primary mb-1"
+                              onClick={() => navigate(`/plan-inversion/${record.id}`)}
+                            >
+                              Plan de Inversión
+                            </button>
+                            <br />
+                            <button
+                              className="btn btn-sm btn-secondary"
+                              onClick={() => navigate(`/table/${tableName}/record/${record.id}`)}
+                            >
+                              Editar
+                            </button>
+                          </td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td colSpan={visibleColumns.length + 1} className="text-center">
+                          No hay registros para mostrar.
                         </td>
                       </tr>
-                    ))}
+                    )}
                   </tbody>
                 </table>
               )}
