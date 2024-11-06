@@ -9,6 +9,7 @@ export default function FormulacionTab({ id }) {
   const [selectedRubro, setSelectedRubro] = useState('');
   const [elementos, setElementos] = useState([]);
   const [selectedElemento, setSelectedElemento] = useState('');
+  const [searchTerm, setSearchTerm] = useState(''); // Nuevo estado para el término de búsqueda
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [piFormulacionRecords, setPiFormulacionRecords] = useState([]);
@@ -157,11 +158,13 @@ export default function FormulacionTab({ id }) {
   const handleRubroChange = (e) => {
     setSelectedRubro(e.target.value);
     setSelectedElemento('');
+    setSearchTerm(''); // Limpiar el término de búsqueda cuando se cambia el Rubro
   };
 
   // Función para manejar cambios en el Elemento seleccionado
   const handleElementoChange = (e) => {
     setSelectedElemento(e.target.value);
+    setSearchTerm(''); // Limpiar el término de búsqueda cuando se cambia el Elemento
   };
 
   // Función para obtener el nombre del Elemento
@@ -338,6 +341,18 @@ export default function FormulacionTab({ id }) {
     (piRecord) => piRecord["Seleccion"]
   );
 
+  // Filtrar registros basados en el término de búsqueda
+  const filteredRecords = useMemo(() => {
+    if (!searchTerm) {
+      return records;
+    }
+    const lowercasedFilter = searchTerm.toLowerCase();
+    return records.filter(record => {
+      const descripcionCorta = record['Descripcion corta'] || '';
+      return descripcionCorta.toLowerCase().includes(lowercasedFilter);
+    });
+  }, [records, searchTerm]);
+
   return (
     <div>
       <h3>Formulación</h3>
@@ -380,6 +395,19 @@ export default function FormulacionTab({ id }) {
             </select>
           </div>
 
+          {/* Campo de búsqueda por Descripción Corta */}
+          <div className="form-group mt-3">
+            <label>Búsqueda por Descripción Corta</label>
+            <input
+              type="text"
+              className="form-control"
+              placeholder="Buscar..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              disabled={!selectedRubro}
+            />
+          </div>
+
           <table className="table mt-3">
             <thead>
               <tr>
@@ -395,8 +423,8 @@ export default function FormulacionTab({ id }) {
               </tr>
             </thead>
             <tbody>
-              {records.length > 0 ? (
-                records.map((record) => {
+              {filteredRecords.length > 0 ? (
+                filteredRecords.map((record) => {
                   const piData = getPiFormulacionData(record.id);
 
                   return (
