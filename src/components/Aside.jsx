@@ -99,7 +99,7 @@ export default function Aside() {
                 </Link>
               </li>
 
-              {/* Gestionar Tablas: visible solo para superAdmin */}
+              {/* Gestionar Tablas: visible solo para Superadministrador */}
               {role === 1 && (
                 <li className="nav-item">
                   <Link to="/list-tables" className="nav-link">
@@ -109,7 +109,7 @@ export default function Aside() {
                 </li>
               )}
 
-              {/* Empresas: visible para superAdmin, Asesor, y Consulta */}
+              {/* Empresas: visible solo para Superadministrador, Asesor y Consulta */}
               {(role === 1 || role === 4 || role === 5) && (
                 <li className="nav-item">
                   <Link to="/dynamic-tables" className="nav-link">
@@ -119,7 +119,7 @@ export default function Aside() {
                 </li>
               )}
 
-              {/* Proveedores: visible para superAdmin y Compras */}
+              {/* Proveedores: visible solo para Superadministrador y Compras */}
               {(role === 1 || role === 3) && (
                 <li className="nav-item">
                   <Link to="/provider-tables" className="nav-link">
@@ -129,7 +129,7 @@ export default function Aside() {
                 </li>
               )}
 
-              {/* Plan de Inversión: visible solo para superAdmin */}
+              {/* Plan de Inversión: visible solo para Superadministrador */}
               {role === 1 && (
                 <li className="nav-item">
                   <Link to="/pi-tables" className="nav-link">
@@ -139,7 +139,7 @@ export default function Aside() {
                 </li>
               )}
 
-              {/* Descarga Masiva: visible solo para superAdmin */}
+              {/* Descarga Masiva: visible solo para Superadministrador */}
               {role === 1 && (
                 <li className="nav-item">
                   <Link to="/download-zip" className="nav-link">
@@ -149,7 +149,7 @@ export default function Aside() {
                 </li>
               )}
 
-              {/* Usuarios: visible solo para superAdmin y Asesor */}
+              {/* Usuarios: visible solo para Superadministrador y Asesor */}
               {(role === 1 || role === 4) && (
                 <li className="nav-item">
                   <Link to="/usuarios" className="nav-link">
