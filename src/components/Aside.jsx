@@ -99,8 +99,8 @@ export default function Aside() {
                 </Link>
               </li>
 
-              {/* Gestionar Tablas: visible solo para SuperAdmin y Administrador */}
-              {(role === 1 || role === 2) && (
+              {/* Gestionar Tablas: visible solo para SuperAdmin */}
+              {userRole === 'superAdmin' && (
                 <li className="nav-item">
                   <Link to="/list-tables" className="nav-link">
                     <i className="nav-icon fas fa-list-alt" />
@@ -117,15 +117,17 @@ export default function Aside() {
                 </Link>
               </li>
 
-              {/* Enlace a las tablas dinámicas de Proveedores */}
-              <li className="nav-item">
-                <Link to="/provider-tables" className="nav-link">
-                  <i className="nav-icon fas fa-briefcase" />
-                  <p>Proveedores</p>
-                </Link>
-              </li>
+              {/* Proveedores: visible solo para SuperAdmin */}
+              {userRole === 'superAdmin' && (
+                <li className="nav-item">
+                  <Link to="/provider-tables" className="nav-link">
+                    <i className="nav-icon fas fa-briefcase" />
+                    <p>Proveedores</p>
+                  </Link>
+                </li>
+              )}
 
-              {/* Nuevo enlace a las tablas de Plan de Inversión */}
+              {/* Plan de Inversión: visible para todos los roles */}
               <li className="nav-item">
                 <Link to="/pi-tables" className="nav-link">
                   <i className="nav-icon fas fa-chart-line" />
@@ -133,16 +135,18 @@ export default function Aside() {
                 </Link>
               </li>
 
-              {/* Enlace para Descarga Masiva */}
-              <li className="nav-item">
-                <Link to="/download-zip" className="nav-link">
-                  <i className="nav-icon fas fa-download" />
-                  <p>Descarga Masiva</p>
-                </Link>
-              </li>
+              {/* Descarga Masiva: visible solo para SuperAdmin */}
+              {userRole === 'superAdmin' && (
+                <li className="nav-item">
+                  <Link to="/download-zip" className="nav-link">
+                    <i className="nav-icon fas fa-download" />
+                    <p>Descarga Masiva</p>
+                  </Link>
+                </li>
+              )}
 
-              {/* Usuarios: visible solo para SuperAdmin y Administrador */}
-              {(role === 1 || role === 2) && (
+              {/* Usuarios: visible solo para SuperAdmin */}
+              {userRole === 'superAdmin' && (
                 <li className="nav-item">
                   <Link to="/usuarios" className="nav-link">
                     <i className="nav-icon fas fa-users" />
