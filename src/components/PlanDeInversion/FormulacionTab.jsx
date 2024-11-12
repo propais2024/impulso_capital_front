@@ -307,9 +307,9 @@ export default function FormulacionTab({ id }) {
         const provider = piRecord.providerData;
         if (provider) {
           const rubroName = getRubroName(provider.Rubro);
-          const precio = parseFloat(provider.Precio) || 0;
+          const precioCatalogo = parseFloat(provider["Valor catalogo"]) || 0;
           const cantidad = parseFloat(piRecord.Cantidad) || 1;
-          const totalPrice = precio * cantidad;
+          const totalPrice = precioCatalogo * cantidad;
 
           if (rubroMap[rubroName]) {
             rubroMap[rubroName] += totalPrice;
@@ -529,8 +529,8 @@ export default function FormulacionTab({ id }) {
                     if (!provider) return null;
 
                     const cantidad = parseFloat(piRecord.Cantidad) || 1;
-                    const precio = parseFloat(provider.Precio) || 0;
-                    const total = (precio * cantidad).toFixed(2);
+                    const precioCatalogo = parseFloat(provider["Valor catalogo"]) || 0;
+                    const total = (precioCatalogo * cantidad).toFixed(2);
 
                     return (
                       <tr key={piRecord.rel_id_prov}>
@@ -538,7 +538,7 @@ export default function FormulacionTab({ id }) {
                         <td>{getRubroName(provider.Rubro)}</td>
                         <td>{getElementoName(provider.Elemento)}</td>
                         <td>{provider["Descripcion corta"]}</td>
-                        <td>{provider.Precio}</td>
+                        <td>{provider["Valor catalogo"]}</td>
                         <td>{cantidad}</td>
                         <td>{total}</td>
                       </tr>
