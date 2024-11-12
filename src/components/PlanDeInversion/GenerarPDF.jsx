@@ -384,7 +384,13 @@ export default function GenerarPDF({ id }) {
         head: [diagnosticoColumns.map(col => col.header)],
         body: diagnosticoTableData.map(row => diagnosticoColumns.map(col => row[col.dataKey])),
         theme: 'striped',
-        styles: { fontSize: fontSizes.normal, cellPadding: 4 }, // Ajustar tamaño de fuente (3.4)
+        styles: { fontSize: fontSizes.normal, cellPadding: 4, overflow: 'linebreak' }, // Ajustar tamaño de fuente y evitar desbordamiento
+        columnStyles: {
+          0: { cellWidth: 30 },
+          1: { cellWidth: 100 },
+          2: { cellWidth: 150 },
+          3: { cellWidth: 150 },
+        },
         headStyles: { fillColor: blueColor, textColor: [255, 255, 255], fontStyle: 'bold' },
         margin: { left: margin, right: margin },
         didDrawPage: (data) => {
@@ -426,7 +432,15 @@ export default function GenerarPDF({ id }) {
         head: [activosColumns.map(col => col.header)],
         body: activosTableData.map(row => activosColumns.map(col => row[col.dataKey])),
         theme: 'striped',
-        styles: { fontSize: fontSizes.normal, cellPadding: 4 }, // Ajustar tamaño de fuente (3.4)
+        styles: { fontSize: fontSizes.normal, cellPadding: 4, overflow: 'linebreak' }, // Ajustar tamaño de fuente y evitar desbordamiento
+        columnStyles: {
+          0: { cellWidth: 30 },
+          1: { cellWidth: 100 },
+          2: { cellWidth: 150 },
+          3: { cellWidth: 80 },
+          4: { cellWidth: 80 },
+          5: { cellWidth: 80 },
+        },
         headStyles: { fillColor: blueColor, textColor: [255, 255, 255], fontStyle: 'bold' },
         margin: { left: margin, right: margin },
         didDrawPage: (data) => {
@@ -440,10 +454,17 @@ export default function GenerarPDF({ id }) {
       doc.setFontSize(fontSizes.title);
       doc.setFont(undefined, 'bold'); // Poner título en negrilla (3.4)
       doc.setFillColor(255, 255, 255);
-      doc.rect(margin, yPosition, maxLineWidth, 25, 'F');
-      doc.text("Descripción de las Características del Espacio Disponible para la Instalación y/o Utilización de los Bienes", pageWidth / 2, yPosition + 18, { align: 'center' });
 
-      yPosition += 30;
+      // Ajustar el título largo (separarlo en dos líneas)
+      const tituloCaracteristicas = "Descripción de las Características del Espacio Disponible para la Instalación y/o Utilización de los Bienes";
+      const tituloCaracteristicasLines = doc.splitTextToSize(tituloCaracteristicas, maxLineWidth);
+
+      const tituloHeight = tituloCaracteristicasLines.length * 12 + 10; // Ajustar altura del rectángulo
+
+      doc.rect(margin, yPosition, maxLineWidth, tituloHeight, 'F');
+      doc.text(tituloCaracteristicasLines, pageWidth / 2, yPosition + 18, { align: 'center' });
+
+      yPosition += tituloHeight + 5;
 
       const caracteristicasTableData = caracteristicasData.map((item, index) => ({
         index: index + 1,
@@ -468,7 +489,15 @@ export default function GenerarPDF({ id }) {
         head: [caracteristicasColumns.map(col => col.header)],
         body: caracteristicasTableData.map(row => caracteristicasColumns.map(col => row[col.dataKey])),
         theme: 'striped',
-        styles: { fontSize: fontSizes.normal, cellPadding: 4 }, // Ajustar tamaño de fuente (3.4)
+        styles: { fontSize: fontSizes.normal, cellPadding: 4, overflow: 'linebreak' }, // Ajustar tamaño de fuente y evitar desbordamiento
+        columnStyles: {
+          0: { cellWidth: 30 },
+          1: { cellWidth: 80 },
+          2: { cellWidth: 60 },
+          3: { cellWidth: 100 },
+          4: { cellWidth: 100 },
+          5: { cellWidth: 100 },
+        },
         headStyles: { fillColor: blueColor, textColor: [255, 255, 255], fontStyle: 'bold' },
         margin: { left: margin, right: margin },
         didDrawPage: (data) => {
@@ -524,7 +553,17 @@ export default function GenerarPDF({ id }) {
         head: [productosColumns.map(col => col.header)],
         body: productosTableData.map(row => productosColumns.map(col => row[col.dataKey])),
         theme: 'striped',
-        styles: { fontSize: fontSizes.normal, cellPadding: 4 }, // Ajustar tamaño de fuente (3.4)
+        styles: { fontSize: fontSizes.normal, cellPadding: 4, overflow: 'linebreak' }, // Ajustar tamaño de fuente y evitar desbordamiento
+        columnStyles: {
+          0: { cellWidth: 30 },
+          1: { cellWidth: 80 },
+          2: { cellWidth: 60 },
+          3: { cellWidth: 60 },
+          4: { cellWidth: 100 },
+          5: { cellWidth: 60 },
+          6: { cellWidth: 50 },
+          7: { cellWidth: 60 },
+        },
         headStyles: { fillColor: blueColor, textColor: [255, 255, 255], fontStyle: 'bold' },
         margin: { left: margin, right: margin },
         didDrawPage: (data) => {
@@ -556,6 +595,10 @@ export default function GenerarPDF({ id }) {
         styles: { fontSize: fontSizes.normal, cellPadding: 4 }, // Ajustar tamaño de fuente (3.4)
         headStyles: { fillColor: blueColor, textColor: [255, 255, 255], fontStyle: 'bold' },
         margin: { left: margin, right: margin },
+        columnStyles: {
+          0: { cellWidth: 300 },
+          1: { cellWidth: 100 },
+        },
         didDrawPage: (data) => {
           yPosition = data.cursor.y;
         },
@@ -603,21 +646,34 @@ export default function GenerarPDF({ id }) {
       yPosition += 30;
       doc.setFontSize(fontSizes.normal);
       doc.setFont(undefined, 'normal');
-      doc.text("Beneficiario", margin + 70, yPosition); // Cambiar "Emprendedor" por "Beneficiario" (3.1)
-      doc.text("Asesor", pageWidth - margin - 70, yPosition, { align: 'right' });
+
+      // Posiciones para las cajas de firmas
+      const boxWidth = 150;
+      const boxHeight = 40;
+
+      const beneficiarioBoxX = margin + 30;
+      const asesorBoxX = pageWidth - margin - 180;
+
+      // Posicionar etiquetas directamente encima de las cajas (ajustado)
+      doc.text("Beneficiario", beneficiarioBoxX + boxWidth / 2, yPosition, { align: 'center' });
+      doc.text("Asesor", asesorBoxX + boxWidth / 2, yPosition, { align: 'center' });
 
       yPosition += 10;
-      doc.rect(margin + 30, yPosition, 150, 40);
-      doc.rect(pageWidth - margin - 180, yPosition, 150, 40);
 
-      yPosition += 55;
-      doc.text(emprendedorNombre, margin + 40, yPosition);
-      doc.text(asesorNombre, pageWidth - margin - 170, yPosition);
+      // Dibujar cajas de firmas
+      doc.rect(beneficiarioBoxX, yPosition, boxWidth, boxHeight);
+      doc.rect(asesorBoxX, yPosition, boxWidth, boxHeight);
+
+      yPosition += boxHeight + 15;
+
+      // Nombres debajo de las cajas
+      doc.text(emprendedorNombre, beneficiarioBoxX + 10, yPosition);
+      doc.text(asesorNombre, asesorBoxX + 10, yPosition);
 
       yPosition += 15;
       const emprendedorCC = caracterizacionData["Numero de documento de identificacion ciudadano"] || 'No disponible';
-      doc.text(`C.C. ${emprendedorCC}`, margin + 70, yPosition);
-      doc.text("C.C. 123456789", pageWidth - margin - 140, yPosition); // Reemplaza con el CC real del asesor si lo tienes
+      doc.text(`C.C. ${emprendedorCC}`, beneficiarioBoxX + 10, yPosition);
+      doc.text("C.C. 123456789", asesorBoxX + 10, yPosition); // Reemplaza con el CC real del asesor si lo tienes
 
       yPosition += 40;
       const fecha = new Date();
