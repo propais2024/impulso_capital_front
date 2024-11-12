@@ -99,8 +99,8 @@ export default function Aside() {
                 </Link>
               </li>
 
-              {/* Gestionar Tablas: visible solo para superAdmin */}
-              {userRole === 'superAdmin' && (
+              {/* Gestionar Tablas: visible solo para superAdmin (role_id === 1) */}
+              {role === 1 && (
                 <li className="nav-item">
                   <Link to="/list-tables" className="nav-link">
                     <i className="nav-icon fas fa-list-alt" />
@@ -118,7 +118,7 @@ export default function Aside() {
               </li>
 
               {/* Enlace a las tablas dinámicas de Proveedores: visible solo para superAdmin */}
-              {userRole === 'superAdmin' && (
+              {role === 1 && (
                 <li className="nav-item">
                   <Link to="/provider-tables" className="nav-link">
                     <i className="nav-icon fas fa-briefcase" />
@@ -136,7 +136,7 @@ export default function Aside() {
               </li>
 
               {/* Enlace para Descarga Masiva: visible solo para superAdmin */}
-              {userRole === 'superAdmin' && (
+              {role === 1 && (
                 <li className="nav-item">
                   <Link to="/download-zip" className="nav-link">
                     <i className="nav-icon fas fa-download" />
@@ -146,7 +146,7 @@ export default function Aside() {
               )}
 
               {/* Usuarios: visible solo para superAdmin */}
-              {userRole === 'superAdmin' && (
+              {role === 1 && (
                 <li className="nav-item">
                   <Link to="/usuarios" className="nav-link">
                     <i className="nav-icon fas fa-users" />
