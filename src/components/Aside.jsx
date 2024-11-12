@@ -120,7 +120,7 @@ export default function Aside() {
               )}
 
               {/* Enlace a las tablas dinámicas de Proveedores: visible solo para superAdmin */}
-              {role === 1 && (
+              {role === 1 && role === 3 && (
                 <li className="nav-item">
                   <Link to="/provider-tables" className="nav-link">
                     <i className="nav-icon fas fa-briefcase" />
