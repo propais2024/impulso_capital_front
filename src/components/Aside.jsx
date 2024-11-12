@@ -99,7 +99,7 @@ export default function Aside() {
                 </Link>
               </li>
 
-              {/* Gestionar Tablas: visible solo para Superadministrador */}
+              {/* Gestionar Tablas: visible solo para Superadministrador (role_id === 1) */}
               {role === 1 && (
                 <li className="nav-item">
                   <Link to="/list-tables" className="nav-link">
@@ -109,8 +109,8 @@ export default function Aside() {
                 </li>
               )}
 
-              {/* Empresas: visible solo para Superadministrador, Asesor y Consulta */}
-              {(role === 1 || role === 4 || role === 5) && (
+              {/* Empresas: visible para roles 1, 2, 4, 5 */}
+              {(role === 1 || role === 2 || role === 4 || role === 5) && (
                 <li className="nav-item">
                   <Link to="/dynamic-tables" className="nav-link">
                     <i className="nav-icon fas fa-building" />
@@ -119,8 +119,8 @@ export default function Aside() {
                 </li>
               )}
 
-              {/* Proveedores: visible solo para Superadministrador y Compras */}
-              {(role === 1 || role === 3) && (
+              {/* Proveedores: visible para roles 1, 3, 5 */}
+              {(role === 1 || role === 3 || role === 5) && (
                 <li className="nav-item">
                   <Link to="/provider-tables" className="nav-link">
                     <i className="nav-icon fas fa-briefcase" />
@@ -129,8 +129,8 @@ export default function Aside() {
                 </li>
               )}
 
-              {/* Plan de Inversión: visible solo para Superadministrador */}
-              {role === 1 && (
+              {/* Plan de Inversión: visible para roles 1, 2, 4, 5 */}
+              {(role === 1 || role === 2 || role === 4 || role === 5) && (
                 <li className="nav-item">
                   <Link to="/pi-tables" className="nav-link">
                     <i className="nav-icon fas fa-chart-line" />
@@ -139,7 +139,7 @@ export default function Aside() {
                 </li>
               )}
 
-              {/* Descarga Masiva: visible solo para Superadministrador */}
+              {/* Descarga Masiva: visible solo para Superadministrador (role_id === 1) */}
               {role === 1 && (
                 <li className="nav-item">
                   <Link to="/download-zip" className="nav-link">
@@ -149,8 +149,8 @@ export default function Aside() {
                 </li>
               )}
 
-              {/* Usuarios: visible solo para Superadministrador y Asesor */}
-              {(role === 1 || role === 4) && (
+              {/* Usuarios: visible para roles 1, 2, 4 */}
+              {(role === 1 || role === 2 || role === 4) && (
                 <li className="nav-item">
                   <Link to="/usuarios" className="nav-link">
                     <i className="nav-icon fas fa-users" />
@@ -183,4 +183,3 @@ export default function Aside() {
     </>
   );
 }
-
