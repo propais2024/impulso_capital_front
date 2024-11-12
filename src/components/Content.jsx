@@ -33,7 +33,7 @@ export default function Content() {
                   {/* Iframe para Power BI */}
                   <iframe
                     title="IC 2024 VF"
-                    width="600"
+                    width="100%"
                     height="373.5"
                     src="https://app.powerbi.com/view?r=eyJrIjoiZDBhMDc0Y2QtNTI2Zi00MTAzLWJlYTgtYWQ0Y2Q4NDU3NmRkIiwidCI6IjgxNjQwZjgyLTVjNDAtNGI5Yi1hYWM2LWQzMjM4ODQ2NjcxMSIsImMiOjR9"
                     frameBorder="0"
