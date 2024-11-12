@@ -385,12 +385,7 @@ export default function GenerarPDF({ id }) {
         body: diagnosticoTableData.map(row => diagnosticoColumns.map(col => row[col.dataKey])),
         theme: 'striped',
         styles: { fontSize: fontSizes.normal, cellPadding: 4, overflow: 'linebreak' }, // Ajustar tamaño de fuente y evitar desbordamiento
-        columnStyles: {
-          0: { cellWidth: 30 },
-          1: { cellWidth: 100 },
-          2: { cellWidth: 150 },
-          3: { cellWidth: 150 },
-        },
+        tableWidth: 'auto', // Ajustar ancho de la tabla
         headStyles: { fillColor: blueColor, textColor: [255, 255, 255], fontStyle: 'bold' },
         margin: { left: margin, right: margin },
         didDrawPage: (data) => {
@@ -432,15 +427,8 @@ export default function GenerarPDF({ id }) {
         head: [activosColumns.map(col => col.header)],
         body: activosTableData.map(row => activosColumns.map(col => row[col.dataKey])),
         theme: 'striped',
-        styles: { fontSize: fontSizes.normal, cellPadding: 4, overflow: 'linebreak' }, // Ajustar tamaño de fuente y evitar desbordamiento
-        columnStyles: {
-          0: { cellWidth: 30 },
-          1: { cellWidth: 100 },
-          2: { cellWidth: 150 },
-          3: { cellWidth: 80 },
-          4: { cellWidth: 80 },
-          5: { cellWidth: 80 },
-        },
+        styles: { fontSize: fontSizes.normal, cellPadding: 4, overflow: 'linebreak' },
+        tableWidth: 'auto',
         headStyles: { fillColor: blueColor, textColor: [255, 255, 255], fontStyle: 'bold' },
         margin: { left: margin, right: margin },
         didDrawPage: (data) => {
@@ -489,15 +477,8 @@ export default function GenerarPDF({ id }) {
         head: [caracteristicasColumns.map(col => col.header)],
         body: caracteristicasTableData.map(row => caracteristicasColumns.map(col => row[col.dataKey])),
         theme: 'striped',
-        styles: { fontSize: fontSizes.normal, cellPadding: 4, overflow: 'linebreak' }, // Ajustar tamaño de fuente y evitar desbordamiento
-        columnStyles: {
-          0: { cellWidth: 30 },
-          1: { cellWidth: 80 },
-          2: { cellWidth: 60 },
-          3: { cellWidth: 100 },
-          4: { cellWidth: 100 },
-          5: { cellWidth: 100 },
-        },
+        styles: { fontSize: fontSizes.normal, cellPadding: 4, overflow: 'linebreak' },
+        tableWidth: 'auto',
         headStyles: { fillColor: blueColor, textColor: [255, 255, 255], fontStyle: 'bold' },
         margin: { left: margin, right: margin },
         didDrawPage: (data) => {
@@ -553,17 +534,8 @@ export default function GenerarPDF({ id }) {
         head: [productosColumns.map(col => col.header)],
         body: productosTableData.map(row => productosColumns.map(col => row[col.dataKey])),
         theme: 'striped',
-        styles: { fontSize: fontSizes.normal, cellPadding: 4, overflow: 'linebreak' }, // Ajustar tamaño de fuente y evitar desbordamiento
-        columnStyles: {
-          0: { cellWidth: 30 },
-          1: { cellWidth: 80 },
-          2: { cellWidth: 60 },
-          3: { cellWidth: 60 },
-          4: { cellWidth: 100 },
-          5: { cellWidth: 60 },
-          6: { cellWidth: 50 },
-          7: { cellWidth: 60 },
-        },
+        styles: { fontSize: fontSizes.normal, cellPadding: 4, overflow: 'linebreak' },
+        tableWidth: 'auto',
         headStyles: { fillColor: blueColor, textColor: [255, 255, 255], fontStyle: 'bold' },
         margin: { left: margin, right: margin },
         didDrawPage: (data) => {
@@ -592,13 +564,10 @@ export default function GenerarPDF({ id }) {
         head: [resumenColumns.map(col => col.header)],
         body: groupedRubros.map(row => resumenColumns.map(col => row[col.dataKey])),
         theme: 'striped',
-        styles: { fontSize: fontSizes.normal, cellPadding: 4 }, // Ajustar tamaño de fuente (3.4)
+        styles: { fontSize: fontSizes.normal, cellPadding: 4 },
+        tableWidth: 'auto',
         headStyles: { fillColor: blueColor, textColor: [255, 255, 255], fontStyle: 'bold' },
         margin: { left: margin, right: margin },
-        columnStyles: {
-          0: { cellWidth: 300 },
-          1: { cellWidth: 100 },
-        },
         didDrawPage: (data) => {
           yPosition = data.cursor.y;
         },
