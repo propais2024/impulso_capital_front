@@ -39,6 +39,9 @@ export default function DynamicRecordEdit() {
   // Estado para almacenar asesores
   const [asesors, setAsesors] = useState([]);
 
+  // Estado para el roleId
+  const [roleId, setRoleId] = useState(null);
+
   // Funciones para manejar el modal de estado
   const handleOpenStatusModal = () => {
     setNewStatus(record.Estado || '');
@@ -75,6 +78,12 @@ export default function DynamicRecordEdit() {
       try {
         const token = localStorage.getItem('token');
         console.log('Token usado para la solicitud:', token);
+
+        // Obtener el roleId desde localStorage
+        const roleIdStored = localStorage.getItem('role_id');
+        if (roleIdStored) {
+          setRoleId(parseInt(roleIdStored, 10));
+        }
 
         // Obtener los campos de la tabla
         const fieldsResponse = await axios.get(
@@ -138,13 +147,22 @@ export default function DynamicRecordEdit() {
         }
 
         // Verificar si el campo 'Asesor' existe y obtener asesores si es necesario
-        if (filteredFields.some(field => field.column_name === 'Asesor')) {
-          console.log('El campo Asesor existe, solicitando asesores...');
-          const asesorsResponse = await axios.get('https://impulso-capital-back.onrender.com/api/users/asesors', {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          });
+        const asesorFieldExists = filteredFields.some(
+          (field) => field.column_name === 'Asesor'
+        );
+
+        if (asesorFieldExists && roleId === 1) {
+          console.log(
+            'El campo Asesor existe y el roleId es 1, solicitando asesores...'
+          );
+          const asesorsResponse = await axios.get(
+            'https://impulso-capital-back.onrender.com/api/users/asesors',
+            {
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+            }
+          );
           console.log('Asesores obtenidos:', asesorsResponse.data);
           setAsesors(asesorsResponse.data);
         }
@@ -206,7 +224,7 @@ export default function DynamicRecordEdit() {
     };
 
     fetchRecordData();
-  }, [tableName, recordId]);
+  }, [tableName, recordId, roleId]);
 
   // Actualizar currentEstado cuando record.Estado o estadoOptions cambien
   useEffect(() => {
@@ -332,9 +350,7 @@ export default function DynamicRecordEdit() {
 
   // Manejar eliminación de archivos
   const handleFileDelete = async (fileId) => {
-    if (
-      window.confirm('¿Estás seguro de que deseas eliminar este archivo?')
-    ) {
+    if (window.confirm('¿Estás seguro de que deseas eliminar este archivo?')) {
       try {
         const token = localStorage.getItem('token');
         await axios.delete(
@@ -458,75 +474,77 @@ export default function DynamicRecordEdit() {
           ) : (
             <div className="row">
               {/* Columna izquierda */}
-              <div
-                className={isPrimaryTable ? 'col-md-8' : 'col-md-12'}
-              >
+              <div className={isPrimaryTable ? 'col-md-8' : 'col-md-12'}>
                 <form onSubmit={handleSubmit}>
-                  {fields.map((field) => (
-                    <div
-                      className="form-group"
-                      key={field.column_name}
-                    >
-                      <label>{field.column_name}</label>
+                  {fields.map((field) => {
+                    // Ocultar el campo 'Asesor' si roleId no es 1
+                    if (field.column_name === 'Asesor' && roleId !== 1) {
+                      return null;
+                    }
 
-                      {/* Campo 'id' como solo lectura */}
-                      {field.column_name === 'id' ? (
-                        <input
-                          type="text"
-                          name={field.column_name}
-                          value={record[field.column_name] || ''}
-                          className="form-control"
-                          readOnly
-                        />
-                      ) : field.column_name === 'Asesor' ? (
-                        // Renderizar Asesor como lista desplegable
-                        <select
-                          className="form-control"
-                          name={field.column_name}
-                          value={record[field.column_name] || ''}
-                          onChange={handleChange}
-                        >
-                          <option value="">-- Selecciona un Asesor --</option>
-                          {asesors.map((asesor) => (
-                            <option key={asesor.id} value={asesor.id}>
-                              {asesor.username}
-                            </option>
-                          ))}
-                        </select>
-                      ) : relatedData[field.column_name] ? (
-                        /* Si el campo tiene datos relacionados, mostrar un select */
-                        <select
-                          className="form-control"
-                          name={field.column_name}
-                          value={record[field.column_name] || ''}
-                          onChange={handleChange}
-                        >
-                          <option value="">
-                            -- Selecciona una opción --
-                          </option>
-                          {relatedData[field.column_name]?.map(
-                            (relatedRecord) => (
-                              <option
-                                key={relatedRecord.id}
-                                value={relatedRecord.id}
-                              >
-                                {relatedRecord.displayValue}
+                    return (
+                      <div className="form-group" key={field.column_name}>
+                        <label>{field.column_name}</label>
+
+                        {/* Campo 'id' como solo lectura */}
+                        {field.column_name === 'id' ? (
+                          <input
+                            type="text"
+                            name={field.column_name}
+                            value={record[field.column_name] || ''}
+                            className="form-control"
+                            readOnly
+                          />
+                        ) : field.column_name === 'Asesor' ? (
+                          // Renderizar Asesor como lista desplegable solo si roleId === 1
+                          <select
+                            className="form-control"
+                            name={field.column_name}
+                            value={record[field.column_name] || ''}
+                            onChange={handleChange}
+                          >
+                            <option value="">-- Selecciona un Asesor --</option>
+                            {asesors.map((asesor) => (
+                              <option key={asesor.id} value={asesor.id}>
+                                {asesor.username}
                               </option>
-                            )
-                          )}
-                        </select>
-                      ) : (
-                        /* Campo de texto por defecto */
-                        <input
-                          type="text"
-                          name={field.column_name}
-                          value={record[field.column_name] || ''}
-                          onChange={handleChange}
-                          className="form-control"
-                        />
-                      )}
-                    </div>
-                  ))}
+                            ))}
+                          </select>
+                        ) : relatedData[field.column_name] ? (
+                          /* Si el campo tiene datos relacionados, mostrar un select */
+                          <select
+                            className="form-control"
+                            name={field.column_name}
+                            value={record[field.column_name] || ''}
+                            onChange={handleChange}
+                          >
+                            <option value="">
+                              -- Selecciona una opción --
+                            </option>
+                            {relatedData[field.column_name]?.map(
+                              (relatedRecord) => (
+                                <option
+                                  key={relatedRecord.id}
+                                  value={relatedRecord.id}
+                                >
+                                  {relatedRecord.displayValue}
+                                </option>
+                              )
+                            )}
+                          </select>
+                        ) : (
+                          /* Campo de texto por defecto */
+                          <input
+                            type="text"
+                            name={field.column_name}
+                            value={record[field.column_name] || ''}
+                            onChange={handleChange}
+                            className="form-control"
+                          />
+                        )}
+                      </div>
+                    );
+                  })}
 
                   <button type="submit" className="btn btn-primary">
                     Guardar Cambios
@@ -559,9 +577,7 @@ export default function DynamicRecordEdit() {
                           })}
                         />
                       </div>
-                      <div className="knob-label mt-2">
-                        Calificación
-                      </div>
+                      <div className="knob-label mt-2">Calificación</div>
                     </>
                   ) : (
                     <>
@@ -583,9 +599,7 @@ export default function DynamicRecordEdit() {
                           })}
                         />
                       </div>
-                      <div className="knob-label mt-2">
-                        Completado
-                      </div>
+                      <div className="knob-label mt-2">Completado</div>
                     </>
                   )}
 
@@ -608,10 +622,7 @@ export default function DynamicRecordEdit() {
                   )}
 
                   {/* Sección de Archivos adicionales */}
-                  <div
-                    className="mt-4"
-                    style={{ width: '100%' }}
-                  >
+                  <div className="mt-4" style={{ width: '100%' }}>
                     <h5>Archivos adicionales</h5>
                     {!showUploadForm && (
                       <button
@@ -679,9 +690,7 @@ export default function DynamicRecordEdit() {
                             </div>
                             <button
                               className="btn btn-danger btn-sm"
-                              onClick={() =>
-                                handleFileDelete(file.id)
-                              }
+                              onClick={() => handleFileDelete(file.id)}
                             >
                               Eliminar
                             </button>
@@ -699,6 +708,7 @@ export default function DynamicRecordEdit() {
     </div>
   );
 }
+
 
 
 
