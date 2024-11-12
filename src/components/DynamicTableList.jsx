@@ -101,7 +101,7 @@ export default function DynamicTableList() {
 
       // Filtrar los registros según el rol y el usuario
       if (tableName === 'inscription_caracterizacion') {
-        if (loggedUserRoleId !== '1' && loggedUserId) {
+        if (loggedUserRoleId !== '1' && loggedUserRoleId !== '2' && loggedUserId) {
           // Usuario NO es SuperAdmin y está logueado
           filteredRecords = filteredRecords.filter(
             (record) => String(record.Asesor) === String(loggedUserId)
