@@ -149,9 +149,9 @@ export default function GenerarPDF({ id }) {
           const provider = piRecord.providerData;
           if (provider) {
             const rubroName = getProviderColumnDisplayValue('Rubro', provider.Rubro);
-            const precio = parseFloat(provider.Precio) || 0;
+            const precioCatalogo = parseFloat(provider["Valor catalogo"]) || 0;
             const cantidad = parseFloat(piRecord.Cantidad) || 1;
-            const totalPrice = precio * cantidad;
+            const totalPrice = precioCatalogo * cantidad;
 
             if (rubroMap[rubroName]) {
               rubroMap[rubroName] += totalPrice;
@@ -476,8 +476,8 @@ export default function GenerarPDF({ id }) {
       const productosTableData = piFormulacionRecords.map((piRecord, index) => {
         const provider = piRecord.providerData;
         const cantidad = parseFloat(piRecord.Cantidad) || 1;
-        const precio = parseFloat(provider.Precio) || 0;
-        const total = (precio * cantidad).toFixed(2);
+        const precioCatalogo = parseFloat(provider["Valor catalogo"]) || 0;
+        const total = (precioCatalogo * cantidad).toFixed(2);
 
         const rubroName = getProviderColumnDisplayValue('Rubro', provider.Rubro);
         const elementoName = getProviderColumnDisplayValue('Elemento', provider.Elemento);
@@ -488,7 +488,7 @@ export default function GenerarPDF({ id }) {
           rubro: rubroName || 'No disponible',
           elemento: elementoName || 'No disponible',
           descripcion: provider["Descripcion corta"] || 'No disponible',
-          precioUnitario: provider.Precio || '0',
+          precioUnitario: provider["Valor catalogo"] || '0',
           cantidad: cantidad.toString(),
           total,
         };
