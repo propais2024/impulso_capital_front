@@ -149,8 +149,8 @@ export default function Aside() {
                 </li>
               )}
 
-              {/* Usuarios: visible para roles 1, 2, 4 */}
-              {(role === 1 || role === 2 || role === 4) && (
+              {/* Usuarios: visible para roles 1 y 2 */}
+              {(role === 1 || role === 2) && (
                 <li className="nav-item">
                   <Link to="/usuarios" className="nav-link">
                     <i className="nav-icon fas fa-users" />
