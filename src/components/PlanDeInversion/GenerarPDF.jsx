@@ -62,7 +62,7 @@ export default function GenerarPDF({ id }) {
           setAsesorNombre('No asignado');
         }
 
-        // Obtener nombre del emprendedor
+        // Obtener nombre del beneficiario
         const nombreEmprendedor = [
           caracterizacionResponse.data.record["Primer nombre"] || '',
           caracterizacionResponse.data.record["Otros nombres"] || '',
@@ -241,14 +241,19 @@ export default function GenerarPDF({ id }) {
       // Encabezado con imagen
       doc.addImage(imgData, 'JPEG', margin, 40, maxLineWidth, 60);
 
-      yPosition = 110; // Ajustar la posición vertical después del encabezado
+      yPosition = 130; // Ajustar la posición vertical después del encabezado (3.3)
 
-      // Información del emprendimiento
+      // Información del Negocio Local (3.1)
       doc.setFontSize(fontSizes.subtitle);
       doc.setTextColor(0, 0, 0);
-      doc.text("Información del Emprendimiento", margin, yPosition);
+      yPosition += 10; // Añadir espacio adicional (3.3)
+      doc.text("Información del Negocio Local", margin, yPosition);
 
       doc.setFontSize(fontSizes.normal);
+      doc.setFont(undefined, 'normal');
+
+      // Agregar ID de Negocio Local encima de Nombre comercial (3.2)
+      const negocioId = id;
       const nombreComercial = caracterizacionData["Nombre comercial"] || 'No disponible';
       const localidadNombre = getColumnDisplayValue("Localidad unidad RIC", caracterizacionData["Localidad unidad RIC"]);
       const barrioNombre = getColumnDisplayValue("Barrio de residencia", caracterizacionData["Barrio de residencia"]);
@@ -257,6 +262,7 @@ export default function GenerarPDF({ id }) {
 
       yPosition += 20;
       const infoEmprendimiento = [
+        `ID de Negocio Local: ${negocioId}`, // (3.2)
         `Nombre comercial: ${nombreComercial}`,
         `Localidad: ${localidadNombre || 'No disponible'}`,
         `Barrio: ${barrioNombre || 'No disponible'}`,
@@ -271,18 +277,20 @@ export default function GenerarPDF({ id }) {
         yPosition += lines.length * 12;
       });
 
-      // Información del emprendedor
+      // Información del Beneficiario (3.1)
       doc.setFontSize(fontSizes.subtitle);
+      doc.setFont(undefined, 'bold');
       yPosition += 10;
-      doc.text("Información del Emprendedor", margin, yPosition);
+      doc.text("Información del Beneficiario", margin, yPosition);
 
       doc.setFontSize(fontSizes.normal);
+      doc.setFont(undefined, 'normal');
       const tipoDocumento = getColumnDisplayValue("Tipo de documento", caracterizacionData["Tipo de documento"]);
       const numeroDocumento = caracterizacionData["Numero de documento de identificacion ciudadano"] || 'No disponible';
 
       yPosition += 20;
       const infoEmprendedor = [
-        `Nombre emprendedor: ${emprendedorNombre}`,
+        `Nombre beneficiario: ${emprendedorNombre}`, // (3.1)
         `Tipo documento identidad: ${tipoDocumento || 'No disponible'}`,
         `Número documento identidad: ${numeroDocumento}`,
       ];
@@ -296,6 +304,7 @@ export default function GenerarPDF({ id }) {
 
       // Plan de Inversión
       doc.setFontSize(fontSizes.title);
+      doc.setFont(undefined, 'bold'); // Poner título en negrilla (3.4)
       yPosition += 20;
       doc.setFillColor(255, 255, 255);
       doc.rect(margin, yPosition, maxLineWidth, 25, 'F');
@@ -303,6 +312,7 @@ export default function GenerarPDF({ id }) {
 
       // Datos de pi_datos
       doc.setFontSize(fontSizes.normal);
+      doc.setFont(undefined, 'normal');
       yPosition += 40;
       const datosKeys = [
         "Tiempo de dedicacion al negocio (Parcial o Completo)",
@@ -346,6 +356,7 @@ export default function GenerarPDF({ id }) {
 
       // DIAGNÓSTICO DEL NEGOCIO Y PROPUESTA DE MEJORA
       doc.setFontSize(fontSizes.title);
+      doc.setFont(undefined, 'bold'); // Poner título en negrilla (3.4)
       yPosition += 20;
       doc.setFillColor(255, 255, 255);
       doc.rect(margin, yPosition, maxLineWidth, 25, 'F');
@@ -373,7 +384,7 @@ export default function GenerarPDF({ id }) {
         head: [diagnosticoColumns.map(col => col.header)],
         body: diagnosticoTableData.map(row => diagnosticoColumns.map(col => row[col.dataKey])),
         theme: 'striped',
-        styles: { fontSize: 8, cellPadding: 4 },
+        styles: { fontSize: fontSizes.normal, cellPadding: 4 }, // Ajustar tamaño de fuente (3.4)
         headStyles: { fillColor: blueColor, textColor: [255, 255, 255], fontStyle: 'bold' },
         margin: { left: margin, right: margin },
         didDrawPage: (data) => {
@@ -385,6 +396,7 @@ export default function GenerarPDF({ id }) {
 
       // DESCRIPCIÓN ACTIVOS ACTUALES
       doc.setFontSize(fontSizes.title);
+      doc.setFont(undefined, 'bold'); // Poner título en negrilla (3.4)
       doc.setFillColor(255, 255, 255);
       doc.rect(margin, yPosition, maxLineWidth, 25, 'F');
       doc.text("Descripción de Activos Actuales", pageWidth / 2, yPosition + 18, { align: 'center' });
@@ -414,7 +426,7 @@ export default function GenerarPDF({ id }) {
         head: [activosColumns.map(col => col.header)],
         body: activosTableData.map(row => activosColumns.map(col => row[col.dataKey])),
         theme: 'striped',
-        styles: { fontSize: 8, cellPadding: 4 },
+        styles: { fontSize: fontSizes.normal, cellPadding: 4 }, // Ajustar tamaño de fuente (3.4)
         headStyles: { fillColor: blueColor, textColor: [255, 255, 255], fontStyle: 'bold' },
         margin: { left: margin, right: margin },
         didDrawPage: (data) => {
@@ -426,6 +438,7 @@ export default function GenerarPDF({ id }) {
 
       // DESCRIPCIÓN DE LAS CARACTERÍSTICAS DEL ESPACIO
       doc.setFontSize(fontSizes.title);
+      doc.setFont(undefined, 'bold'); // Poner título en negrilla (3.4)
       doc.setFillColor(255, 255, 255);
       doc.rect(margin, yPosition, maxLineWidth, 25, 'F');
       doc.text("Descripción de las Características del Espacio Disponible para la Instalación y/o Utilización de los Bienes", pageWidth / 2, yPosition + 18, { align: 'center' });
@@ -455,7 +468,7 @@ export default function GenerarPDF({ id }) {
         head: [caracteristicasColumns.map(col => col.header)],
         body: caracteristicasTableData.map(row => caracteristicasColumns.map(col => row[col.dataKey])),
         theme: 'striped',
-        styles: { fontSize: 8, cellPadding: 4 },
+        styles: { fontSize: fontSizes.normal, cellPadding: 4 }, // Ajustar tamaño de fuente (3.4)
         headStyles: { fillColor: blueColor, textColor: [255, 255, 255], fontStyle: 'bold' },
         margin: { left: margin, right: margin },
         didDrawPage: (data) => {
@@ -467,6 +480,7 @@ export default function GenerarPDF({ id }) {
 
       // Productos Seleccionados
       doc.setFontSize(fontSizes.title);
+      doc.setFont(undefined, 'bold'); // Poner título en negrilla (3.4)
       doc.setFillColor(255, 255, 255);
       doc.rect(margin, yPosition, maxLineWidth, 25, 'F');
       doc.text("Descripción de las Necesidades de Inversión y Valor", pageWidth / 2, yPosition + 18, { align: 'center' });
@@ -510,7 +524,7 @@ export default function GenerarPDF({ id }) {
         head: [productosColumns.map(col => col.header)],
         body: productosTableData.map(row => productosColumns.map(col => row[col.dataKey])),
         theme: 'striped',
-        styles: { fontSize: 8, cellPadding: 4 },
+        styles: { fontSize: fontSizes.normal, cellPadding: 4 }, // Ajustar tamaño de fuente (3.4)
         headStyles: { fillColor: blueColor, textColor: [255, 255, 255], fontStyle: 'bold' },
         margin: { left: margin, right: margin },
         didDrawPage: (data) => {
@@ -522,6 +536,7 @@ export default function GenerarPDF({ id }) {
 
       // Resumen de la Inversión
       doc.setFontSize(fontSizes.title);
+      doc.setFont(undefined, 'bold'); // Poner título en negrilla (3.4)
       doc.setFillColor(255, 255, 255);
       doc.rect(margin, yPosition, maxLineWidth, 25, 'F');
       doc.text("Resumen de la Inversión", pageWidth / 2, yPosition + 18, { align: 'center' });
@@ -538,7 +553,7 @@ export default function GenerarPDF({ id }) {
         head: [resumenColumns.map(col => col.header)],
         body: groupedRubros.map(row => resumenColumns.map(col => row[col.dataKey])),
         theme: 'striped',
-        styles: { fontSize: 10, cellPadding: 4 },
+        styles: { fontSize: fontSizes.normal, cellPadding: 4 }, // Ajustar tamaño de fuente (3.4)
         headStyles: { fillColor: blueColor, textColor: [255, 255, 255], fontStyle: 'bold' },
         margin: { left: margin, right: margin },
         didDrawPage: (data) => {
@@ -548,10 +563,12 @@ export default function GenerarPDF({ id }) {
 
       yPosition = doc.lastAutoTable.finalY + 10 || yPosition + 10;
       doc.setFontSize(fontSizes.subtitle);
+      doc.setFont(undefined, 'normal');
       doc.text(`Total Inversión: $${totalInversion}`, pageWidth - margin, yPosition, { align: 'right' });
 
       yPosition += 30;
       doc.setFontSize(fontSizes.title);
+      doc.setFont(undefined, 'bold'); // Poner título en negrilla (3.4)
       doc.setTextColor(0, 0, 0);
       const conceptoHeader = "Concepto de Viabilidad";
       yPosition = checkPageEnd(doc, yPosition, 25);
@@ -559,10 +576,11 @@ export default function GenerarPDF({ id }) {
 
       yPosition += 20;
       doc.setFontSize(fontSizes.normal);
+      doc.setFont(undefined, 'normal');
 
       // Texto de la sección CONCEPTO DE VIABILIDAD
       const textoViabilidad = [
-        `Yo, ${asesorNombre}, identificado con documento de identidad 123456789 expedido en la ciudad de BOGOTÁ, en mi calidad de asesor empresarial del micronegocio denominado ${nombreComercial} y haciendo parte del equipo ejecutor del programa “Impulso Capital” suscrito entre la Corporación para el Desarrollo de las Microempresas - Propaís y la Secretaría de Desarrollo Económico - SDDE, emito concepto de VIABILIDAD para que el emprendedor pueda acceder a los recursos de capitalización proporcionados por el citado programa.`,
+        `Yo, ${asesorNombre}, identificado con documento de identidad 123456789 expedido en la ciudad de BOGOTÁ, en mi calidad de asesor empresarial del micronegocio denominado ${nombreComercial} y haciendo parte del equipo ejecutor del programa “Impulso Capital” suscrito entre la Corporación para el Desarrollo de las Microempresas - Propaís y la Secretaría de Desarrollo Económico - SDDE, emito concepto de VIABILIDAD para que el beneficiario pueda acceder a los recursos de capitalización proporcionados por el citado programa.`, // (3.1)
         "",
         "Nota: El valor detallado en el presente documento corresponde a la planeación de las inversiones que requiere cada negocio local, sin embargo, es preciso aclarar que el programa Impulso Capital no capitalizará este valor en su totalidad, sino que fortalecerá cada unidad productiva con algunos de estos bienes hasta por $3.000.000 de pesos en total, de acuerdo con la disponibilidad de los mismos y la mayor eficiencia en el uso de los recursos públicos.",
         "",
@@ -578,12 +596,14 @@ export default function GenerarPDF({ id }) {
 
       yPosition += 20;
       doc.setFontSize(fontSizes.subtitle);
+      doc.setFont(undefined, 'bold'); // Poner "Firmas" en negrilla (3.4)
       yPosition = checkPageEnd(doc, yPosition, 20);
       doc.text("Firmas", pageWidth / 2, yPosition, { align: 'center' });
 
       yPosition += 30;
       doc.setFontSize(fontSizes.normal);
-      doc.text("Emprendedor", margin + 70, yPosition);
+      doc.setFont(undefined, 'normal');
+      doc.text("Beneficiario", margin + 70, yPosition); // Cambiar "Emprendedor" por "Beneficiario" (3.1)
       doc.text("Asesor", pageWidth - margin - 70, yPosition, { align: 'right' });
 
       yPosition += 10;
@@ -606,7 +626,7 @@ export default function GenerarPDF({ id }) {
       doc.text(fecha.toLocaleDateString() + ' ' + fecha.toLocaleTimeString(), pageWidth / 2, yPosition, { align: 'center' });
 
       // Descargar PDF
-      doc.save('Informe_Emprendimiento.pdf');
+      doc.save('Informe_Negocio_Local.pdf'); // Cambiar nombre del archivo si lo deseas
     };
   };
 
