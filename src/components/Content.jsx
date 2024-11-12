@@ -33,9 +33,9 @@ export default function Content() {
                   {/* Iframe para Power BI */}
                   <iframe
                     title="IC 2024 VF"
-                    width="100%"
-                    height="541.25"
-                    src="https://app.powerbi.com/reportEmbed?reportId=60ca53c0-61e3-43bc-bb5c-f0dc4e591816&autoAuth=true&ctid=81640f82-5c40-4b9b-aac6-d32388466711"
+                    width="600"
+                    height="373.5"
+                    src="https://app.powerbi.com/view?r=eyJrIjoiZDBhMDc0Y2QtNTI2Zi00MTAzLWJlYTgtYWQ0Y2Q4NDU3NmRkIiwidCI6IjgxNjQwZjgyLTVjNDAtNGI5Yi1hYWM2LWQzMjM4ODQ2NjcxMSIsImMiOjR9"
                     frameBorder="0"
                     allowFullScreen="true"
                   ></iframe>
