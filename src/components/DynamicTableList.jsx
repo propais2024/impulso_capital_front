@@ -376,14 +376,14 @@ export default function DynamicTableList() {
                 className="btn btn-light mr-2"
                 onClick={() => setShowSearchBar(!showSearchBar)}
               >
-                {showSearchBar ? "Ocultar búsqueda" : "Mostrar búsqueda"}
+                {showSearchBar ? 'Ocultar búsqueda' : 'Mostrar búsqueda'}
               </button>
               <select
                 id="tableSelect"
                 className="form-control"
                 value={selectedTable}
                 onChange={handleTableSelect}
-                style={{ maxWidth: "250px" }}
+                style={{ maxWidth: '250px' }}
               >
                 <option value="">-- Selecciona una tabla --</option>
                 {tables.length > 0 &&
@@ -423,15 +423,15 @@ export default function DynamicTableList() {
                 </div>
               )}
 
-              {/* Select de columnas: visible solo para role_id === 1 */}
-              {getLoggedUserRoleId() === "1" && columns.length > 0 && (
+              {/* Select de columnas */}
+              {columns.length > 0 && (
                 <div className="form-group mb-3">
                   <label>Selecciona las columnas a mostrar:</label>
                   <select
                     ref={selectRef}
                     className="select2 form-control"
                     multiple="multiple"
-                    style={{ width: "100%" }}
+                    style={{ width: '100%' }}
                   >
                     {columns.map((column) => (
                       <option key={column} value={column}>
@@ -444,9 +444,7 @@ export default function DynamicTableList() {
 
               {/* Tabla de registros */}
               {loading ? (
-                <div className="d-flex justify-content-center p-3">
-                  Cargando...
-                </div>
+                <div className="d-flex justify-content-center p-3">Cargando...</div>
               ) : (
                 <>
                   <table className="table table-hover text-nowrap minimal-table">
@@ -458,8 +456,7 @@ export default function DynamicTableList() {
                               type="checkbox"
                               onChange={handleSelectAll}
                               checked={
-                                selectedRecords.length ===
-                                  currentRecords.length &&
+                                selectedRecords.length === currentRecords.length &&
                                 currentRecords.length > 0
                               }
                             />
@@ -481,25 +478,17 @@ export default function DynamicTableList() {
                                 <input
                                   type="checkbox"
                                   checked={selectedRecords.includes(record.id)}
-                                  onChange={() =>
-                                    handleCheckboxChange(record.id)
-                                  }
+                                  onChange={() => handleCheckboxChange(record.id)}
                                 />
                               </td>
                             )}
                             {visibleColumns.length > 0 ? (
                               visibleColumns.map((column) => (
-                                <td key={column}>
-                                  {getColumnDisplayValue(record, column)}
-                                </td>
+                                <td key={column}>{getColumnDisplayValue(record, column)}</td>
                               ))
                             ) : (
                               <td
-                                colSpan={
-                                  isPrimaryTable
-                                    ? columns.length + 2
-                                    : columns.length + 1
-                                }
+                                colSpan={isPrimaryTable ? columns.length + 2 : columns.length + 1}
                                 className="text-center"
                               >
                                 No hay columnas seleccionadas para mostrar.
@@ -509,9 +498,7 @@ export default function DynamicTableList() {
                               <button
                                 className="btn btn-sm btn-primary"
                                 onClick={() =>
-                                  navigate(
-                                    `/table/${selectedTable}/record/${record.id}`
-                                  )
+                                  navigate(`/table/${selectedTable}/record/${record.id}`)
                                 }
                               >
                                 Editar
@@ -541,34 +528,27 @@ export default function DynamicTableList() {
                     <div className="pagination mt-3 d-flex justify-content-center">
                       <button
                         className="btn btn-light mr-2"
-                        onClick={() =>
-                          setCurrentPage((prev) => Math.max(prev - 1, 1))
-                        }
+                        onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
                         disabled={currentPage === 1}
                       >
                         Anterior
                       </button>
-                      {Array.from(
-                        { length: totalPages },
-                        (_, index) => index + 1
-                      ).map((number) => (
-                        <button
-                          key={number}
-                          onClick={() => setCurrentPage(number)}
-                          className={`btn btn-light mr-2 ${
-                            number === currentPage ? "active" : ""
-                          }`}
-                        >
-                          {number}
-                        </button>
-                      ))}
+                      {Array.from({ length: totalPages }, (_, index) => index + 1).map(
+                        (number) => (
+                          <button
+                            key={number}
+                            onClick={() => setCurrentPage(number)}
+                            className={`btn btn-light mr-2 ${
+                              number === currentPage ? 'active' : ''
+                            }`}
+                          >
+                            {number}
+                          </button>
+                        )
+                      )}
                       <button
                         className="btn btn-light"
-                        onClick={() =>
-                          setCurrentPage((prev) =>
-                            Math.min(prev + 1, totalPages)
-                          )
-                        }
+                        onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
                         disabled={currentPage === totalPages}
                       >
                         Siguiente
@@ -587,10 +567,8 @@ export default function DynamicTableList() {
                       <label>{field}</label>
                       <select
                         className="form-control"
-                        value={bulkUpdateData[field] || ""}
-                        onChange={(e) =>
-                          handleBulkUpdateChange(field, e.target.value)
-                        }
+                        value={bulkUpdateData[field] || ''}
+                        onChange={(e) => handleBulkUpdateChange(field, e.target.value)}
                       >
                         <option value="">-- Selecciona una opción --</option>
                         {relatedData[field]?.map((option) => (

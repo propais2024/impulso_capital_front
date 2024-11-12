@@ -1,6 +1,3 @@
-[build]
-  node_version = "18.17.0" # Puedes cambiar a una versión soportada, como 18.17.0
-
 [[redirects]]
   from = "/*"
   to = "/index.html"
