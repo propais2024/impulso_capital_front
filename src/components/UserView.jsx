@@ -10,7 +10,7 @@ export default function UserView() {
   const [loading, setLoading] = useState(true);
   const [editMode, setEditMode] = useState(false);
   const [alert, setAlert] = useState({ message: '', type: '' });
-  const [updatedData, setUpdatedData] = useState({ username: '', email: '', role_id: '', password: '' });
+  const [updatedData, setUpdatedData] = useState({ username: '', email: '', role_id: '', password: '', documento: '' });
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -41,6 +41,7 @@ export default function UserView() {
           username: userResponse.data.username,
           email: userResponse.data.email,
           role_id: userResponse.data.role_id, // Almacenar el ID del rol actual
+          documento: userResponse.data.documento, // Inicializar el campo de documento
         });
         setLoading(false);
       } catch (error) {
@@ -139,6 +140,16 @@ export default function UserView() {
                           />
                         </div>
                         <div className="form-group">
+                          <label>Documento</label>
+                          <input
+                            type="text"
+                            name="documento"
+                            className="form-control"
+                            value={updatedData.documento}
+                            onChange={handleChange}
+                          />
+                        </div>
+                        <div className="form-group">
                           <label>Rol</label>
                           <select
                             name="role_id"
@@ -171,6 +182,7 @@ export default function UserView() {
                       <>
                         <p><strong>Nombre de usuario:</strong> {user.username}</p>
                         <p><strong>Email:</strong> {user.email}</p>
+                        <p><strong>Documento:</strong> {user.documento}</p>
                         <p><strong>Rol:</strong> {user.Role?.role_name || 'Sin rol'}</p>
                         <p><strong>Estado:</strong> {user.status === 1 ? 'Activo' : 'Inactivo'}</p>
                         <p><strong>Registrado:</strong> {new Date(user.created_at).toLocaleDateString()}</p>
@@ -190,3 +202,4 @@ export default function UserView() {
     </div>
   );
 }
+
