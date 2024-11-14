@@ -22,6 +22,7 @@ export default function GenerarPDF({ id }) {
   // Nuevos estados para almacenar los nombres
   const [asesorNombre, setAsesorNombre] = useState('');
   const [emprendedorNombre, setEmprendedorNombre] = useState('');
+  const [asesorDocumento, setAsesorDocumento] = useState('');
 
   useEffect(() => {
     const fetchData = async () => {
@@ -58,8 +59,13 @@ export default function GenerarPDF({ id }) {
           const asesorData = asesorResponse.data.record;
           const nombreAsesor = asesorData.username || 'No asignado';
           setAsesorNombre(nombreAsesor);
+
+          // Obtener el documento del asesor
+          const documentoAsesor = asesorData.documento || 'No disponible';
+          setAsesorDocumento(documentoAsesor);
         } else {
           setAsesorNombre('No asignado');
+          setAsesorDocumento('No disponible');
         }
 
         // Obtener nombre del beneficiario
@@ -592,7 +598,7 @@ export default function GenerarPDF({ id }) {
 
       // Texto de la sección CONCEPTO DE VIABILIDAD
       const textoViabilidad = [
-        `Yo, ${asesorNombre}, identificado con documento de identidad 123456789 expedido en la ciudad de BOGOTÁ, en mi calidad de asesor empresarial del micronegocio denominado ${nombreComercial} y haciendo parte del equipo ejecutor del programa “Impulso Capital” suscrito entre la Corporación para el Desarrollo de las Microempresas - Propaís y la Secretaría de Desarrollo Económico - SDDE, emito concepto de VIABILIDAD para que el beneficiario pueda acceder a los recursos de capitalización proporcionados por el citado programa.`, // (3.1)
+        `Yo, ${asesorNombre}, identificado con documento de identidad ${asesorDocumento} expedido en la ciudad de BOGOTÁ, en mi calidad de asesor empresarial del micronegocio denominado ${nombreComercial} y haciendo parte del equipo ejecutor del programa “Impulso Capital” suscrito entre la Corporación para el Desarrollo de las Microempresas - Propaís y la Secretaría de Desarrollo Económico - SDDE, emito concepto de VIABILIDAD para que el beneficiario pueda acceder a los recursos de capitalización proporcionados por el citado programa.`,
         "",
         "Nota: El valor detallado en el presente documento corresponde a la planeación de las inversiones que requiere cada negocio local, sin embargo, es preciso aclarar que el programa Impulso Capital no capitalizará este valor en su totalidad, sino que fortalecerá cada unidad productiva con algunos de estos bienes hasta por $3.000.000 de pesos en total, de acuerdo con la disponibilidad de los mismos y la mayor eficiencia en el uso de los recursos públicos.",
         "",
@@ -642,7 +648,7 @@ export default function GenerarPDF({ id }) {
       yPosition += 15;
       const emprendedorCC = caracterizacionData["Numero de documento de identificacion ciudadano"] || 'No disponible';
       doc.text(`C.C. ${emprendedorCC}`, beneficiarioBoxX + 10, yPosition);
-      doc.text("C.C. 123456789", asesorBoxX + 10, yPosition); // Reemplaza con el CC real del asesor si lo tienes
+      doc.text(`C.C. ${asesorDocumento}`, asesorBoxX + 10, yPosition);
 
       yPosition += 40;
       const fecha = new Date();
