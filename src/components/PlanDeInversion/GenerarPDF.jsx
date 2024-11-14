@@ -154,23 +154,26 @@ export default function GenerarPDF({ id }) {
         combinedData.forEach((piRecord) => {
           const provider = piRecord.providerData;
           if (provider) {
-            const rubroName = getProviderColumnDisplayValue('Rubro', provider.Rubro);
+            const rubroId = provider.Rubro;
             const precioCatalogo = parseFloat(provider["Valor catalogo"]) || 0;
             const cantidad = parseFloat(piRecord.Cantidad) || 1;
             const totalPrice = precioCatalogo * cantidad;
 
-            if (rubroMap[rubroName]) {
-              rubroMap[rubroName] += totalPrice;
+            if (rubroMap[rubroId]) {
+              rubroMap[rubroId] += totalPrice;
             } else {
-              rubroMap[rubroName] = totalPrice;
+              rubroMap[rubroId] = totalPrice;
             }
           }
         });
 
-        const groupedRubrosArray = Object.entries(rubroMap).map(([rubro, total]) => ({
-          rubro,
-          total: total.toFixed(2),
-        }));
+        const groupedRubrosArray = Object.entries(rubroMap).map(([rubroId, total]) => {
+          const rubroName = getProviderColumnDisplayValue('Rubro', rubroId);
+          return {
+            rubro: rubroName || 'No disponible',
+            total: total.toFixed(2),
+          };
+        });
 
         const totalInv = groupedRubrosArray.reduce(
           (acc, record) => acc + parseFloat(record.total || 0),
@@ -681,6 +684,7 @@ export default function GenerarPDF({ id }) {
     </div>
   );
 }
+
 
 
 
