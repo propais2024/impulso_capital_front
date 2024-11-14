@@ -167,10 +167,18 @@ export default function GenerarPDF({ id }) {
           }
         });
 
+        // Mapeo de IDs de Rubro a nombres
+        const rubroNamesMap = {
+          '1': 'Equipo',
+          '2': 'Herramientas',
+          '3': 'Maquinaria',
+          '4': 'Mobiliario',
+        };
+
         const groupedRubrosArray = Object.entries(rubroMap).map(([rubroId, total]) => {
-          const rubroName = getProviderColumnDisplayValue('Rubro', rubroId);
+          const rubroName = rubroNamesMap[rubroId] || 'No disponible';
           return {
-            rubro: rubroName || 'No disponible',
+            rubro: rubroName,
             total: total.toFixed(2),
           };
         });
