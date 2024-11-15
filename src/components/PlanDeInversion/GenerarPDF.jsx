@@ -423,7 +423,6 @@ export default function GenerarPDF({ id }) {
           fontStyle: 'bold',
           halign: 'center',
           valign: 'middle',
-          fillStyle: 'F',
         },
         margin: { left: margin, right: margin },
         didDrawPage: (data) => {
@@ -485,14 +484,14 @@ export default function GenerarPDF({ id }) {
           fontStyle: 'bold',
           halign: 'center',
           valign: 'middle',
-          fillStyle: 'F',
         },
         margin: { left: margin, right: margin },
         pageBreak: 'auto',
-        didDrawCell: (data) => {
-          // Si es una nueva página, ajustar yPosition
-          if (data.row.section === 'head' && data.cell.y < margin) {
-            yPosition = data.cell.y + data.cell.height;
+        willDrawCell: (data) => {
+          if (data.section === 'head') {
+            data.cell.styles.fillColor = blueColor; // Aplicar color solo al encabezado
+          } else {
+            data.cell.styles.fillColor = null; // Sin color de relleno en celdas de datos
           }
         },
       });
@@ -535,6 +534,7 @@ export default function GenerarPDF({ id }) {
         { header: 'Otras Características', dataKey: 'otrasCaracteristicas' },
       ];
 
+      // Solución al problema del recuadro negro
       doc.autoTable({
         startY: yPosition,
         head: [caracteristicasColumns.map(col => col.header)],
@@ -553,13 +553,14 @@ export default function GenerarPDF({ id }) {
           fontStyle: 'bold',
           halign: 'center',
           valign: 'middle',
-          fillStyle: 'F',
         },
         margin: { left: margin, right: margin },
         pageBreak: 'auto',
-        didDrawCell: (data) => {
-          if (data.row.section === 'head' && data.cell.y < margin) {
-            yPosition = data.cell.y + data.cell.height;
+        willDrawCell: (data) => {
+          if (data.section === 'head') {
+            data.cell.styles.fillColor = blueColor;
+          } else {
+            data.cell.styles.fillColor = null;
           }
         },
       });
@@ -629,13 +630,14 @@ export default function GenerarPDF({ id }) {
           fontStyle: 'bold',
           halign: 'center',
           valign: 'middle',
-          fillStyle: 'F',
         },
         margin: { left: margin, right: margin },
         pageBreak: 'auto',
-        didDrawCell: (data) => {
-          if (data.row.section === 'head' && data.cell.y < margin) {
-            yPosition = data.cell.y + data.cell.height;
+        willDrawCell: (data) => {
+          if (data.section === 'head') {
+            data.cell.styles.fillColor = blueColor;
+          } else {
+            data.cell.styles.fillColor = null;
           }
         },
       });
@@ -677,13 +679,14 @@ export default function GenerarPDF({ id }) {
           fontStyle: 'bold',
           halign: 'center',
           valign: 'middle',
-          fillStyle: 'F',
         },
         margin: { left: margin, right: margin },
         pageBreak: 'auto',
-        didDrawCell: (data) => {
-          if (data.row.section === 'head' && data.cell.y < margin) {
-            yPosition = data.cell.y + data.cell.height;
+        willDrawCell: (data) => {
+          if (data.section === 'head') {
+            data.cell.styles.fillColor = blueColor;
+          } else {
+            data.cell.styles.fillColor = null;
           }
         },
       });
@@ -800,6 +803,7 @@ export default function GenerarPDF({ id }) {
     </div>
   );
 }
+
 
 
 
