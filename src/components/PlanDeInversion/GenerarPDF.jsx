@@ -1,3 +1,5 @@
+// GenerarPDF.jsx
+
 import React, { useState, useEffect } from 'react';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
@@ -258,18 +260,18 @@ export default function GenerarPDF({ id }) {
       // Encabezado con imagen
       doc.addImage(imgData, 'JPEG', margin, 40, maxLineWidth, 60);
 
-      yPosition = 130; // Ajustar la posición vertical después del encabezado (3.3)
+      yPosition = 130; // Ajustar la posición vertical después del encabezado
 
-      // Información del Negocio Local (3.1)
+      // Información del Negocio Local
       doc.setFontSize(fontSizes.subtitle);
       doc.setTextColor(0, 0, 0);
-      yPosition += 10; // Añadir espacio adicional (3.3)
+      yPosition += 10; // Añadir espacio adicional
       doc.text("Información del Negocio Local", margin, yPosition);
 
       doc.setFontSize(fontSizes.normal);
       doc.setFont(undefined, 'normal');
 
-      // Agregar ID de Negocio Local encima de Nombre comercial (3.2)
+      // Agregar ID de Negocio Local encima de Nombre comercial
       const negocioId = id;
       const nombreComercial = caracterizacionData["Nombre comercial"] || 'No disponible';
       const localidadNombre = getColumnDisplayValue("Localidad unidad RIC", caracterizacionData["Localidad unidad RIC"]);
@@ -279,7 +281,7 @@ export default function GenerarPDF({ id }) {
 
       yPosition += 20;
       const infoEmprendimiento = [
-        `ID de Negocio Local: ${negocioId}`, // (3.2)
+        `ID de Negocio Local: ${negocioId}`,
         `Nombre comercial: ${nombreComercial}`,
         `Localidad: ${localidadNombre || 'No disponible'}`,
         `Barrio: ${barrioNombre || 'No disponible'}`,
@@ -289,12 +291,13 @@ export default function GenerarPDF({ id }) {
 
       infoEmprendimiento.forEach(text => {
         const lines = doc.splitTextToSize(text, maxLineWidth);
-        yPosition = checkPageEnd(doc, yPosition, lines.length * 12);
+        const blockHeight = lines.length * 12;
+        yPosition = checkPageEnd(doc, yPosition, blockHeight);
         doc.text(lines, margin, yPosition);
-        yPosition += lines.length * 12;
+        yPosition += blockHeight;
       });
 
-      // Información del Beneficiario (3.1)
+      // Información del Beneficiario
       doc.setFontSize(fontSizes.subtitle);
       doc.setFont(undefined, 'bold');
       yPosition += 10;
@@ -307,30 +310,34 @@ export default function GenerarPDF({ id }) {
 
       yPosition += 20;
       const infoEmprendedor = [
-        `Nombre beneficiario: ${emprendedorNombre}`, // (3.1)
+        `Nombre beneficiario: ${emprendedorNombre}`,
         `Tipo documento identidad: ${tipoDocumento || 'No disponible'}`,
         `Número documento identidad: ${numeroDocumento}`,
       ];
 
       infoEmprendedor.forEach(text => {
         const lines = doc.splitTextToSize(text, maxLineWidth);
-        yPosition = checkPageEnd(doc, yPosition, lines.length * 12);
+        const blockHeight = lines.length * 12;
+        yPosition = checkPageEnd(doc, yPosition, blockHeight);
         doc.text(lines, margin, yPosition);
-        yPosition += lines.length * 12;
+        yPosition += blockHeight;
       });
 
       // Plan de Inversión
       doc.setFontSize(fontSizes.title);
-      doc.setFont(undefined, 'bold'); // Poner título en negrilla (3.4)
+      doc.setFont(undefined, 'bold');
       yPosition += 20;
+      yPosition = checkPageEnd(doc, yPosition, 25);
       doc.setFillColor(255, 255, 255);
       doc.rect(margin, yPosition, maxLineWidth, 25, 'F');
       doc.text("Plan de Inversión", pageWidth / 2, yPosition + 18, { align: 'center' });
 
+      yPosition += 40;
+
       // Datos de pi_datos
       doc.setFontSize(fontSizes.normal);
       doc.setFont(undefined, 'normal');
-      yPosition += 40;
+
       const datosKeys = [
         "Tiempo de dedicacion al negocio (Parcial o Completo)",
         "Descripcion general del negocio",
@@ -359,22 +366,25 @@ export default function GenerarPDF({ id }) {
         // Texto en negrita para el label
         doc.setFont(undefined, 'bold');
         const labelLines = doc.splitTextToSize(label, maxLineWidth);
-        yPosition = checkPageEnd(doc, yPosition, labelLines.length * 12);
+        const labelHeight = labelLines.length * 12;
+        yPosition = checkPageEnd(doc, yPosition, labelHeight);
         doc.text(labelLines, margin, yPosition);
-        yPosition += labelLines.length * 12;
+        yPosition += labelHeight;
 
         // Salto de línea y texto normal para el valor
         doc.setFont(undefined, 'normal');
         const valueLines = doc.splitTextToSize(value, maxLineWidth);
-        yPosition = checkPageEnd(doc, yPosition, valueLines.length * 12);
+        const valueHeight = valueLines.length * 12 + 5; // Espacio adicional entre entradas
+        yPosition = checkPageEnd(doc, yPosition, valueHeight);
         doc.text(valueLines, margin, yPosition);
-        yPosition += valueLines.length * 12 + 5; // Espacio adicional entre entradas
+        yPosition += valueHeight;
       });
 
       // DIAGNÓSTICO DEL NEGOCIO Y PROPUESTA DE MEJORA
       doc.setFontSize(fontSizes.title);
-      doc.setFont(undefined, 'bold'); // Poner título en negrilla (3.4)
+      doc.setFont(undefined, 'bold');
       yPosition += 20;
+      yPosition = checkPageEnd(doc, yPosition, 25);
       doc.setFillColor(255, 255, 255);
       doc.rect(margin, yPosition, maxLineWidth, 25, 'F');
       doc.text("Diagnóstico del Negocio y Propuesta de Mejora", pageWidth / 2, yPosition + 18, { align: 'center' });
@@ -401,20 +411,22 @@ export default function GenerarPDF({ id }) {
         head: [diagnosticoColumns.map(col => col.header)],
         body: diagnosticoTableData.map(row => diagnosticoColumns.map(col => row[col.dataKey])),
         theme: 'striped',
-        styles: { fontSize: fontSizes.normal, cellPadding: 4, overflow: 'linebreak' }, // Ajustar tamaño de fuente y evitar desbordamiento
-        tableWidth: 'auto', // Ajustar ancho de la tabla
+        styles: { fontSize: fontSizes.normal, cellPadding: 4, overflow: 'linebreak' },
+        tableWidth: 'auto',
         headStyles: { fillColor: blueColor, textColor: [255, 255, 255], fontStyle: 'bold' },
         margin: { left: margin, right: margin },
         didDrawPage: (data) => {
           yPosition = data.cursor.y;
         },
+        pageBreak: 'auto', // Permite que la tabla se divida en varias páginas
       });
 
       yPosition = doc.lastAutoTable.finalY + 20 || yPosition + 20;
 
       // DESCRIPCIÓN ACTIVOS ACTUALES
       doc.setFontSize(fontSizes.title);
-      doc.setFont(undefined, 'bold'); // Poner título en negrilla (3.4)
+      doc.setFont(undefined, 'bold');
+      yPosition = checkPageEnd(doc, yPosition, 25);
       doc.setFillColor(255, 255, 255);
       doc.rect(margin, yPosition, maxLineWidth, 25, 'F');
       doc.text("Descripción de Activos Actuales", pageWidth / 2, yPosition + 18, { align: 'center' });
@@ -451,21 +463,22 @@ export default function GenerarPDF({ id }) {
         didDrawPage: (data) => {
           yPosition = data.cursor.y;
         },
+        pageBreak: 'auto',
       });
 
       yPosition = doc.lastAutoTable.finalY + 20 || yPosition + 20;
 
       // DESCRIPCIÓN DE LAS CARACTERÍSTICAS DEL ESPACIO
       doc.setFontSize(fontSizes.title);
-      doc.setFont(undefined, 'bold'); // Poner título en negrilla (3.4)
-      doc.setFillColor(255, 255, 255);
+      doc.setFont(undefined, 'bold');
 
       // Ajustar el título largo (separarlo en dos líneas)
       const tituloCaracteristicas = "Descripción de las Características del Espacio Disponible para la Instalación y/o Utilización de los Bienes";
       const tituloCaracteristicasLines = doc.splitTextToSize(tituloCaracteristicas, maxLineWidth);
 
-      const tituloHeight = tituloCaracteristicasLines.length * 12 + 10; // Ajustar altura del rectángulo
+      const tituloHeight = tituloCaracteristicasLines.length * 12 + 10;
 
+      yPosition = checkPageEnd(doc, yPosition, tituloHeight);
       doc.rect(margin, yPosition, maxLineWidth, tituloHeight, 'F');
       doc.text(tituloCaracteristicasLines, pageWidth / 2, yPosition + 18, { align: 'center' });
 
@@ -501,13 +514,15 @@ export default function GenerarPDF({ id }) {
         didDrawPage: (data) => {
           yPosition = data.cursor.y;
         },
+        pageBreak: 'auto',
       });
 
       yPosition = doc.lastAutoTable.finalY + 20 || yPosition + 20;
 
       // Productos Seleccionados
       doc.setFontSize(fontSizes.title);
-      doc.setFont(undefined, 'bold'); // Poner título en negrilla (3.4)
+      doc.setFont(undefined, 'bold');
+      yPosition = checkPageEnd(doc, yPosition, 25);
       doc.setFillColor(255, 255, 255);
       doc.rect(margin, yPosition, maxLineWidth, 25, 'F');
       doc.text("Descripción de las Necesidades de Inversión y Valor", pageWidth / 2, yPosition + 18, { align: 'center' });
@@ -558,13 +573,15 @@ export default function GenerarPDF({ id }) {
         didDrawPage: (data) => {
           yPosition = data.cursor.y;
         },
+        pageBreak: 'auto',
       });
 
       yPosition = doc.lastAutoTable.finalY + 20 || yPosition + 20;
 
       // Resumen de la Inversión
       doc.setFontSize(fontSizes.title);
-      doc.setFont(undefined, 'bold'); // Poner título en negrilla (3.4)
+      doc.setFont(undefined, 'bold');
+      yPosition = checkPageEnd(doc, yPosition, 25);
       doc.setFillColor(255, 255, 255);
       doc.rect(margin, yPosition, maxLineWidth, 25, 'F');
       doc.text("Resumen de la Inversión", pageWidth / 2, yPosition + 18, { align: 'center' });
@@ -588,16 +605,18 @@ export default function GenerarPDF({ id }) {
         didDrawPage: (data) => {
           yPosition = data.cursor.y;
         },
+        pageBreak: 'auto',
       });
 
       yPosition = doc.lastAutoTable.finalY + 10 || yPosition + 10;
       doc.setFontSize(fontSizes.subtitle);
       doc.setFont(undefined, 'normal');
+      yPosition = checkPageEnd(doc, yPosition, 20);
       doc.text(`Total Inversión: $${totalInversion}`, pageWidth - margin, yPosition, { align: 'right' });
 
       yPosition += 30;
       doc.setFontSize(fontSizes.title);
-      doc.setFont(undefined, 'bold'); // Poner título en negrilla (3.4)
+      doc.setFont(undefined, 'bold');
       doc.setTextColor(0, 0, 0);
       const conceptoHeader = "Concepto de Viabilidad";
       yPosition = checkPageEnd(doc, yPosition, 25);
@@ -618,29 +637,32 @@ export default function GenerarPDF({ id }) {
 
       textoViabilidad.forEach(parrafo => {
         const lines = doc.splitTextToSize(parrafo, maxLineWidth);
-        yPosition = checkPageEnd(doc, yPosition, lines.length * 12);
+        const parrafoHeight = lines.length * 12 + 10;
+        yPosition = checkPageEnd(doc, yPosition, parrafoHeight);
         doc.text(lines, margin, yPosition);
-        yPosition += lines.length * 12 + 10; // Añadimos un espacio adicional entre párrafos
+        yPosition += parrafoHeight;
       });
+
+      // Calcular altura necesaria para la sección de firmas
+      const boxWidth = 150;
+      const boxHeight = 40;
+      const firmasSectionHeight = 20 + 30 + 10 + boxHeight + 15 + 15; // Total estimado
+
+      yPosition = checkPageEnd(doc, yPosition, firmasSectionHeight);
 
       yPosition += 20;
       doc.setFontSize(fontSizes.subtitle);
-      doc.setFont(undefined, 'bold'); // Poner "Firmas" en negrilla (3.4)
-      yPosition = checkPageEnd(doc, yPosition, 20);
+      doc.setFont(undefined, 'bold');
       doc.text("Firmas", pageWidth / 2, yPosition, { align: 'center' });
 
       yPosition += 30;
       doc.setFontSize(fontSizes.normal);
       doc.setFont(undefined, 'normal');
 
-      // Posiciones para las cajas de firmas
-      const boxWidth = 150;
-      const boxHeight = 40;
-
       const beneficiarioBoxX = margin + 30;
       const asesorBoxX = pageWidth - margin - 180;
 
-      // Posicionar etiquetas directamente encima de las cajas (ajustado)
+      // Posicionar etiquetas directamente encima de las cajas
       doc.text("Beneficiario", beneficiarioBoxX + boxWidth / 2, yPosition, { align: 'center' });
       doc.text("Asesor", asesorBoxX + boxWidth / 2, yPosition, { align: 'center' });
 
@@ -661,6 +683,11 @@ export default function GenerarPDF({ id }) {
       doc.text(`C.C. ${emprendedorCC}`, beneficiarioBoxX + 10, yPosition);
       doc.text(`C.C. ${asesorDocumento}`, asesorBoxX + 10, yPosition);
 
+      // Calcular altura necesaria para la sección de fecha y hora
+      const dateSectionHeight = 40 + 15 + 15; // Total estimado
+
+      yPosition = checkPageEnd(doc, yPosition, dateSectionHeight);
+
       yPosition += 40;
       const fecha = new Date();
       doc.text(`Fecha y hora de generación`, pageWidth / 2, yPosition, { align: 'center' });
@@ -668,14 +695,15 @@ export default function GenerarPDF({ id }) {
       doc.text(fecha.toLocaleDateString() + ' ' + fecha.toLocaleTimeString(), pageWidth / 2, yPosition, { align: 'center' });
 
       // Descargar PDF
-      doc.save('Informe_Negocio_Local.pdf'); // Cambiar nombre del archivo si lo deseas
+      doc.save('Informe_Negocio_Local.pdf');
     };
   };
 
   // Función para verificar el final de la página y agregar una nueva si es necesario
   const checkPageEnd = (doc, currentY, addedHeight) => {
     const pageHeight = doc.internal.pageSize.getHeight();
-    if (currentY + addedHeight > pageHeight - 40) { // Dejamos un margen inferior de 40
+    const bottomMargin = 40; // Margen inferior
+    if (currentY + addedHeight > pageHeight - bottomMargin) {
       doc.addPage();
       currentY = 40; // Reiniciamos yPosition al margen superior después de agregar una nueva página
     }
@@ -692,6 +720,7 @@ export default function GenerarPDF({ id }) {
     </div>
   );
 }
+
 
 
 
