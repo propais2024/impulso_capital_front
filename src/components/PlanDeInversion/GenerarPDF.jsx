@@ -1,3 +1,5 @@
+// GenerarPDF.jsx
+
 import React, { useState, useEffect } from 'react';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
@@ -416,6 +418,7 @@ export default function GenerarPDF({ id }) {
       doc.setFontSize(fontSizes.title);
       doc.setFont(undefined, 'bold'); // Poner título en negrilla (3.4)
       doc.setFillColor(255, 255, 255);
+      yPosition = checkPageEnd(doc, yPosition, 25);
       doc.rect(margin, yPosition, maxLineWidth, 25, 'F');
       doc.text("Descripción de Activos Actuales", pageWidth / 2, yPosition + 18, { align: 'center' });
 
@@ -466,6 +469,7 @@ export default function GenerarPDF({ id }) {
 
       const tituloHeight = tituloCaracteristicasLines.length * 12 + 10; // Ajustar altura del rectángulo
 
+      yPosition = checkPageEnd(doc, yPosition, tituloHeight);
       doc.rect(margin, yPosition, maxLineWidth, tituloHeight, 'F');
       doc.text(tituloCaracteristicasLines, pageWidth / 2, yPosition + 18, { align: 'center' });
 
@@ -509,6 +513,7 @@ export default function GenerarPDF({ id }) {
       doc.setFontSize(fontSizes.title);
       doc.setFont(undefined, 'bold'); // Poner título en negrilla (3.4)
       doc.setFillColor(255, 255, 255);
+      yPosition = checkPageEnd(doc, yPosition, 25);
       doc.rect(margin, yPosition, maxLineWidth, 25, 'F');
       doc.text("Descripción de las Necesidades de Inversión y Valor", pageWidth / 2, yPosition + 18, { align: 'center' });
 
@@ -566,6 +571,7 @@ export default function GenerarPDF({ id }) {
       doc.setFontSize(fontSizes.title);
       doc.setFont(undefined, 'bold'); // Poner título en negrilla (3.4)
       doc.setFillColor(255, 255, 255);
+      yPosition = checkPageEnd(doc, yPosition, 25);
       doc.rect(margin, yPosition, maxLineWidth, 25, 'F');
       doc.text("Resumen de la Inversión", pageWidth / 2, yPosition + 18, { align: 'center' });
 
@@ -593,6 +599,7 @@ export default function GenerarPDF({ id }) {
       yPosition = doc.lastAutoTable.finalY + 10 || yPosition + 10;
       doc.setFontSize(fontSizes.subtitle);
       doc.setFont(undefined, 'normal');
+      yPosition = checkPageEnd(doc, yPosition, 20);
       doc.text(`Total Inversión: $${totalInversion}`, pageWidth - margin, yPosition, { align: 'right' });
 
       yPosition += 30;
@@ -623,10 +630,14 @@ export default function GenerarPDF({ id }) {
         yPosition += lines.length * 12 + 10; // Añadimos un espacio adicional entre párrafos
       });
 
+      // Calcular altura necesaria para la sección de firmas
+      const firmasSectionHeight = 30 + 15 + 10 + 40 + 15 + 15; // Altura total estimada de la sección de firmas
+
       yPosition += 20;
+      yPosition = checkPageEnd(doc, yPosition, firmasSectionHeight);
+
       doc.setFontSize(fontSizes.subtitle);
       doc.setFont(undefined, 'bold'); // Poner "Firmas" en negrilla (3.4)
-      yPosition = checkPageEnd(doc, yPosition, 20);
       doc.text("Firmas", pageWidth / 2, yPosition, { align: 'center' });
 
       yPosition += 30;
@@ -661,7 +672,12 @@ export default function GenerarPDF({ id }) {
       doc.text(`C.C. ${emprendedorCC}`, beneficiarioBoxX + 10, yPosition);
       doc.text(`C.C. ${asesorDocumento}`, asesorBoxX + 10, yPosition);
 
+      // Calcular altura necesaria para la sección de fecha y hora
+      const dateSectionHeight = 40 + 15 + 15; // Altura total estimada de la sección de fecha y hora
+
       yPosition += 40;
+      yPosition = checkPageEnd(doc, yPosition, dateSectionHeight);
+
       const fecha = new Date();
       doc.text(`Fecha y hora de generación`, pageWidth / 2, yPosition, { align: 'center' });
       yPosition += 15;
