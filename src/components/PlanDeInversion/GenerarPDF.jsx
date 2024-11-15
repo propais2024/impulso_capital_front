@@ -327,6 +327,8 @@ export default function GenerarPDF({ id }) {
       doc.setFontSize(fontSizes.title);
       doc.setFont(undefined, 'bold');
       yPosition += 20;
+
+      // Asegurar que hay espacio antes de dibujar el título y el rectángulo
       yPosition = checkPageEnd(doc, yPosition, 25);
       doc.setFillColor(255, 255, 255);
       doc.rect(margin, yPosition, maxLineWidth, 25, 'F');
@@ -384,6 +386,8 @@ export default function GenerarPDF({ id }) {
       doc.setFontSize(fontSizes.title);
       doc.setFont(undefined, 'bold');
       yPosition += 20;
+
+      // Asegurar que hay espacio antes de dibujar el título y el rectángulo
       yPosition = checkPageEnd(doc, yPosition, 25);
       doc.setFillColor(255, 255, 255);
       doc.rect(margin, yPosition, maxLineWidth, 25, 'F');
@@ -433,7 +437,11 @@ export default function GenerarPDF({ id }) {
       // DESCRIPCIÓN ACTIVOS ACTUALES
       doc.setFontSize(fontSizes.title);
       doc.setFont(undefined, 'bold');
+      yPosition += 20;
+
+      // Asegurar que hay espacio antes de dibujar el título y el rectángulo
       yPosition = checkPageEnd(doc, yPosition, 25);
+
       doc.setFillColor(255, 255, 255);
       doc.rect(margin, yPosition, maxLineWidth, 25, 'F');
       doc.text("Descripción de Activos Actuales", pageWidth / 2, yPosition + 18, { align: 'center' });
@@ -475,7 +483,10 @@ export default function GenerarPDF({ id }) {
         },
         margin: { left: margin, right: margin },
         didDrawPage: (data) => {
-          yPosition = data.cursor.y;
+          // Al iniciar una nueva página, ajustar yPosition
+          if (data.pageNumber > 1 && data.cursor.y < yPosition) {
+            yPosition = data.cursor.y;
+          }
         },
         pageBreak: 'auto',
       });
@@ -492,7 +503,9 @@ export default function GenerarPDF({ id }) {
 
       const tituloHeight = tituloCaracteristicasLines.length * 12 + 10;
 
+      // Asegurar que hay espacio antes de dibujar el título y el rectángulo
       yPosition = checkPageEnd(doc, yPosition, tituloHeight);
+
       doc.rect(margin, yPosition, maxLineWidth, tituloHeight, 'F');
       doc.text(tituloCaracteristicasLines, pageWidth / 2, yPosition + 18, { align: 'center' });
 
@@ -533,7 +546,9 @@ export default function GenerarPDF({ id }) {
         },
         margin: { left: margin, right: margin },
         didDrawPage: (data) => {
-          yPosition = data.cursor.y;
+          if (data.pageNumber > 1 && data.cursor.y < yPosition) {
+            yPosition = data.cursor.y;
+          }
         },
         pageBreak: 'auto',
       });
@@ -543,6 +558,9 @@ export default function GenerarPDF({ id }) {
       // Productos Seleccionados
       doc.setFontSize(fontSizes.title);
       doc.setFont(undefined, 'bold');
+      yPosition += 20;
+
+      // Asegurar que hay espacio antes de dibujar el título y el rectángulo
       yPosition = checkPageEnd(doc, yPosition, 25);
       doc.setFillColor(255, 255, 255);
       doc.rect(margin, yPosition, maxLineWidth, 25, 'F');
@@ -599,7 +617,9 @@ export default function GenerarPDF({ id }) {
         },
         margin: { left: margin, right: margin },
         didDrawPage: (data) => {
-          yPosition = data.cursor.y;
+          if (data.pageNumber > 1 && data.cursor.y < yPosition) {
+            yPosition = data.cursor.y;
+          }
         },
         pageBreak: 'auto',
       });
@@ -609,6 +629,9 @@ export default function GenerarPDF({ id }) {
       // Resumen de la Inversión
       doc.setFontSize(fontSizes.title);
       doc.setFont(undefined, 'bold');
+      yPosition += 20;
+
+      // Asegurar que hay espacio antes de dibujar el título y el rectángulo
       yPosition = checkPageEnd(doc, yPosition, 25);
       doc.setFillColor(255, 255, 255);
       doc.rect(margin, yPosition, maxLineWidth, 25, 'F');
@@ -638,7 +661,9 @@ export default function GenerarPDF({ id }) {
         },
         margin: { left: margin, right: margin },
         didDrawPage: (data) => {
-          yPosition = data.cursor.y;
+          if (data.pageNumber > 1 && data.cursor.y < yPosition) {
+            yPosition = data.cursor.y;
+          }
         },
         pageBreak: 'auto',
       });
