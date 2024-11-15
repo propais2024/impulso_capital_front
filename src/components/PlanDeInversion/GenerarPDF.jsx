@@ -1,5 +1,3 @@
-// GenerarPDF.jsx
-
 import React, { useState, useEffect } from 'react';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
@@ -260,18 +258,18 @@ export default function GenerarPDF({ id }) {
       // Encabezado con imagen
       doc.addImage(imgData, 'JPEG', margin, 40, maxLineWidth, 60);
 
-      yPosition = 130; // Ajustar la posición vertical después del encabezado
+      yPosition = 130; // Ajustar la posición vertical después del encabezado (3.3)
 
-      // Información del Negocio Local
+      // Información del Negocio Local (3.1)
       doc.setFontSize(fontSizes.subtitle);
       doc.setTextColor(0, 0, 0);
-      yPosition += 10; // Añadir espacio adicional
+      yPosition += 10; // Añadir espacio adicional (3.3)
       doc.text("Información del Negocio Local", margin, yPosition);
 
       doc.setFontSize(fontSizes.normal);
       doc.setFont(undefined, 'normal');
 
-      // Agregar ID de Negocio Local encima de Nombre comercial
+      // Agregar ID de Negocio Local encima de Nombre comercial (3.2)
       const negocioId = id;
       const nombreComercial = caracterizacionData["Nombre comercial"] || 'No disponible';
       const localidadNombre = getColumnDisplayValue("Localidad unidad RIC", caracterizacionData["Localidad unidad RIC"]);
@@ -281,7 +279,7 @@ export default function GenerarPDF({ id }) {
 
       yPosition += 20;
       const infoEmprendimiento = [
-        `ID de Negocio Local: ${negocioId}`,
+        `ID de Negocio Local: ${negocioId}`, // (3.2)
         `Nombre comercial: ${nombreComercial}`,
         `Localidad: ${localidadNombre || 'No disponible'}`,
         `Barrio: ${barrioNombre || 'No disponible'}`,
@@ -291,13 +289,12 @@ export default function GenerarPDF({ id }) {
 
       infoEmprendimiento.forEach(text => {
         const lines = doc.splitTextToSize(text, maxLineWidth);
-        const blockHeight = lines.length * 12;
-        yPosition = checkPageEnd(doc, yPosition, blockHeight);
+        yPosition = checkPageEnd(doc, yPosition, lines.length * 12);
         doc.text(lines, margin, yPosition);
-        yPosition += blockHeight;
+        yPosition += lines.length * 12;
       });
 
-      // Información del Beneficiario
+      // Información del Beneficiario (3.1)
       doc.setFontSize(fontSizes.subtitle);
       doc.setFont(undefined, 'bold');
       yPosition += 10;
@@ -310,36 +307,30 @@ export default function GenerarPDF({ id }) {
 
       yPosition += 20;
       const infoEmprendedor = [
-        `Nombre beneficiario: ${emprendedorNombre}`,
+        `Nombre beneficiario: ${emprendedorNombre}`, // (3.1)
         `Tipo documento identidad: ${tipoDocumento || 'No disponible'}`,
         `Número documento identidad: ${numeroDocumento}`,
       ];
 
       infoEmprendedor.forEach(text => {
         const lines = doc.splitTextToSize(text, maxLineWidth);
-        const blockHeight = lines.length * 12;
-        yPosition = checkPageEnd(doc, yPosition, blockHeight);
+        yPosition = checkPageEnd(doc, yPosition, lines.length * 12);
         doc.text(lines, margin, yPosition);
-        yPosition += blockHeight;
+        yPosition += lines.length * 12;
       });
 
       // Plan de Inversión
       doc.setFontSize(fontSizes.title);
-      doc.setFont(undefined, 'bold');
+      doc.setFont(undefined, 'bold'); // Poner título en negrilla (3.4)
       yPosition += 20;
-
-      // Asegurar que hay espacio antes de dibujar el título y el rectángulo
-      yPosition = checkPageEnd(doc, yPosition, 25);
       doc.setFillColor(255, 255, 255);
       doc.rect(margin, yPosition, maxLineWidth, 25, 'F');
       doc.text("Plan de Inversión", pageWidth / 2, yPosition + 18, { align: 'center' });
 
-      yPosition += 40;
-
       // Datos de pi_datos
       doc.setFontSize(fontSizes.normal);
       doc.setFont(undefined, 'normal');
-
+      yPosition += 40;
       const datosKeys = [
         "Tiempo de dedicacion al negocio (Parcial o Completo)",
         "Descripcion general del negocio",
@@ -368,27 +359,22 @@ export default function GenerarPDF({ id }) {
         // Texto en negrita para el label
         doc.setFont(undefined, 'bold');
         const labelLines = doc.splitTextToSize(label, maxLineWidth);
-        const labelHeight = labelLines.length * 12;
-        yPosition = checkPageEnd(doc, yPosition, labelHeight);
+        yPosition = checkPageEnd(doc, yPosition, labelLines.length * 12);
         doc.text(labelLines, margin, yPosition);
-        yPosition += labelHeight;
+        yPosition += labelLines.length * 12;
 
         // Salto de línea y texto normal para el valor
         doc.setFont(undefined, 'normal');
         const valueLines = doc.splitTextToSize(value, maxLineWidth);
-        const valueHeight = valueLines.length * 12 + 5; // Espacio adicional entre entradas
-        yPosition = checkPageEnd(doc, yPosition, valueHeight);
+        yPosition = checkPageEnd(doc, yPosition, valueLines.length * 12);
         doc.text(valueLines, margin, yPosition);
-        yPosition += valueHeight;
+        yPosition += valueLines.length * 12 + 5; // Espacio adicional entre entradas
       });
 
       // DIAGNÓSTICO DEL NEGOCIO Y PROPUESTA DE MEJORA
       doc.setFontSize(fontSizes.title);
-      doc.setFont(undefined, 'bold');
+      doc.setFont(undefined, 'bold'); // Poner título en negrilla (3.4)
       yPosition += 20;
-
-      // Asegurar que hay espacio antes de dibujar el título y el rectángulo
-      yPosition = checkPageEnd(doc, yPosition, 25);
       doc.setFillColor(255, 255, 255);
       doc.rect(margin, yPosition, maxLineWidth, 25, 'F');
       doc.text("Diagnóstico del Negocio y Propuesta de Mejora", pageWidth / 2, yPosition + 18, { align: 'center' });
@@ -415,32 +401,20 @@ export default function GenerarPDF({ id }) {
         head: [diagnosticoColumns.map(col => col.header)],
         body: diagnosticoTableData.map(row => diagnosticoColumns.map(col => row[col.dataKey])),
         theme: 'striped',
-        styles: { fontSize: fontSizes.normal, cellPadding: 4, overflow: 'linebreak' },
-        tableWidth: 'auto',
-        headStyles: {
-          fillColor: blueColor,
-          textColor: [255, 255, 255],
-          fontStyle: 'bold',
-          halign: 'center',
-          valign: 'middle',
-        },
+        styles: { fontSize: fontSizes.normal, cellPadding: 4, overflow: 'linebreak' }, // Ajustar tamaño de fuente y evitar desbordamiento
+        tableWidth: 'auto', // Ajustar ancho de la tabla
+        headStyles: { fillColor: blueColor, textColor: [255, 255, 255], fontStyle: 'bold' },
         margin: { left: margin, right: margin },
         didDrawPage: (data) => {
           yPosition = data.cursor.y;
         },
-        pageBreak: 'auto',
       });
 
       yPosition = doc.lastAutoTable.finalY + 20 || yPosition + 20;
 
       // DESCRIPCIÓN ACTIVOS ACTUALES
       doc.setFontSize(fontSizes.title);
-      doc.setFont(undefined, 'bold');
-      yPosition += 20;
-
-      // Asegurar que hay espacio antes de dibujar el título y el rectángulo
-      yPosition = checkPageEnd(doc, yPosition, 25);
-
+      doc.setFont(undefined, 'bold'); // Poner título en negrilla (3.4)
       doc.setFillColor(255, 255, 255);
       doc.rect(margin, yPosition, maxLineWidth, 25, 'F');
       doc.text("Descripción de Activos Actuales", pageWidth / 2, yPosition + 18, { align: 'center' });
@@ -465,34 +439,17 @@ export default function GenerarPDF({ id }) {
         { header: 'Elemento para Reposición', dataKey: 'elementoReposicion' },
       ];
 
-      // Solución al problema del recuadro negro
       doc.autoTable({
         startY: yPosition,
         head: [activosColumns.map(col => col.header)],
         body: activosTableData.map(row => activosColumns.map(col => row[col.dataKey])),
         theme: 'striped',
-        styles: {
-          fontSize: fontSizes.normal,
-          cellPadding: 4,
-          overflow: 'linebreak',
-          fillColor: null, // Evitar relleno en celdas para prevenir recuadro negro
-        },
+        styles: { fontSize: fontSizes.normal, cellPadding: 4, overflow: 'linebreak' },
         tableWidth: 'auto',
-        headStyles: {
-          fillColor: blueColor,
-          textColor: [255, 255, 255],
-          fontStyle: 'bold',
-          halign: 'center',
-          valign: 'middle',
-        },
+        headStyles: { fillColor: blueColor, textColor: [255, 255, 255], fontStyle: 'bold' },
         margin: { left: margin, right: margin },
-        pageBreak: 'auto',
-        willDrawCell: (data) => {
-          if (data.section === 'head') {
-            data.cell.styles.fillColor = blueColor; // Aplicar color solo al encabezado
-          } else {
-            data.cell.styles.fillColor = null; // Sin color de relleno en celdas de datos
-          }
+        didDrawPage: (data) => {
+          yPosition = data.cursor.y;
         },
       });
 
@@ -500,16 +457,14 @@ export default function GenerarPDF({ id }) {
 
       // DESCRIPCIÓN DE LAS CARACTERÍSTICAS DEL ESPACIO
       doc.setFontSize(fontSizes.title);
-      doc.setFont(undefined, 'bold');
+      doc.setFont(undefined, 'bold'); // Poner título en negrilla (3.4)
+      doc.setFillColor(255, 255, 255);
 
       // Ajustar el título largo (separarlo en dos líneas)
       const tituloCaracteristicas = "Descripción de las Características del Espacio Disponible para la Instalación y/o Utilización de los Bienes";
       const tituloCaracteristicasLines = doc.splitTextToSize(tituloCaracteristicas, maxLineWidth);
 
-      const tituloHeight = tituloCaracteristicasLines.length * 12 + 10;
-
-      // Asegurar que hay espacio antes de dibujar el título y el rectángulo
-      yPosition = checkPageEnd(doc, yPosition, tituloHeight);
+      const tituloHeight = tituloCaracteristicasLines.length * 12 + 10; // Ajustar altura del rectángulo
 
       doc.rect(margin, yPosition, maxLineWidth, tituloHeight, 'F');
       doc.text(tituloCaracteristicasLines, pageWidth / 2, yPosition + 18, { align: 'center' });
@@ -534,34 +489,17 @@ export default function GenerarPDF({ id }) {
         { header: 'Otras Características', dataKey: 'otrasCaracteristicas' },
       ];
 
-      // Solución al problema del recuadro negro
       doc.autoTable({
         startY: yPosition,
         head: [caracteristicasColumns.map(col => col.header)],
         body: caracteristicasTableData.map(row => caracteristicasColumns.map(col => row[col.dataKey])),
         theme: 'striped',
-        styles: {
-          fontSize: fontSizes.normal,
-          cellPadding: 4,
-          overflow: 'linebreak',
-          fillColor: null,
-        },
+        styles: { fontSize: fontSizes.normal, cellPadding: 4, overflow: 'linebreak' },
         tableWidth: 'auto',
-        headStyles: {
-          fillColor: blueColor,
-          textColor: [255, 255, 255],
-          fontStyle: 'bold',
-          halign: 'center',
-          valign: 'middle',
-        },
+        headStyles: { fillColor: blueColor, textColor: [255, 255, 255], fontStyle: 'bold' },
         margin: { left: margin, right: margin },
-        pageBreak: 'auto',
-        willDrawCell: (data) => {
-          if (data.section === 'head') {
-            data.cell.styles.fillColor = blueColor;
-          } else {
-            data.cell.styles.fillColor = null;
-          }
+        didDrawPage: (data) => {
+          yPosition = data.cursor.y;
         },
       });
 
@@ -569,11 +507,7 @@ export default function GenerarPDF({ id }) {
 
       // Productos Seleccionados
       doc.setFontSize(fontSizes.title);
-      doc.setFont(undefined, 'bold');
-      yPosition += 20;
-
-      // Asegurar que hay espacio antes de dibujar el título y el rectángulo
-      yPosition = checkPageEnd(doc, yPosition, 25);
+      doc.setFont(undefined, 'bold'); // Poner título en negrilla (3.4)
       doc.setFillColor(255, 255, 255);
       doc.rect(margin, yPosition, maxLineWidth, 25, 'F');
       doc.text("Descripción de las Necesidades de Inversión y Valor", pageWidth / 2, yPosition + 18, { align: 'center' });
@@ -617,28 +551,12 @@ export default function GenerarPDF({ id }) {
         head: [productosColumns.map(col => col.header)],
         body: productosTableData.map(row => productosColumns.map(col => row[col.dataKey])),
         theme: 'striped',
-        styles: {
-          fontSize: fontSizes.normal,
-          cellPadding: 4,
-          overflow: 'linebreak',
-          fillColor: null,
-        },
+        styles: { fontSize: fontSizes.normal, cellPadding: 4, overflow: 'linebreak' },
         tableWidth: 'auto',
-        headStyles: {
-          fillColor: blueColor,
-          textColor: [255, 255, 255],
-          fontStyle: 'bold',
-          halign: 'center',
-          valign: 'middle',
-        },
+        headStyles: { fillColor: blueColor, textColor: [255, 255, 255], fontStyle: 'bold' },
         margin: { left: margin, right: margin },
-        pageBreak: 'auto',
-        willDrawCell: (data) => {
-          if (data.section === 'head') {
-            data.cell.styles.fillColor = blueColor;
-          } else {
-            data.cell.styles.fillColor = null;
-          }
+        didDrawPage: (data) => {
+          yPosition = data.cursor.y;
         },
       });
 
@@ -646,11 +564,7 @@ export default function GenerarPDF({ id }) {
 
       // Resumen de la Inversión
       doc.setFontSize(fontSizes.title);
-      doc.setFont(undefined, 'bold');
-      yPosition += 20;
-
-      // Asegurar que hay espacio antes de dibujar el título y el rectángulo
-      yPosition = checkPageEnd(doc, yPosition, 25);
+      doc.setFont(undefined, 'bold'); // Poner título en negrilla (3.4)
       doc.setFillColor(255, 255, 255);
       doc.rect(margin, yPosition, maxLineWidth, 25, 'F');
       doc.text("Resumen de la Inversión", pageWidth / 2, yPosition + 18, { align: 'center' });
@@ -667,39 +581,23 @@ export default function GenerarPDF({ id }) {
         head: [resumenColumns.map(col => col.header)],
         body: groupedRubros.map(row => resumenColumns.map(col => row[col.dataKey])),
         theme: 'striped',
-        styles: {
-          fontSize: fontSizes.normal,
-          cellPadding: 4,
-          fillColor: null,
-        },
+        styles: { fontSize: fontSizes.normal, cellPadding: 4 },
         tableWidth: 'auto',
-        headStyles: {
-          fillColor: blueColor,
-          textColor: [255, 255, 255],
-          fontStyle: 'bold',
-          halign: 'center',
-          valign: 'middle',
-        },
+        headStyles: { fillColor: blueColor, textColor: [255, 255, 255], fontStyle: 'bold' },
         margin: { left: margin, right: margin },
-        pageBreak: 'auto',
-        willDrawCell: (data) => {
-          if (data.section === 'head') {
-            data.cell.styles.fillColor = blueColor;
-          } else {
-            data.cell.styles.fillColor = null;
-          }
+        didDrawPage: (data) => {
+          yPosition = data.cursor.y;
         },
       });
 
       yPosition = doc.lastAutoTable.finalY + 10 || yPosition + 10;
       doc.setFontSize(fontSizes.subtitle);
       doc.setFont(undefined, 'normal');
-      yPosition = checkPageEnd(doc, yPosition, 20);
       doc.text(`Total Inversión: $${totalInversion}`, pageWidth - margin, yPosition, { align: 'right' });
 
       yPosition += 30;
       doc.setFontSize(fontSizes.title);
-      doc.setFont(undefined, 'bold');
+      doc.setFont(undefined, 'bold'); // Poner título en negrilla (3.4)
       doc.setTextColor(0, 0, 0);
       const conceptoHeader = "Concepto de Viabilidad";
       yPosition = checkPageEnd(doc, yPosition, 25);
@@ -720,32 +618,29 @@ export default function GenerarPDF({ id }) {
 
       textoViabilidad.forEach(parrafo => {
         const lines = doc.splitTextToSize(parrafo, maxLineWidth);
-        const parrafoHeight = lines.length * 12 + 10;
-        yPosition = checkPageEnd(doc, yPosition, parrafoHeight);
+        yPosition = checkPageEnd(doc, yPosition, lines.length * 12);
         doc.text(lines, margin, yPosition);
-        yPosition += parrafoHeight;
+        yPosition += lines.length * 12 + 10; // Añadimos un espacio adicional entre párrafos
       });
-
-      // Calcular altura necesaria para la sección de firmas
-      const boxWidth = 150;
-      const boxHeight = 40;
-      const firmasSectionHeight = 20 + 30 + 10 + boxHeight + 15 + 15; // Total estimado
-
-      yPosition = checkPageEnd(doc, yPosition, firmasSectionHeight);
 
       yPosition += 20;
       doc.setFontSize(fontSizes.subtitle);
-      doc.setFont(undefined, 'bold');
+      doc.setFont(undefined, 'bold'); // Poner "Firmas" en negrilla (3.4)
+      yPosition = checkPageEnd(doc, yPosition, 20);
       doc.text("Firmas", pageWidth / 2, yPosition, { align: 'center' });
 
       yPosition += 30;
       doc.setFontSize(fontSizes.normal);
       doc.setFont(undefined, 'normal');
 
+      // Posiciones para las cajas de firmas
+      const boxWidth = 150;
+      const boxHeight = 40;
+
       const beneficiarioBoxX = margin + 30;
       const asesorBoxX = pageWidth - margin - 180;
 
-      // Posicionar etiquetas directamente encima de las cajas
+      // Posicionar etiquetas directamente encima de las cajas (ajustado)
       doc.text("Beneficiario", beneficiarioBoxX + boxWidth / 2, yPosition, { align: 'center' });
       doc.text("Asesor", asesorBoxX + boxWidth / 2, yPosition, { align: 'center' });
 
@@ -766,11 +661,6 @@ export default function GenerarPDF({ id }) {
       doc.text(`C.C. ${emprendedorCC}`, beneficiarioBoxX + 10, yPosition);
       doc.text(`C.C. ${asesorDocumento}`, asesorBoxX + 10, yPosition);
 
-      // Calcular altura necesaria para la sección de fecha y hora
-      const dateSectionHeight = 40 + 15 + 15; // Total estimado
-
-      yPosition = checkPageEnd(doc, yPosition, dateSectionHeight);
-
       yPosition += 40;
       const fecha = new Date();
       doc.text(`Fecha y hora de generación`, pageWidth / 2, yPosition, { align: 'center' });
@@ -778,15 +668,14 @@ export default function GenerarPDF({ id }) {
       doc.text(fecha.toLocaleDateString() + ' ' + fecha.toLocaleTimeString(), pageWidth / 2, yPosition, { align: 'center' });
 
       // Descargar PDF
-      doc.save('Informe_Negocio_Local.pdf');
+      doc.save('Informe_Negocio_Local.pdf'); // Cambiar nombre del archivo si lo deseas
     };
   };
 
   // Función para verificar el final de la página y agregar una nueva si es necesario
   const checkPageEnd = (doc, currentY, addedHeight) => {
     const pageHeight = doc.internal.pageSize.getHeight();
-    const bottomMargin = 40; // Margen inferior
-    if (currentY + addedHeight > pageHeight - bottomMargin) {
+    if (currentY + addedHeight > pageHeight - 40) { // Dejamos un margen inferior de 40
       doc.addPage();
       currentY = 40; // Reiniciamos yPosition al margen superior después de agregar una nueva página
     }
@@ -803,8 +692,6 @@ export default function GenerarPDF({ id }) {
     </div>
   );
 }
-
-
 
 
 
