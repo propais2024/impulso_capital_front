@@ -466,12 +466,18 @@ export default function GenerarPDF({ id }) {
         { header: 'Elemento para Reposición', dataKey: 'elementoReposicion' },
       ];
 
+      // Solución al problema del recuadro negro
       doc.autoTable({
         startY: yPosition,
         head: [activosColumns.map(col => col.header)],
         body: activosTableData.map(row => activosColumns.map(col => row[col.dataKey])),
         theme: 'striped',
-        styles: { fontSize: fontSizes.normal, cellPadding: 4, overflow: 'linebreak' },
+        styles: {
+          fontSize: fontSizes.normal,
+          cellPadding: 4,
+          overflow: 'linebreak',
+          fillColor: null, // Evitar relleno en celdas para prevenir recuadro negro
+        },
         tableWidth: 'auto',
         headStyles: {
           fillColor: blueColor,
@@ -482,13 +488,13 @@ export default function GenerarPDF({ id }) {
           fillStyle: 'F',
         },
         margin: { left: margin, right: margin },
-        didDrawPage: (data) => {
-          // Al iniciar una nueva página, ajustar yPosition
-          if (data.pageNumber > 1 && data.cursor.y < yPosition) {
-            yPosition = data.cursor.y;
+        pageBreak: 'auto',
+        didDrawCell: (data) => {
+          // Si es una nueva página, ajustar yPosition
+          if (data.row.section === 'head' && data.cell.y < margin) {
+            yPosition = data.cell.y + data.cell.height;
           }
         },
-        pageBreak: 'auto',
       });
 
       yPosition = doc.lastAutoTable.finalY + 20 || yPosition + 20;
@@ -534,7 +540,12 @@ export default function GenerarPDF({ id }) {
         head: [caracteristicasColumns.map(col => col.header)],
         body: caracteristicasTableData.map(row => caracteristicasColumns.map(col => row[col.dataKey])),
         theme: 'striped',
-        styles: { fontSize: fontSizes.normal, cellPadding: 4, overflow: 'linebreak' },
+        styles: {
+          fontSize: fontSizes.normal,
+          cellPadding: 4,
+          overflow: 'linebreak',
+          fillColor: null,
+        },
         tableWidth: 'auto',
         headStyles: {
           fillColor: blueColor,
@@ -545,12 +556,12 @@ export default function GenerarPDF({ id }) {
           fillStyle: 'F',
         },
         margin: { left: margin, right: margin },
-        didDrawPage: (data) => {
-          if (data.pageNumber > 1 && data.cursor.y < yPosition) {
-            yPosition = data.cursor.y;
+        pageBreak: 'auto',
+        didDrawCell: (data) => {
+          if (data.row.section === 'head' && data.cell.y < margin) {
+            yPosition = data.cell.y + data.cell.height;
           }
         },
-        pageBreak: 'auto',
       });
 
       yPosition = doc.lastAutoTable.finalY + 20 || yPosition + 20;
@@ -605,7 +616,12 @@ export default function GenerarPDF({ id }) {
         head: [productosColumns.map(col => col.header)],
         body: productosTableData.map(row => productosColumns.map(col => row[col.dataKey])),
         theme: 'striped',
-        styles: { fontSize: fontSizes.normal, cellPadding: 4, overflow: 'linebreak' },
+        styles: {
+          fontSize: fontSizes.normal,
+          cellPadding: 4,
+          overflow: 'linebreak',
+          fillColor: null,
+        },
         tableWidth: 'auto',
         headStyles: {
           fillColor: blueColor,
@@ -616,12 +632,12 @@ export default function GenerarPDF({ id }) {
           fillStyle: 'F',
         },
         margin: { left: margin, right: margin },
-        didDrawPage: (data) => {
-          if (data.pageNumber > 1 && data.cursor.y < yPosition) {
-            yPosition = data.cursor.y;
+        pageBreak: 'auto',
+        didDrawCell: (data) => {
+          if (data.row.section === 'head' && data.cell.y < margin) {
+            yPosition = data.cell.y + data.cell.height;
           }
         },
-        pageBreak: 'auto',
       });
 
       yPosition = doc.lastAutoTable.finalY + 20 || yPosition + 20;
@@ -649,7 +665,11 @@ export default function GenerarPDF({ id }) {
         head: [resumenColumns.map(col => col.header)],
         body: groupedRubros.map(row => resumenColumns.map(col => row[col.dataKey])),
         theme: 'striped',
-        styles: { fontSize: fontSizes.normal, cellPadding: 4 },
+        styles: {
+          fontSize: fontSizes.normal,
+          cellPadding: 4,
+          fillColor: null,
+        },
         tableWidth: 'auto',
         headStyles: {
           fillColor: blueColor,
@@ -660,12 +680,12 @@ export default function GenerarPDF({ id }) {
           fillStyle: 'F',
         },
         margin: { left: margin, right: margin },
-        didDrawPage: (data) => {
-          if (data.pageNumber > 1 && data.cursor.y < yPosition) {
-            yPosition = data.cursor.y;
+        pageBreak: 'auto',
+        didDrawCell: (data) => {
+          if (data.row.section === 'head' && data.cell.y < margin) {
+            yPosition = data.cell.y + data.cell.height;
           }
         },
-        pageBreak: 'auto',
       });
 
       yPosition = doc.lastAutoTable.finalY + 10 || yPosition + 10;
