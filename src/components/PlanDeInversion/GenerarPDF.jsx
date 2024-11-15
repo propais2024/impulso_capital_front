@@ -413,12 +413,19 @@ export default function GenerarPDF({ id }) {
         theme: 'striped',
         styles: { fontSize: fontSizes.normal, cellPadding: 4, overflow: 'linebreak' },
         tableWidth: 'auto',
-        headStyles: { fillColor: blueColor, textColor: [255, 255, 255], fontStyle: 'bold' },
+        headStyles: {
+          fillColor: blueColor,
+          textColor: [255, 255, 255],
+          fontStyle: 'bold',
+          halign: 'center',
+          valign: 'middle',
+          fillStyle: 'F',
+        },
         margin: { left: margin, right: margin },
         didDrawPage: (data) => {
           yPosition = data.cursor.y;
         },
-        pageBreak: 'auto', // Permite que la tabla se divida en varias páginas
+        pageBreak: 'auto',
       });
 
       yPosition = doc.lastAutoTable.finalY + 20 || yPosition + 20;
@@ -458,7 +465,14 @@ export default function GenerarPDF({ id }) {
         theme: 'striped',
         styles: { fontSize: fontSizes.normal, cellPadding: 4, overflow: 'linebreak' },
         tableWidth: 'auto',
-        headStyles: { fillColor: blueColor, textColor: [255, 255, 255], fontStyle: 'bold' },
+        headStyles: {
+          fillColor: blueColor,
+          textColor: [255, 255, 255],
+          fontStyle: 'bold',
+          halign: 'center',
+          valign: 'middle',
+          fillStyle: 'F',
+        },
         margin: { left: margin, right: margin },
         didDrawPage: (data) => {
           yPosition = data.cursor.y;
@@ -509,7 +523,14 @@ export default function GenerarPDF({ id }) {
         theme: 'striped',
         styles: { fontSize: fontSizes.normal, cellPadding: 4, overflow: 'linebreak' },
         tableWidth: 'auto',
-        headStyles: { fillColor: blueColor, textColor: [255, 255, 255], fontStyle: 'bold' },
+        headStyles: {
+          fillColor: blueColor,
+          textColor: [255, 255, 255],
+          fontStyle: 'bold',
+          halign: 'center',
+          valign: 'middle',
+          fillStyle: 'F',
+        },
         margin: { left: margin, right: margin },
         didDrawPage: (data) => {
           yPosition = data.cursor.y;
@@ -568,7 +589,14 @@ export default function GenerarPDF({ id }) {
         theme: 'striped',
         styles: { fontSize: fontSizes.normal, cellPadding: 4, overflow: 'linebreak' },
         tableWidth: 'auto',
-        headStyles: { fillColor: blueColor, textColor: [255, 255, 255], fontStyle: 'bold' },
+        headStyles: {
+          fillColor: blueColor,
+          textColor: [255, 255, 255],
+          fontStyle: 'bold',
+          halign: 'center',
+          valign: 'middle',
+          fillStyle: 'F',
+        },
         margin: { left: margin, right: margin },
         didDrawPage: (data) => {
           yPosition = data.cursor.y;
@@ -600,7 +628,14 @@ export default function GenerarPDF({ id }) {
         theme: 'striped',
         styles: { fontSize: fontSizes.normal, cellPadding: 4 },
         tableWidth: 'auto',
-        headStyles: { fillColor: blueColor, textColor: [255, 255, 255], fontStyle: 'bold' },
+        headStyles: {
+          fillColor: blueColor,
+          textColor: [255, 255, 255],
+          fontStyle: 'bold',
+          halign: 'center',
+          valign: 'middle',
+          fillStyle: 'F',
+        },
         margin: { left: margin, right: margin },
         didDrawPage: (data) => {
           yPosition = data.cursor.y;
