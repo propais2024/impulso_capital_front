@@ -191,25 +191,26 @@ export default function FormulacionTab({ id }) {
         recordData.id = res.data.id; 
       }
 
+      // Volver a obtener el registro actualizado desde el servidor
+      const updatedResponse = await axios.get(
+        `https://impulso-capital-back.onrender.com/api/inscriptions/pi/tables/${piFormulacionTableName}/record?caracterizacion_id=${id}&rel_id_prov=${recordId}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      const updatedPiRecord = updatedResponse.data[0];
+
+      // Actualizar el estado con el registro actualizado
       setPiFormulacionRecords((prevRecords) => {
         const index = prevRecords.findIndex((rec) => String(rec.rel_id_prov) === String(recordId));
         if (index !== -1) {
-          const updatedRecord = { ...prevRecords[index], Cantidad: cantidad };
+          const updatedRecord = { ...prevRecords[index], ...updatedPiRecord };
           return [
             ...prevRecords.slice(0, index),
             updatedRecord,
             ...prevRecords.slice(index + 1),
           ];
         } else {
-          axios.get(`https://impulso-capital-back.onrender.com/api/inscriptions/tables/${tableName}/record/${recordId}`, {
-            headers: { Authorization: `Bearer ${token}` },
-          }).then((res) => {
-            const providerData = res.data.record;
-            setPiFormulacionRecords((prev) => [
-              ...prev,
-              { ...recordData, providerData },
-            ]);
-          });
+          // Si no existe en el estado anterior, agregarlo
+          // Obtenemos el providerData
           return prevRecords;
         }
       });
@@ -269,48 +270,36 @@ export default function FormulacionTab({ id }) {
         recordData.id = res.data.id;
       }
 
+      // Volver a obtener el registro actualizado desde el servidor
+      const updatedResponse = await axios.get(
+        `https://impulso-capital-back.onrender.com/api/inscriptions/pi/tables/${piFormulacionTableName}/record?caracterizacion_id=${id}&rel_id_prov=${record.id}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      const updatedPiRecord = updatedResponse.data[0];
+
+      // Ahora obtenemos la información del proveedor si es necesario
+      if (!updatedPiRecord.providerData) {
+        const providerResponse = await axios.get(
+          `https://impulso-capital-back.onrender.com/api/inscriptions/tables/${tableName}/record/${record.id}`,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        updatedPiRecord.providerData = providerResponse.data.record;
+      }
+
       setPiFormulacionRecords((prevRecords) => {
         const index = prevRecords.findIndex((rec) => String(rec.rel_id_prov) === String(record.id));
-        let updatedRecords;
-
         if (index !== -1) {
-          const updatedRecord = { ...prevRecords[index], [field]: value };
-
-          if (field === "Seleccion") {
-            if (value === true) {
-              updatedRecord.selectionorder = recordData.selectionorder;
-            } else {
-              updatedRecord.selectionorder = null;
-            }
-          }
-
-          updatedRecords = [
+          const updatedRecord = { ...prevRecords[index], ...updatedPiRecord };
+          return [
             ...prevRecords.slice(0, index),
             updatedRecord,
             ...prevRecords.slice(index + 1),
           ];
         } else {
-          // Registro no existe en el estado, lo buscamos tras creación
-          const newRecord = { ...recordData };
-          axios.get(`https://impulso-capital-back.onrender.com/api/inscriptions/tables/${tableName}/record/${record.id}`, {
-            headers: { Authorization: `Bearer ${token}` },
-          }).then((res) => {
-            const providerData = res.data.record;
-            // Si es selección verdadera
-            if (field === "Seleccion" && value === true) {
-              newRecord.selectionorder = recordData.selectionorder;
-            } else {
-              newRecord.selectionorder = null;
-            }
-            setPiFormulacionRecords((prev) => [
-              ...prev,
-              { ...newRecord, providerData },
-            ]);
-          });
-          updatedRecords = prevRecords;
+          return [...prevRecords, updatedPiRecord];
         }
-        return updatedRecords;
       });
+
     } catch (error) {
       console.error('Error al cambiar la aprobación:', error);
     }
@@ -350,8 +339,8 @@ export default function FormulacionTab({ id }) {
     .filter((piRecord) => piRecord["Seleccion"]);
 
   selectedRecords.sort((a, b) => {
-    const orderA = a.selectionorder || Infinity;
-    const orderB = b.selectionorder || Infinity;
+    const orderA = (a.selectionorder === null || a.selectionorder === undefined) ? Infinity : a.selectionorder;
+    const orderB = (b.selectionorder === null || b.selectionorder === undefined) ? Infinity : b.selectionorder;
     return orderA - orderB;
   });
 
