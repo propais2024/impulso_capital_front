@@ -9,10 +9,14 @@ export default function FormulacionTab({ id }) {
   const [selectedRubro, setSelectedRubro] = useState('');
   const [elementos, setElementos] = useState([]);
   const [selectedElemento, setSelectedElemento] = useState('');
-  const [searchTerm, setSearchTerm] = useState(''); // Estado para el término de búsqueda
+  const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [piFormulacionRecords, setPiFormulacionRecords] = useState([]);
+  
+  // Esta variable servirá para asignar un orden de selección a cada registro cuando se marque por primera vez
+  const [selectionOrderCounter, setSelectionOrderCounter] = useState(1);
+
   const tableName = 'provider_proveedores';
   const rubroTableName = 'provider_rubro';
   const elementoTableName = 'provider_elemento';
@@ -88,7 +92,6 @@ export default function FormulacionTab({ id }) {
           headers: { Authorization: `Bearer ${token}` },
         });
 
-        // Aquí eliminamos la selección de los top 3, para hacerlo después de filtrar por descripción
         setRecords(recordsResponse.data);
         setLoading(false);
       } catch (error) {
@@ -154,13 +157,13 @@ export default function FormulacionTab({ id }) {
   const handleRubroChange = (e) => {
     setSelectedRubro(e.target.value);
     setSelectedElemento('');
-    setSearchTerm(''); // Limpiar el término de búsqueda cuando se cambia el Rubro
+    setSearchTerm('');
   };
 
   // Función para manejar cambios en el Elemento seleccionado
   const handleElementoChange = (e) => {
     setSelectedElemento(e.target.value);
-    setSearchTerm(''); // Limpiar el término de búsqueda cuando se cambia el Elemento
+    setSearchTerm('');
   };
 
   // Función para obtener el nombre del Elemento
@@ -203,9 +206,10 @@ export default function FormulacionTab({ id }) {
         });
       } else {
         // Crear nuevo registro
-        await axios.post(endpoint, recordData, {
+        const res = await axios.post(endpoint, recordData, {
           headers: { Authorization: `Bearer ${token}` },
         });
+        recordData.id = res.data.id; // Asignar el id del nuevo registro creado
       }
 
       // Actualizar estado
@@ -221,9 +225,8 @@ export default function FormulacionTab({ id }) {
             ...prevRecords.slice(index + 1),
           ];
         } else {
-          // Necesitamos obtener los datos del proveedor
-          const providerUrl = `https://impulso-capital-back.onrender.com/api/inscriptions/tables/${tableName}/record/${recordId}`;
-          axios.get(providerUrl, {
+          // Obtener datos del proveedor
+          axios.get(`https://impulso-capital-back.onrender.com/api/inscriptions/tables/${tableName}/record/${recordId}`, {
             headers: { Authorization: `Bearer ${token}` },
           }).then((res) => {
             const providerData = res.data.record;
@@ -240,7 +243,7 @@ export default function FormulacionTab({ id }) {
     }
   };
 
-  // Función para manejar cambios en la aprobación
+  // Función para manejar cambios en la aprobación (incluye "Seleccion", "pre-Seleccion", "Aprobación comité")
   const handleApprovalChange = async (record, field, value) => {
     try {
       const token = localStorage.getItem('token');
@@ -261,37 +264,59 @@ export default function FormulacionTab({ id }) {
         });
       } else {
         // Crear nuevo registro
-        await axios.post(endpoint, recordData, {
+        const res = await axios.post(endpoint, recordData, {
           headers: { Authorization: `Bearer ${token}` },
         });
+        recordData.id = res.data.id; // Asignar el id del nuevo registro creado
       }
 
-      // Actualizar estado
+      // Ahora actualizamos el estado local
       setPiFormulacionRecords((prevRecords) => {
         const index = prevRecords.findIndex(
           (rec) => String(rec.rel_id_prov) === String(record.id)
         );
+        let updatedRecords;
+
         if (index !== -1) {
+          // Registro ya existe en estado
           const updatedRecord = { ...prevRecords[index], [field]: value };
-          return [
+
+          // Si el campo es "Seleccion" y se está marcando true por primera vez, asignamos un orden de selección
+          if (field === "Seleccion") {
+            if (value === true && updatedRecord.selectionOrder == null) {
+              updatedRecord.selectionOrder = selectionOrderCounter;
+              setSelectionOrderCounter((prev) => prev + 1);
+            } else if (value === false) {
+              // Si se desmarca la selección, removemos el orden de selección
+              delete updatedRecord.selectionOrder;
+            }
+          }
+
+          updatedRecords = [
             ...prevRecords.slice(0, index),
             updatedRecord,
             ...prevRecords.slice(index + 1),
           ];
         } else {
-          // Necesitamos obtener los datos del proveedor
-          const providerUrl = `https://impulso-capital-back.onrender.com/api/inscriptions/tables/${tableName}/record/${record.id}`;
-          axios.get(providerUrl, {
+          // Registro no existe en estado, necesitamos obtener datos del proveedor
+          const newRecord = { ...recordData };
+          axios.get(`https://impulso-capital-back.onrender.com/api/inscriptions/tables/${tableName}/record/${record.id}`, {
             headers: { Authorization: `Bearer ${token}` },
           }).then((res) => {
             const providerData = res.data.record;
+            // Si es selección verdadera, asignar orden de selección
+            if (field === "Seleccion" && value === true) {
+              newRecord.selectionOrder = selectionOrderCounter;
+              setSelectionOrderCounter((prev) => prev + 1);
+            }
             setPiFormulacionRecords((prev) => [
               ...prev,
-              { ...recordData, providerData },
+              { ...newRecord, providerData },
             ]);
           });
-          return prevRecords;
+          updatedRecords = prevRecords;
         }
+        return updatedRecords;
       });
     } catch (error) {
       console.error('Error al cambiar la aprobación:', error);
@@ -324,18 +349,23 @@ export default function FormulacionTab({ id }) {
       rubro,
       total: total.toFixed(2),
     }));
-  }, [piFormulacionRecords]);
+  }, [piFormulacionRecords, rubros]);
 
-  // Calcular el total de la inversión a partir de los rubros agrupados
-  const totalInversion = groupedRubros.reduce(
-    (acc, record) => acc + parseFloat(record.total || 0),
-    0
-  ).toFixed(2);
+  // Calcular el total de la inversión
+  const totalInversion = groupedRubros
+    .reduce((acc, record) => acc + parseFloat(record.total || 0), 0)
+    .toFixed(2);
 
   // Obtener registros seleccionados
-  const selectedRecords = piFormulacionRecords.filter(
-    (piRecord) => piRecord["Seleccion"]
-  );
+  const selectedRecords = piFormulacionRecords
+    .filter((piRecord) => piRecord["Seleccion"]);
+
+  // Ordenar los registros seleccionados por el orden en el que fueron seleccionados por primera vez
+  selectedRecords.sort((a, b) => {
+    const orderA = a.selectionOrder || Infinity;
+    const orderB = b.selectionOrder || Infinity;
+    return orderA - orderB;
+  });
 
   // Filtrar registros basados en el término de búsqueda y obtener los top 3
   const filteredRecords = useMemo(() => {
@@ -349,12 +379,10 @@ export default function FormulacionTab({ id }) {
       });
     }
 
-    // Ordenar por "Puntuacion evaluacion"
     const sortedRecords = filtered.sort(
       (a, b) => b["Puntuacion evaluacion"] - a["Puntuacion evaluacion"]
     );
 
-    // Tomar los primeros 3 registros
     const topThreeRecords = sortedRecords.slice(0, 3);
 
     return topThreeRecords;
