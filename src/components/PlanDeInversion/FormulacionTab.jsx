@@ -13,7 +13,7 @@ export default function FormulacionTab({ id }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [piFormulacionRecords, setPiFormulacionRecords] = useState([]);
-  
+
   // Esta variable servirá para asignar un orden de selección a cada registro cuando se marque por primera vez
   const [selectionOrderCounter, setSelectionOrderCounter] = useState(1);
 
@@ -384,7 +384,7 @@ export default function FormulacionTab({ id }) {
     return orderA - orderB;
   });
 
-  // Filtrar registros basados en el término de búsqueda y obtener los top 3
+  // Filtrar registros basados en el término de búsqueda y mostrar todos ordenados por Puntuacion evaluacion
   const filteredRecords = useMemo(() => {
     let filtered = records;
 
@@ -400,9 +400,7 @@ export default function FormulacionTab({ id }) {
       (a, b) => b["Puntuacion evaluacion"] - a["Puntuacion evaluacion"]
     );
 
-    const topThreeRecords = sortedRecords.slice(0, 3);
-
-    return topThreeRecords;
+    return sortedRecords; // Devuelve todos los registros ordenados
   }, [records, searchTerm]);
 
   return (
