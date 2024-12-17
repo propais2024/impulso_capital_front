@@ -255,6 +255,22 @@ export default function FormulacionTab({ id }) {
         [field]: value,
       };
 
+      // Si el campo es "Seleccion" debemos actualizar el selectionOrder
+      if (field === "Seleccion") {
+        if (value === true) {
+          // Si se va a seleccionar y no tiene selectionOrder asignado
+          if (!existingPiData.selectionOrder) {
+            recordData.selectionOrder = selectionOrderCounter;
+          } else {
+            // Si ya tenía selectionOrder, mantener el que ya tenía
+            recordData.selectionOrder = existingPiData.selectionOrder;
+          }
+        } else {
+          // Si se deselecciona, poner selectionOrder en null
+          recordData.selectionOrder = null;
+        }
+      }
+
       const endpoint = `https://impulso-capital-back.onrender.com/api/inscriptions/pi/tables/${piFormulacionTableName}/record`;
 
       if (existingPiData.id) {
@@ -267,7 +283,7 @@ export default function FormulacionTab({ id }) {
         const res = await axios.post(endpoint, recordData, {
           headers: { Authorization: `Bearer ${token}` },
         });
-        recordData.id = res.data.id; // Asignar el id del nuevo registro creado
+        recordData.id = res.data.id;
       }
 
       // Ahora actualizamos el estado local
@@ -281,13 +297,14 @@ export default function FormulacionTab({ id }) {
           // Registro ya existe en estado
           const updatedRecord = { ...prevRecords[index], [field]: value };
 
-          // Si el campo es "Seleccion" y se está marcando true por primera vez, asignamos un orden de selección
+          // Aplicar la lógica de asignar o remover selectionOrder
           if (field === "Seleccion") {
             if (value === true && updatedRecord.selectionOrder == null) {
-              updatedRecord.selectionOrder = selectionOrderCounter;
+              // Asigna el selectionOrder desde recordData ya calculado
+              updatedRecord.selectionOrder = recordData.selectionOrder;
               setSelectionOrderCounter((prev) => prev + 1);
             } else if (value === false) {
-              // Si se desmarca la selección, removemos el orden de selección
+              // Si se desmarca la selección, remover el selectionOrder
               delete updatedRecord.selectionOrder;
             }
           }
@@ -304,9 +321,9 @@ export default function FormulacionTab({ id }) {
             headers: { Authorization: `Bearer ${token}` },
           }).then((res) => {
             const providerData = res.data.record;
-            // Si es selección verdadera, asignar orden de selección
-            if (field === "Seleccion" && value === true) {
-              newRecord.selectionOrder = selectionOrderCounter;
+            // Si es selección verdadera y no había orden previo
+            if (field === "Seleccion" && value === true && !existingPiData.selectionOrder) {
+              newRecord.selectionOrder = recordData.selectionOrder;
               setSelectionOrderCounter((prev) => prev + 1);
             }
             setPiFormulacionRecords((prev) => [
