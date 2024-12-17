@@ -251,7 +251,7 @@ export default function FormulacionTab({ id }) {
           // Asignamos el order encontrado
           recordData.selectionorder = freeOrder;
         } else {
-          // Si se deselecciona
+          // Si se deselecciona, se pone null
           recordData.selectionorder = null;
         }
       }
@@ -280,7 +280,7 @@ export default function FormulacionTab({ id }) {
             if (value === true) {
               updatedRecord.selectionorder = recordData.selectionorder;
             } else {
-              delete updatedRecord.selectionorder;
+              updatedRecord.selectionorder = null;
             }
           }
 
@@ -296,9 +296,11 @@ export default function FormulacionTab({ id }) {
             headers: { Authorization: `Bearer ${token}` },
           }).then((res) => {
             const providerData = res.data.record;
-            // Si es selección verdadera y no había order previo
+            // Si es selección verdadera
             if (field === "Seleccion" && value === true) {
               newRecord.selectionorder = recordData.selectionorder;
+            } else {
+              newRecord.selectionorder = null;
             }
             setPiFormulacionRecords((prev) => [
               ...prev,
