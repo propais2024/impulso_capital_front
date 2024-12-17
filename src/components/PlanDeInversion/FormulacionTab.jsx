@@ -191,27 +191,27 @@ export default function FormulacionTab({ id }) {
         recordData.id = res.data.id; 
       }
 
-      // Volver a obtener el registro actualizado desde el servidor
-      const updatedResponse = await axios.get(
-        `https://impulso-capital-back.onrender.com/api/inscriptions/pi/tables/${piFormulacionTableName}/record?caracterizacion_id=${id}&rel_id_prov=${recordId}`,
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      const updatedPiRecord = updatedResponse.data[0];
-
-      // Actualizar el estado con el registro actualizado
       setPiFormulacionRecords((prevRecords) => {
         const index = prevRecords.findIndex((rec) => String(rec.rel_id_prov) === String(recordId));
         if (index !== -1) {
-          const updatedRecord = { ...prevRecords[index], ...updatedPiRecord };
+          const updatedRecord = { ...prevRecords[index], Cantidad: cantidad };
           return [
             ...prevRecords.slice(0, index),
             updatedRecord,
             ...prevRecords.slice(index + 1),
           ];
         } else {
-          // Si no existe en el estado anterior, agregarlo
-          // Obtenemos el providerData
-          return prevRecords;
+          // Si no existe en el estado, lo agregamos
+          // Obtenemos la info del proveedor
+          const providerResponse = await axios.get(
+            `https://impulso-capital-back.onrender.com/api/inscriptions/tables/${tableName}/record/${recordId}`,
+            { headers: { Authorization: `Bearer ${token}` } }
+          );
+          const providerData = providerResponse.data.record;
+          return [
+            ...prevRecords,
+            { ...recordData, providerData }
+          ];
         }
       });
     } catch (error) {
@@ -245,11 +245,10 @@ export default function FormulacionTab({ id }) {
 
           if (!freeOrder) {
             console.log("Ya hay 3 productos seleccionados. No se puede seleccionar otro.");
-            // No enviamos nada al backend. Revertimos el cambio en el checkbox.
+            // Revertimos el cambio
             return; 
           }
 
-          // Asignamos el order encontrado
           recordData.selectionorder = freeOrder;
         } else {
           // Si se deselecciona, se pone null
@@ -270,33 +269,37 @@ export default function FormulacionTab({ id }) {
         recordData.id = res.data.id;
       }
 
-      // Volver a obtener el registro actualizado desde el servidor
-      const updatedResponse = await axios.get(
-        `https://impulso-capital-back.onrender.com/api/inscriptions/pi/tables/${piFormulacionTableName}/record?caracterizacion_id=${id}&rel_id_prov=${record.id}`,
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      const updatedPiRecord = updatedResponse.data[0];
-
-      // Ahora obtenemos la información del proveedor si es necesario
-      if (!updatedPiRecord.providerData) {
-        const providerResponse = await axios.get(
-          `https://impulso-capital-back.onrender.com/api/inscriptions/tables/${tableName}/record/${record.id}`,
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
-        updatedPiRecord.providerData = providerResponse.data.record;
-      }
-
       setPiFormulacionRecords((prevRecords) => {
         const index = prevRecords.findIndex((rec) => String(rec.rel_id_prov) === String(record.id));
         if (index !== -1) {
-          const updatedRecord = { ...prevRecords[index], ...updatedPiRecord };
+          const updatedRecord = { ...prevRecords[index], [field]: value };
+          if (field === "Seleccion") {
+            if (value === true) {
+              updatedRecord.selectionorder = recordData.selectionorder;
+            } else {
+              updatedRecord.selectionorder = null;
+            }
+          }
           return [
             ...prevRecords.slice(0, index),
             updatedRecord,
             ...prevRecords.slice(index + 1),
           ];
         } else {
-          return [...prevRecords, updatedPiRecord];
+          // Si el registro no existe, lo creamos
+          const providerResponse = await axios.get(
+            `https://impulso-capital-back.onrender.com/api/inscriptions/tables/${tableName}/record/${record.id}`,
+            { headers: { Authorization: `Bearer ${token}` } }
+          );
+          const providerData = providerResponse.data.record;
+          const newRecord = { ...recordData, providerData };
+          if (field === "Seleccion" && value === false) {
+            newRecord.selectionorder = null;
+          }
+          return [
+            ...prevRecords,
+            newRecord
+          ];
         }
       });
 
@@ -587,4 +590,3 @@ export default function FormulacionTab({ id }) {
 FormulacionTab.propTypes = {
   id: PropTypes.string.isRequired,
 };
-
