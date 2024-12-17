@@ -280,7 +280,7 @@ export default function FormulacionTab({ id }) {
             if (value === true) {
               updatedRecord.selectionorder = recordData.selectionorder;
             } else {
-              // Aquí asignamos null explícitamente cuando se deselecciona
+              // Aquí el cambio: en lugar de borrar la propiedad, la establecemos en null.
               updatedRecord.selectionorder = null;
             }
           }
@@ -297,11 +297,11 @@ export default function FormulacionTab({ id }) {
             headers: { Authorization: `Bearer ${token}` },
           }).then((res) => {
             const providerData = res.data.record;
-            // Si es selección verdadera, asignamos el order
+            // Si es selección verdadera
             if (field === "Seleccion" && value === true) {
               newRecord.selectionorder = recordData.selectionorder;
             } else if (field === "Seleccion" && value === false) {
-              // Si es falsa, asignamos null a selectionorder
+              // Si es falsa, aseguramos que selectionorder sea null
               newRecord.selectionorder = null;
             }
 
@@ -601,4 +601,3 @@ export default function FormulacionTab({ id }) {
 FormulacionTab.propTypes = {
   id: PropTypes.string.isRequired,
 };
-
