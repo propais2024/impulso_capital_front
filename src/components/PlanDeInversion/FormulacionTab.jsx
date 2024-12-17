@@ -15,7 +15,8 @@ export default function FormulacionTab({ id }) {
   const [piFormulacionRecords, setPiFormulacionRecords] = useState([]);
 
   // Esta variable servirá para asignar un orden de selección a cada registro cuando se marque por primera vez
-  const [selectionOrderCounter, setSelectionOrderCounter] = useState(1);
+  // Cambiamos de selectionOrderCounter a seleccionorderCounter por consistencia interna (opcional)
+  const [seleccionorderCounter, setSeleccionorderCounter] = useState(1);
 
   const tableName = 'provider_proveedores';
   const rubroTableName = 'provider_rubro';
@@ -255,19 +256,19 @@ export default function FormulacionTab({ id }) {
         [field]: value,
       };
 
-      // Si el campo es "Seleccion" debemos actualizar el selectionOrder
+      // Si el campo es "Seleccion" debemos actualizar el seleccionorder
       if (field === "Seleccion") {
         if (value === true) {
-          // Si se va a seleccionar y no tiene selectionOrder asignado
-          if (!existingPiData.selectionOrder) {
-            recordData.selectionOrder = selectionOrderCounter;
+          // Si se va a seleccionar y no tiene seleccionorder asignado
+          if (!existingPiData.seleccionorder) {
+            recordData.seleccionorder = seleccionorderCounter;
           } else {
-            // Si ya tenía selectionOrder, mantener el que ya tenía
-            recordData.selectionOrder = existingPiData.selectionOrder;
+            // Si ya tenía seleccionorder, mantener el que ya tenía
+            recordData.seleccionorder = existingPiData.seleccionorder;
           }
         } else {
-          // Si se deselecciona, poner selectionOrder en null
-          recordData.selectionOrder = null;
+          // Si se deselecciona, poner seleccionorder en null
+          recordData.seleccionorder = null;
         }
       }
 
@@ -297,15 +298,15 @@ export default function FormulacionTab({ id }) {
           // Registro ya existe en estado
           const updatedRecord = { ...prevRecords[index], [field]: value };
 
-          // Aplicar la lógica de asignar o remover selectionOrder
+          // Aplicar la lógica de asignar o remover seleccionorder
           if (field === "Seleccion") {
-            if (value === true && updatedRecord.selectionOrder == null) {
-              // Asigna el selectionOrder desde recordData ya calculado
-              updatedRecord.selectionOrder = recordData.selectionOrder;
-              setSelectionOrderCounter((prev) => prev + 1);
+            if (value === true && updatedRecord.seleccionorder == null) {
+              // Asigna el seleccionorder desde recordData ya calculado
+              updatedRecord.seleccionorder = recordData.seleccionorder;
+              setSeleccionorderCounter((prev) => prev + 1);
             } else if (value === false) {
-              // Si se desmarca la selección, remover el selectionOrder
-              delete updatedRecord.selectionOrder;
+              // Si se desmarca la selección, remover el seleccionorder
+              delete updatedRecord.seleccionorder;
             }
           }
 
@@ -322,9 +323,9 @@ export default function FormulacionTab({ id }) {
           }).then((res) => {
             const providerData = res.data.record;
             // Si es selección verdadera y no había orden previo
-            if (field === "Seleccion" && value === true && !existingPiData.selectionOrder) {
-              newRecord.selectionOrder = recordData.selectionOrder;
-              setSelectionOrderCounter((prev) => prev + 1);
+            if (field === "Seleccion" && value === true && !existingPiData.seleccionorder) {
+              newRecord.seleccionorder = recordData.seleccionorder;
+              setSeleccionorderCounter((prev) => prev + 1);
             }
             setPiFormulacionRecords((prev) => [
               ...prev,
@@ -379,8 +380,8 @@ export default function FormulacionTab({ id }) {
 
   // Ordenar los registros seleccionados por el orden en el que fueron seleccionados por primera vez
   selectedRecords.sort((a, b) => {
-    const orderA = a.selectionOrder || Infinity;
-    const orderB = b.selectionOrder || Infinity;
+    const orderA = a.seleccionorder || Infinity;
+    const orderB = b.seleccionorder || Infinity;
     return orderA - orderB;
   });
 
