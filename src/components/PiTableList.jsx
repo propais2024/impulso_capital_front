@@ -83,12 +83,17 @@ export default function PiTableList() {
       let filteredRecords = recordsResponse.data;
 
       // Filtrar los registros según el rol y el usuario
-      if (loggedUserRoleId !== '1' && loggedUserRoleId !== '2' && loggedUserId) {
-        // Usuario NO es SuperAdmin y está logueado
+      if (
+        loggedUserRoleId !== '1' &&
+        loggedUserRoleId !== '2' &&
+        loggedUserRoleId !== '5' &&  // <-- EXCLUIMOS al rol 5 del filtrado
+        loggedUserId
+      ) {
         filteredRecords = filteredRecords.filter(
           (record) => String(record.Asesor) === String(loggedUserId)
         );
       }
+      
       // Si el usuario es 'SuperAdmin' (role_id '1'), no se aplica el filtro y se muestran todos los registros
 
       setRecords(filteredRecords);
