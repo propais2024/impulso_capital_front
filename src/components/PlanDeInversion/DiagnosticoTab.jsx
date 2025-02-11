@@ -10,6 +10,10 @@ export default function DiagnosticoTab({ id }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
+  // 1. Tomar el role_id y evaluar si es '5'
+  const roleId = localStorage.getItem('role_id');
+  const isRole5 = roleId === '5';
+
   useEffect(() => {
     const fetchFieldsAndRecords = async () => {
       setLoading(true);
@@ -47,13 +51,20 @@ export default function DiagnosticoTab({ id }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    // 2. Bloqueo también a nivel de función
+    if (isRole5) {
+      alert('No tienes permisos para guardar registros.');
+      return;
+    }
+
     try {
       const token = localStorage.getItem('token');
       if (!token) return;
 
       const recordData = { ...data, caracterizacion_id: id };
 
-      // Crear un nuevo registro sin actualizar
+      // Crear un nuevo registro (no se actualiza uno existente)
       await axios.post(
         `https://impulso-capital-back.onrender.com/api/inscriptions/pi/tables/${tableName}/record`,
         recordData,
@@ -61,9 +72,9 @@ export default function DiagnosticoTab({ id }) {
       );
       
       alert('Datos guardados exitosamente');
-      setData({ caracterizacion_id: id }); // Limpiar el formulario después de guardar
+      setData({ caracterizacion_id: id }); // Limpiar el formulario
 
-      // Actualizar los registros después de agregar un nuevo registro
+      // Refrescar la lista de registros
       const updatedRecords = await axios.get(
         `https://impulso-capital-back.onrender.com/api/inscriptions/pi/tables/${tableName}/records?caracterizacion_id=${id}`,
         { headers: { Authorization: `Bearer ${token}` } }
@@ -76,6 +87,12 @@ export default function DiagnosticoTab({ id }) {
   };
 
   const handleDelete = async (recordId) => {
+    // Bloqueo también a nivel de función
+    if (isRole5) {
+      alert('No tienes permisos para eliminar registros.');
+      return;
+    }
+
     try {
       const token = localStorage.getItem('token');
       await axios.delete(
@@ -115,7 +132,12 @@ export default function DiagnosticoTab({ id }) {
                   />
                 </div>
               ))}
-            <button type="submit" className="btn btn-primary">
+            {/* 3. Deshabilitar el botón si isRole5 == true */}
+            <button
+              type="submit"
+              className="btn btn-primary"
+              disabled={isRole5}
+            >
               Guardar
             </button>
           </form>
@@ -137,9 +159,11 @@ export default function DiagnosticoTab({ id }) {
                     <td key={field.column_name}>{record[field.column_name]}</td>
                   ))}
                   <td>
+                    {/* 4. Deshabilitar el botón Eliminar si isRole5 == true */}
                     <button
                       className="btn btn-danger btn-sm"
                       onClick={() => handleDelete(record.id)}
+                      disabled={isRole5}
                     >
                       Eliminar
                     </button>
