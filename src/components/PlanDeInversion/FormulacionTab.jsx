@@ -14,6 +14,10 @@ export default function FormulacionTab({ id }) {
   const [error, setError] = useState(null);
   const [piFormulacionRecords, setPiFormulacionRecords] = useState([]);
 
+  // 1. Obtener role_id y verificar si es '5'
+  const roleId = localStorage.getItem('role_id');
+  const isRole5 = roleId === '5';
+
   const tableName = 'provider_proveedores';
   const rubroTableName = 'provider_rubro';
   const elementoTableName = 'provider_elemento';
@@ -188,7 +192,7 @@ export default function FormulacionTab({ id }) {
         const res = await axios.post(endpoint, recordData, {
           headers: { Authorization: `Bearer ${token}` },
         });
-        recordData.id = res.data.id; 
+        recordData.id = res.data.id;
       }
 
       setPiFormulacionRecords((prevRecords) => {
@@ -201,9 +205,11 @@ export default function FormulacionTab({ id }) {
             ...prevRecords.slice(index + 1),
           ];
         } else {
-          axios.get(`https://impulso-capital-back.onrender.com/api/inscriptions/tables/${tableName}/record/${recordId}`, {
-            headers: { Authorization: `Bearer ${token}` },
-          }).then((res) => {
+          // No se encontraba el registro en el estado => lo traemos de la API y lo agregamos
+          axios.get(
+            `https://impulso-capital-back.onrender.com/api/inscriptions/tables/${tableName}/record/${recordId}`,
+            { headers: { Authorization: `Bearer ${token}` } }
+          ).then((res) => {
             const providerData = res.data.record;
             setPiFormulacionRecords((prev) => [
               ...prev,
@@ -231,27 +237,23 @@ export default function FormulacionTab({ id }) {
 
       if (field === "Seleccion") {
         if (value === true) {
-          // Obtener todos los seleccionados
+          // Ver cuántos productos ya están seleccionados:
           const currentlySelected = piFormulacionRecords.filter(r => r.Seleccion);
-          // Extraer sus selectionorder
           const occupiedOrders = currentlySelected
             .map(r => r.selectionorder)
             .filter(o => o !== null && o !== undefined);
 
-          // Buscamos el primer número libre en {1,2,3}
-          const possibleOrders = [1,2,3];
+          // Espacios disponibles son 1,2,3
+          const possibleOrders = [1, 2, 3];
           const freeOrder = possibleOrders.find(order => !occupiedOrders.includes(order));
 
           if (!freeOrder) {
             console.log("Ya hay 3 productos seleccionados. No se puede seleccionar otro.");
-            // No enviamos nada al backend. Revertimos el cambio en el checkbox.
-            return; 
+            // Revertimos el checkbox en interfaz, sin actualizar en BD.
+            return;
           }
-
-          // Asignamos el order encontrado
           recordData.selectionorder = freeOrder;
         } else {
-          // Si se deselecciona, se pone null
           recordData.selectionorder = null;
         }
       }
@@ -275,14 +277,8 @@ export default function FormulacionTab({ id }) {
 
         if (index !== -1) {
           const updatedRecord = { ...prevRecords[index], [field]: value };
-
           if (field === "Seleccion") {
-            if (value === true) {
-              updatedRecord.selectionorder = recordData.selectionorder;
-            } else {
-              // Aquí el cambio: en lugar de borrar la propiedad, la establecemos en null.
-              updatedRecord.selectionorder = null;
-            }
+            updatedRecord.selectionorder = value ? recordData.selectionorder : null;
           }
 
           updatedRecords = [
@@ -291,20 +287,16 @@ export default function FormulacionTab({ id }) {
             ...prevRecords.slice(index + 1),
           ];
         } else {
-          // Registro no existe en el estado, lo buscamos tras creación
+          // Registro no existe en el estado, lo buscamos tras la creación
           const newRecord = { ...recordData };
-          axios.get(`https://impulso-capital-back.onrender.com/api/inscriptions/tables/${tableName}/record/${record.id}`, {
-            headers: { Authorization: `Bearer ${token}` },
-          }).then((res) => {
+          axios.get(
+            `https://impulso-capital-back.onrender.com/api/inscriptions/tables/${tableName}/record/${record.id}`,
+            { headers: { Authorization: `Bearer ${token}` } }
+          ).then((res) => {
             const providerData = res.data.record;
-            // Si es selección verdadera
-            if (field === "Seleccion" && value === true) {
-              newRecord.selectionorder = recordData.selectionorder;
-            } else if (field === "Seleccion" && value === false) {
-              // Si es falsa, aseguramos que selectionorder sea null
-              newRecord.selectionorder = null;
+            if (field === "Seleccion") {
+              newRecord.selectionorder = value ? recordData.selectionorder : null;
             }
-
             setPiFormulacionRecords((prev) => [
               ...prev,
               { ...newRecord, providerData },
@@ -352,6 +344,7 @@ export default function FormulacionTab({ id }) {
   const selectedRecords = piFormulacionRecords
     .filter((piRecord) => piRecord["Seleccion"]);
 
+  // Ordenar los seleccionados por selectionorder
   selectedRecords.sort((a, b) => {
     const orderA = a.selectionorder || Infinity;
     const orderB = b.selectionorder || Infinity;
@@ -382,12 +375,14 @@ export default function FormulacionTab({ id }) {
         <div className="alert alert-danger">{error}</div>
       ) : (
         <>
+          {/* 2. Deshabilitar selector de Rubro si es role 5 */}
           <div className="form-group">
             <label>Rubro</label>
             <select
               className="form-control"
               value={selectedRubro}
               onChange={handleRubroChange}
+              disabled={isRole5}
             >
               <option value="">-- Selecciona un rubro --</option>
               {rubros.map((rubro) => (
@@ -398,13 +393,14 @@ export default function FormulacionTab({ id }) {
             </select>
           </div>
 
+          {/* 3. Deshabilitar selector de Elemento si es role 5 (o si no hay rubro) */}
           <div className="form-group mt-3">
             <label>Elemento</label>
             <select
               className="form-control"
               value={selectedElemento}
               onChange={handleElementoChange}
-              disabled={!selectedRubro}
+              disabled={!selectedRubro || isRole5}
             >
               <option value="">-- Selecciona un elemento --</option>
               {elementos.map((elemento) => (
@@ -415,6 +411,7 @@ export default function FormulacionTab({ id }) {
             </select>
           </div>
 
+          {/* 4. (Opcional) Si quieres también bloquear la búsqueda cuando es role 5 */}
           <div className="form-group mt-3">
             <label>Búsqueda por Descripción Corta</label>
             <input
@@ -423,7 +420,7 @@ export default function FormulacionTab({ id }) {
               placeholder="Buscar..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              disabled={!selectedRubro}
+              disabled={!selectedRubro || isRole5}
             />
           </div>
 
