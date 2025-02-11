@@ -5,29 +5,32 @@ import './css/UsersList.css'; // Ajusta la ruta si es necesario
 
 export default function ProviderTableList() {
   // Estados y variables
-  const [tables, setTables] = useState([]); // Tablas disponibles
-  const [selectedTable, setSelectedTable] = useState(''); // Tabla seleccionada
-  const [isPrimaryTable, setIsPrimaryTable] = useState(false); // Si la tabla es principal
-  const [records, setRecords] = useState([]); // Registros de la tabla
-  const [columns, setColumns] = useState([]); // Columnas de la tabla
-  const [fieldsData, setFieldsData] = useState([]); // Información completa de los campos
-  const [visibleColumns, setVisibleColumns] = useState([]); // Columnas a mostrar
-  const [loading, setLoading] = useState(false); // Estado de carga
-  const [error, setError] = useState(null); // Estado de error
-  const [search, setSearch] = useState(''); // Búsqueda
-  const [showSearchBar, setShowSearchBar] = useState(false); // Mostrar barra de búsqueda
+  const [tables, setTables] = useState([]); 
+  const [selectedTable, setSelectedTable] = useState(''); 
+  const [isPrimaryTable, setIsPrimaryTable] = useState(false); 
+  const [records, setRecords] = useState([]); 
+  const [columns, setColumns] = useState([]); 
+  const [fieldsData, setFieldsData] = useState([]); 
+  const [visibleColumns, setVisibleColumns] = useState([]); 
+  const [loading, setLoading] = useState(false); 
+  const [error, setError] = useState(null); 
+  const [search, setSearch] = useState(''); 
+  const [showSearchBar, setShowSearchBar] = useState(false); 
 
-  const [selectedRecords, setSelectedRecords] = useState([]); // Registros seleccionados
-  const [multiSelectFields, setMultiSelectFields] = useState([]); // Campos de clave foránea
-  const [bulkUpdateData, setBulkUpdateData] = useState({}); // Datos para actualización masiva
-  const [fieldOptions, setFieldOptions] = useState({}); // Opciones para campos de clave foránea
+  const [selectedRecords, setSelectedRecords] = useState([]); 
+  const [multiSelectFields, setMultiSelectFields] = useState([]); 
+  const [bulkUpdateData, setBulkUpdateData] = useState({}); 
+  const [fieldOptions, setFieldOptions] = useState({}); 
 
   const navigate = useNavigate();
 
   // Claves únicas para evitar conflictos entre módulos
-  const LOCAL_STORAGE_TABLE_KEY = 'providerSelectedTable'; // Clave única para tablas en providers
-  const LOCAL_STORAGE_COLUMNS_KEY = 'providerVisibleColumns'; // Clave única para columnas visibles
-  const LOCAL_STORAGE_SEARCH_KEY = 'providerSearchQuery'; // Clave única para búsqueda
+  const LOCAL_STORAGE_TABLE_KEY = 'providerSelectedTable';
+  const LOCAL_STORAGE_COLUMNS_KEY = 'providerVisibleColumns';
+  const LOCAL_STORAGE_SEARCH_KEY = 'providerSearchQuery';
+
+  // 1. Función para obtener el role_id del usuario
+  const getLoggedUserRoleId = () => localStorage.getItem('role_id') || null;
 
   // Función para obtener columnas y registros de la tabla seleccionada
   const fetchTableData = async (tableName, savedVisibleColumns = null) => {
@@ -44,14 +47,14 @@ export default function ProviderTableList() {
             Authorization: `Bearer ${token}`,
           },
           params: {
-            tableType: 'provider' // Especificamos que estamos trabajando con tablas de proveedores
-          }
+            tableType: 'provider', // Especificamos que estamos trabajando con tablas de proveedores
+          },
         }
       );
 
       const fetchedColumns = fieldsResponse.data.map((column) => column.column_name);
       setColumns(fetchedColumns);
-      setFieldsData(fieldsResponse.data); // Guardar información completa de los campos
+      setFieldsData(fieldsResponse.data);
 
       // Identificar campos de selección múltiple (claves foráneas)
       const multiSelectFieldsArray = fieldsResponse.data
@@ -60,13 +63,15 @@ export default function ProviderTableList() {
 
       setMultiSelectFields(multiSelectFieldsArray);
 
-      // Si hay columnas visibles guardadas en localStorage, úsalas; si no, muestra todas las columnas por defecto
+      // Manejar columnas visibles (persistencia)
       const localVisibleColumns =
-        savedVisibleColumns || JSON.parse(localStorage.getItem(LOCAL_STORAGE_COLUMNS_KEY)) || [];
+        savedVisibleColumns ||
+        JSON.parse(localStorage.getItem(LOCAL_STORAGE_COLUMNS_KEY)) ||
+        [];
       if (localVisibleColumns.length > 0) {
         setVisibleColumns(localVisibleColumns);
       } else {
-        setVisibleColumns(fetchedColumns); // Mostrar todas las columnas por defecto
+        setVisibleColumns(fetchedColumns);
       }
 
       // Obtener registros
@@ -77,14 +82,14 @@ export default function ProviderTableList() {
             Authorization: `Bearer ${token}`,
           },
           params: {
-            tableType: 'provider' // Especificamos que estamos trabajando con tablas de proveedores
-          }
+            tableType: 'provider',
+          },
         }
       );
-      setRecords(recordsResponse.data); // Establecer registros
-
+      setRecords(recordsResponse.data);
       setLoading(false);
     } catch (error) {
+      console.error(error);
       setError('Error obteniendo los registros');
       setLoading(false);
     }
@@ -95,19 +100,24 @@ export default function ProviderTableList() {
     const fetchTables = async () => {
       try {
         const token = localStorage.getItem('token');
-        const response = await axios.get('https://impulso-capital-back.onrender.com/api/inscriptions/tables', {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-          params: {
-            tableType: 'provider' // Especificamos que estamos trabajando con tablas de proveedores
+        const response = await axios.get(
+          'https://impulso-capital-back.onrender.com/api/inscriptions/tables',
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+            params: {
+              tableType: 'provider',
+            },
           }
-        });
-        setTables(response.data || []); // Asegurar que `tables` es un array
+        );
+        setTables(response.data || []);
 
-        // Cargar la tabla seleccionada y las columnas visibles guardadas desde el localStorage
+        // Cargar la tabla seleccionada y las columnas visibles guardadas
         const savedTable = localStorage.getItem(LOCAL_STORAGE_TABLE_KEY);
-        const savedVisibleColumns = JSON.parse(localStorage.getItem(LOCAL_STORAGE_COLUMNS_KEY));
+        const savedVisibleColumns = JSON.parse(
+          localStorage.getItem(LOCAL_STORAGE_COLUMNS_KEY)
+        );
 
         if (savedTable) {
           setSelectedTable(savedTable);
@@ -115,11 +125,12 @@ export default function ProviderTableList() {
           const selectedTableObj = response.data.find(
             (table) => table.table_name === savedTable
           );
-          setIsPrimaryTable(selectedTableObj?.is_primary || false); // Actualizar estado
+          setIsPrimaryTable(selectedTableObj?.is_primary || false);
 
           fetchTableData(savedTable, savedVisibleColumns);
         }
       } catch (error) {
+        console.error(error);
         setError('Error obteniendo las tablas');
       }
     };
@@ -130,23 +141,26 @@ export default function ProviderTableList() {
   // Manejar Select2 con persistencia
   useEffect(() => {
     if (window.$) {
-      // Inicializar select2
       window.$('.select2').select2({
-        closeOnSelect: false, // No cerrar al seleccionar
+        closeOnSelect: false,
         width: '100%',
       });
 
-      // Manejar el cambio en select2 y actualizar el estado y localStorage
       window.$('.select2').on('change', (e) => {
         const selectedOptions = Array.from(e.target.selectedOptions || []).map(
           (option) => option.value
         );
         setVisibleColumns(selectedOptions);
-        localStorage.setItem(LOCAL_STORAGE_COLUMNS_KEY, JSON.stringify(selectedOptions));
+        localStorage.setItem(
+          LOCAL_STORAGE_COLUMNS_KEY,
+          JSON.stringify(selectedOptions)
+        );
       });
 
-      // Cargar las columnas visibles guardadas desde el localStorage
-      const savedVisibleColumns = JSON.parse(localStorage.getItem(LOCAL_STORAGE_COLUMNS_KEY));
+      // Cargar las columnas visibles guardadas
+      const savedVisibleColumns = JSON.parse(
+        localStorage.getItem(LOCAL_STORAGE_COLUMNS_KEY)
+      );
       if (savedVisibleColumns && savedVisibleColumns.length > 0) {
         window.$('.select2').val(savedVisibleColumns).trigger('change');
       }
@@ -163,16 +177,20 @@ export default function ProviderTableList() {
   const handleTableSelect = (e) => {
     const tableName = e.target.value;
     setSelectedTable(tableName);
-    localStorage.setItem(LOCAL_STORAGE_TABLE_KEY, tableName); // Guardar tabla seleccionada en el localStorage
+    localStorage.setItem(LOCAL_STORAGE_TABLE_KEY, tableName);
 
     if (tableName) {
-      const selectedTableObj = tables.find((table) => table.table_name === tableName);
-      setIsPrimaryTable(selectedTableObj?.is_primary || false); // Actualizar estado
+      const selectedTableObj = tables.find(
+        (table) => table.table_name === tableName
+      );
+      setIsPrimaryTable(selectedTableObj?.is_primary || false);
 
-      const savedVisibleColumns = JSON.parse(localStorage.getItem(LOCAL_STORAGE_COLUMNS_KEY));
-      fetchTableData(tableName, savedVisibleColumns); // Cargar columnas y registros de la tabla seleccionada
+      const savedVisibleColumns = JSON.parse(
+        localStorage.getItem(LOCAL_STORAGE_COLUMNS_KEY)
+      );
+      fetchTableData(tableName, savedVisibleColumns);
     } else {
-      setRecords([]); // Limpiar los registros si no se selecciona ninguna tabla
+      setRecords([]);
       setIsPrimaryTable(false);
     }
   };
@@ -181,25 +199,23 @@ export default function ProviderTableList() {
   const getColumnDisplayValue = (record, column) => {
     if (multiSelectFields.includes(column)) {
       // Es un campo de clave foránea
-      const fieldData = fieldsData.find((field) => field.column_name === column); // Uso de fieldsData
       const foreignKeyValue = record[column];
-
-      if (fieldOptions[column]) {
-        const option = fieldOptions[column].find(
+      const fieldOptionsForColumn = fieldOptions[column];
+      if (fieldOptionsForColumn) {
+        const option = fieldOptionsForColumn.find(
           (opt) => opt.value === foreignKeyValue
         );
         if (option) {
-          return option.label; // Mostrar el nombre asociado
+          return option.label;
         }
       }
-
-      return foreignKeyValue; // Si no se encuentra el nombre, mostrar el ID
+      return foreignKeyValue;
     } else {
       return record[column];
     }
   };
 
-  // Aplicar el filtro de búsqueda
+  // Filtro de búsqueda
   const filteredRecords = search
     ? records.filter((record) => {
         return visibleColumns.some((column) => {
@@ -209,24 +225,23 @@ export default function ProviderTableList() {
       })
     : records;
 
-  // Función para limpiar filtros y mostrar todos los registros
+  // Limpiar filtros
   const clearFilters = () => {
-    setVisibleColumns(columns); // Mostrar todas las columnas disponibles
-    setSearch(''); // Limpiar búsqueda
-    localStorage.removeItem(LOCAL_STORAGE_COLUMNS_KEY); // Limpiar filtros persistentes
-    localStorage.removeItem(LOCAL_STORAGE_SEARCH_KEY); // Limpiar búsqueda persistente
+    setVisibleColumns(columns);
+    setSearch('');
+    localStorage.removeItem(LOCAL_STORAGE_COLUMNS_KEY);
+    localStorage.removeItem(LOCAL_STORAGE_SEARCH_KEY);
 
-    // Volver a cargar todos los registros de la tabla seleccionada
-    fetchTableData(selectedTable); // Restablecer la tabla completa sin filtros
+    fetchTableData(selectedTable);
   };
 
-  // Manejar el cambio en la búsqueda
+  // Manejar cambio en búsqueda
   const handleSearchChange = (e) => {
     setSearch(e.target.value);
-    localStorage.setItem(LOCAL_STORAGE_SEARCH_KEY, e.target.value); // Guardar búsqueda en el localStorage
+    localStorage.setItem(LOCAL_STORAGE_SEARCH_KEY, e.target.value);
   };
 
-  // Manejar cambios en los checkboxes
+  // Manejar checkboxes
   const handleCheckboxChange = (recordId) => {
     setSelectedRecords((prevSelected) => {
       if (prevSelected.includes(recordId)) {
@@ -237,7 +252,6 @@ export default function ProviderTableList() {
     });
   };
 
-  // Manejar selección de todos los registros
   const handleSelectAll = (e) => {
     if (e.target.checked) {
       const allRecordIds = filteredRecords.map((record) => record.id);
@@ -247,7 +261,7 @@ export default function ProviderTableList() {
     }
   };
 
-  // Manejar cambios en los campos de actualización masiva
+  // Actualización masiva
   const handleBulkUpdateChange = (field, value) => {
     setBulkUpdateData((prevData) => ({
       ...prevData,
@@ -255,7 +269,6 @@ export default function ProviderTableList() {
     }));
   };
 
-  // Aplicar actualización masiva
   const applyBulkUpdate = async () => {
     try {
       const token = localStorage.getItem('token');
@@ -270,22 +283,21 @@ export default function ProviderTableList() {
             Authorization: `Bearer ${token}`,
           },
           params: {
-            tableType: 'provider' // Especificamos que estamos trabajando con tablas de proveedores
-          }
+            tableType: 'provider',
+          },
         }
       );
       alert('Registros actualizados con éxito');
-      // Recargar los registros después de la actualización
       fetchTableData(selectedTable);
-      // Limpiar la selección
       setSelectedRecords([]);
       setBulkUpdateData({});
     } catch (error) {
+      console.error(error);
       setError('Error actualizando los registros');
     }
   };
 
-  // Obtener opciones para los campos de selección múltiple (claves foráneas)
+  // Obtener opciones para campos foráneos
   useEffect(() => {
     const fetchFieldOptions = async () => {
       try {
@@ -300,14 +312,15 @@ export default function ProviderTableList() {
                 Authorization: `Bearer ${token}`,
               },
               params: {
-                tableType: 'provider' // Especificamos que estamos trabajando con tablas de proveedores
-              }
+                tableType: 'provider',
+              },
             }
           );
           options[field] = response.data.options;
         }
         setFieldOptions(options);
       } catch (error) {
+        console.error(error);
         setError('Error obteniendo las opciones de los campos');
       }
     };
@@ -398,7 +411,9 @@ export default function ProviderTableList() {
 
                   {/* Tabla de registros */}
                   {loading ? (
-                    <div className="d-flex justify-content-center p-3">Cargando...</div>
+                    <div className="d-flex justify-content-center p-3">
+                      Cargando...
+                    </div>
                   ) : (
                     <table className="table table-hover text-nowrap minimal-table">
                       <thead>
@@ -409,7 +424,8 @@ export default function ProviderTableList() {
                                 type="checkbox"
                                 onChange={handleSelectAll}
                                 checked={
-                                  selectedRecords.length === filteredRecords.length &&
+                                  selectedRecords.length ===
+                                    filteredRecords.length &&
                                   filteredRecords.length > 0
                                 }
                               />
@@ -423,7 +439,7 @@ export default function ProviderTableList() {
                         </tr>
                       </thead>
                       <tbody>
-                        {filteredRecords.length > 0 &&
+                        {filteredRecords.length > 0 ? (
                           filteredRecords.map((record) => (
                             <tr key={record.id}>
                               {isPrimaryTable && (
@@ -436,20 +452,42 @@ export default function ProviderTableList() {
                                 </td>
                               )}
                               {visibleColumns.map((column) => (
-                                <td key={column}>{getColumnDisplayValue(record, column)}</td>
+                                <td key={column}>
+                                  {getColumnDisplayValue(record, column)}
+                                </td>
                               ))}
                               <td>
+                                {/* 2. Deshabilitar el botón Editar si role_id = 5 */}
                                 <button
                                   className="btn btn-sm btn-primary"
-                                  onClick={() =>
-                                    navigate(`/table/${selectedTable}/record/${record.id}`)
-                                  }
+                                  disabled={getLoggedUserRoleId() === '5'}
+                                  onClick={() => {
+                                    if (getLoggedUserRoleId() === '5') {
+                                      alert('No tienes permisos para editar.');
+                                      return;
+                                    }
+                                    navigate(`/table/${selectedTable}/record/${record.id}`);
+                                  }}
                                 >
                                   Editar
                                 </button>
                               </td>
                             </tr>
-                          ))}
+                          ))
+                        ) : (
+                          <tr>
+                            <td
+                              colSpan={
+                                isPrimaryTable
+                                  ? visibleColumns.length + 2
+                                  : visibleColumns.length + 1
+                              }
+                              className="text-center"
+                            >
+                              No hay registros para mostrar.
+                            </td>
+                          </tr>
+                        )}
                       </tbody>
                     </table>
                   )}
