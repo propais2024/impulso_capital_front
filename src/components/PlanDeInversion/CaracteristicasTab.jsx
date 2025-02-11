@@ -10,6 +10,10 @@ export default function CaracteristicasTab({ id }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
+  // 1. Leer el role_id y saber si es '5'
+  const roleId = localStorage.getItem('role_id');
+  const isRole5 = roleId === '5';
+
   useEffect(() => {
     const fetchFieldsAndRecords = async () => {
       setLoading(true);
@@ -45,8 +49,15 @@ export default function CaracteristicasTab({ id }) {
     setData({ ...data, [e.target.name]: e.target.value });
   };
 
+  // 2. Bloquear a nivel de función en handleSubmit
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    if (isRole5) {
+      alert('No tienes permisos para guardar registros.');
+      return;
+    }
+
     try {
       const token = localStorage.getItem('token');
       if (!token) return;
@@ -63,7 +74,7 @@ export default function CaracteristicasTab({ id }) {
       alert('Datos guardados exitosamente');
       setData({ caracterizacion_id: id });
 
-      // Actualizar los registros después de agregar un nuevo registro
+      // Actualizar los registros después de agregar el nuevo registro
       const updatedRecords = await axios.get(
         `https://impulso-capital-back.onrender.com/api/inscriptions/pi/tables/${tableName}/records?caracterizacion_id=${id}`,
         { headers: { Authorization: `Bearer ${token}` } }
@@ -75,7 +86,13 @@ export default function CaracteristicasTab({ id }) {
     }
   };
 
+  // 3. Bloqueo a nivel de función en handleDelete
   const handleDelete = async (recordId) => {
+    if (isRole5) {
+      alert('No tienes permisos para eliminar registros.');
+      return;
+    }
+
     try {
       const token = localStorage.getItem('token');
       await axios.delete(
@@ -115,7 +132,8 @@ export default function CaracteristicasTab({ id }) {
                   />
                 </div>
               ))}
-            <button type="submit" className="btn btn-primary">
+            {/* 4. Deshabilitar el botón de guardar si rol=5 */}
+            <button type="submit" className="btn btn-primary" disabled={isRole5}>
               Guardar
             </button>
           </form>
@@ -137,9 +155,11 @@ export default function CaracteristicasTab({ id }) {
                     <td key={field.column_name}>{record[field.column_name]}</td>
                   ))}
                   <td>
+                    {/* 5. Deshabilitar botón Eliminar si rol=5 */}
                     <button
                       className="btn btn-danger btn-sm"
                       onClick={() => handleDelete(record.id)}
+                      disabled={isRole5}
                     >
                       Eliminar
                     </button>

@@ -10,6 +10,10 @@ export default function ActivosTab({ id }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
+  // 1. Obtener el role_id y verificar si es '5'
+  const roleId = localStorage.getItem('role_id');
+  const isRole5 = roleId === '5';
+
   useEffect(() => {
     const fetchFieldsAndRecords = async () => {
       setLoading(true);
@@ -45,8 +49,15 @@ export default function ActivosTab({ id }) {
     setData({ ...data, [e.target.name]: e.target.value });
   };
 
+  // 2. Bloqueo a nivel de función en handleSubmit
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    if (isRole5) {
+      alert('No tienes permisos para guardar registros.');
+      return; // Evita continuar con la creación
+    }
+
     try {
       const token = localStorage.getItem('token');
       if (!token) return;
@@ -61,7 +72,7 @@ export default function ActivosTab({ id }) {
       );
 
       alert('Datos guardados exitosamente');
-      setData({ caracterizacion_id: id });
+      setData({ caracterizacion_id: id }); // Limpiar el formulario
 
       // Actualizar los registros después de agregar un nuevo registro
       const updatedRecords = await axios.get(
@@ -75,7 +86,13 @@ export default function ActivosTab({ id }) {
     }
   };
 
+  // 3. Bloqueo a nivel de función en handleDelete
   const handleDelete = async (recordId) => {
+    if (isRole5) {
+      alert('No tienes permisos para eliminar registros.');
+      return;
+    }
+
     try {
       const token = localStorage.getItem('token');
       await axios.delete(
@@ -115,7 +132,8 @@ export default function ActivosTab({ id }) {
                   />
                 </div>
               ))}
-            <button type="submit" className="btn btn-primary">
+            {/* 4. Deshabilitar el botón Guardar si es rol 5 */}
+            <button type="submit" className="btn btn-primary" disabled={isRole5}>
               Guardar
             </button>
           </form>
@@ -137,9 +155,11 @@ export default function ActivosTab({ id }) {
                     <td key={field.column_name}>{record[field.column_name]}</td>
                   ))}
                   <td>
+                    {/* 5. Deshabilitar el botón Eliminar si es rol 5 */}
                     <button
                       className="btn btn-danger btn-sm"
                       onClick={() => handleDelete(record.id)}
+                      disabled={isRole5}
                     >
                       Eliminar
                     </button>
@@ -157,3 +177,4 @@ export default function ActivosTab({ id }) {
 ActivosTab.propTypes = {
   id: PropTypes.string.isRequired,
 };
+
