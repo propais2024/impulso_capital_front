@@ -93,8 +93,6 @@ export default function PiTableList() {
           (record) => String(record.Asesor) === String(loggedUserId)
         );
       }
-      
-      // Si el usuario es 'SuperAdmin' (role_id '1'), no se aplica el filtro y se muestran todos los registros
 
       setRecords(filteredRecords);
 
@@ -160,7 +158,6 @@ export default function PiTableList() {
     if (multiSelectFields.includes(column)) {
       // Es un campo de llave foránea
       const foreignKeyValue = record[column];
-
       if (relatedData[column]) {
         const relatedRecord = relatedData[column].find(
           (item) => String(item.id) === String(foreignKeyValue)
@@ -280,9 +277,17 @@ export default function PiTableList() {
                               Plan de Inversión
                             </button>
                             <br />
+                            {/* // <-- CAMBIO: Deshabilitar si role_id=5 */}
                             <button
                               className="btn btn-sm btn-secondary"
-                              onClick={() => navigate(`/table/${tableName}/record/${record.id}`)}
+                              disabled={getLoggedUserRoleId() === '5'}
+                              onClick={() => {
+                                if (getLoggedUserRoleId() === '5') {
+                                  alert('No tienes permisos para editar.');
+                                  return;
+                                }
+                                navigate(`/table/${tableName}/record/${record.id}`);
+                              }}
                             >
                               Editar
                             </button>
