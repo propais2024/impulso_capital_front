@@ -10,6 +10,11 @@ export default function DatosTab({ id }) {
   const [recordId, setRecordId] = useState(null);
   const [error, setError] = useState(null);
 
+  // 1. Obtener role_id del localStorage
+  const roleId = localStorage.getItem('role_id');
+  // 2. Comparar si es '5'
+  const isRole5 = roleId === '5';
+
   useEffect(() => {
     const fetchFieldsAndData = async () => {
       setLoading(true);
@@ -76,6 +81,13 @@ export default function DatosTab({ id }) {
         return;
       }
 
+      // Si deseas evitar incluso que se envíe al backend cuando el rol sea 5
+      // puedes hacer un chequeo extra aquí:
+      if (isRole5) {
+        alert('No tienes permisos para actualizar datos.');
+        return;
+      }
+
       const recordData = { ...data, caracterizacion_id: id };
 
       if (recordId) {
@@ -133,7 +145,12 @@ export default function DatosTab({ id }) {
                 />
               </div>
             ))}
-          <button type="submit" className="btn btn-primary">
+          {/* 3. Deshabilitar el botón si el rol es 5 */}
+          <button
+            type="submit"
+            className="btn btn-primary"
+            disabled={isRole5}
+          >
             {recordId ? 'Actualizar' : 'Guardar'}
           </button>
         </form>
@@ -144,5 +161,5 @@ export default function DatosTab({ id }) {
 
 // Definir las validaciones de propiedades
 DatosTab.propTypes = {
-  id: PropTypes.string.isRequired, // Si 'id' es un número, cambia a PropTypes.number
+  id: PropTypes.string.isRequired, // O number, según corresponda
 };
