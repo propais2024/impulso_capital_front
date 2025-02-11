@@ -14,6 +14,10 @@ export default function AnexosTab({ id }) {
   const [showUploadForm, setShowUploadForm] = useState(false);
   const [uploadedFiles, setUploadedFiles] = useState([]);
 
+  // 1. Obtener el role_id y evaluar si es '5'
+  const roleId = localStorage.getItem('role_id');
+  const isRole5 = roleId === '5';
+
   // Función para obtener archivos en el frontend, utilizando caracterizacion_id
   const fetchFiles = useCallback(async () => {
     try {
@@ -70,13 +74,13 @@ export default function AnexosTab({ id }) {
         if (recordsResponse.data.length > 0) {
           // Si existe el registro, configuramos `recordId` y cargamos los archivos
           const existingRecord = recordsResponse.data[0];
-          console.log("Existing record found:", existingRecord); // LOG para ver el registro encontrado
+          console.log("Existing record found:", existingRecord);
           setData(existingRecord);
           setRecordId(existingRecord.id);
-          await fetchFiles(); // Llamar a fetchFiles para obtener archivos de `caracterizacion_id`
+          await fetchFiles(); 
         } else {
           // Si no existe, creamos el registro y luego cargamos los archivos
-          console.log("No existing record found, creating a new one."); // LOG para verificar creación
+          console.log("No existing record found, creating a new one.");
           const createResponse = await axios.post(
             `https://impulso-capital-back.onrender.com/api/inscriptions/pi/tables/${tableName}/record`,
             { caracterizacion_id: id },
@@ -86,9 +90,9 @@ export default function AnexosTab({ id }) {
               },
             }
           );
-          console.log("New record created:", createResponse.data); // LOG para ver el nuevo registro creado
-          setRecordId(createResponse.data.id); // Configuramos el nuevo `recordId`
-          await fetchFiles(); // Llamar a fetchFiles para obtener archivos de `caracterizacion_id`
+          console.log("New record created:", createResponse.data);
+          setRecordId(createResponse.data.id); 
+          await fetchFiles();
         }
 
         setLoading(false);
@@ -110,8 +114,16 @@ export default function AnexosTab({ id }) {
     setFileName(e.target.value);
   };
 
+  // 2. Bloqueo en la función handleFileUpload y a nivel de interfaz
   const handleFileUpload = async (e) => {
     e.preventDefault();
+
+    // Aseguramos también a nivel de lógica
+    if (isRole5) {
+      alert('No tienes permisos para subir archivos.');
+      return;
+    }
+
     if (!file || !fileName) {
       alert('Por favor, ingresa un nombre y selecciona un archivo');
       return;
@@ -122,10 +134,10 @@ export default function AnexosTab({ id }) {
       formData.append('file', file);
       formData.append('fileName', fileName);
       formData.append('caracterizacion_id', id);
-      formData.append('source', 'anexos'); // asegurando que source se envía
-  
-      console.log("Uploading file with source:", formData.get('source')); // Agregamos un log para verificar el envío de source
-  
+      formData.append('source', 'anexos'); 
+
+      console.log("Uploading file with source:", formData.get('source'));
+
       await axios.post(
         `https://impulso-capital-back.onrender.com/api/inscriptions/tables/${tableName}/record/${recordId}/upload`,
         formData,
@@ -136,7 +148,7 @@ export default function AnexosTab({ id }) {
           },
         }
       );
-  
+
       await fetchFiles();
       setFile(null);
       setFileName('');
@@ -146,9 +158,15 @@ export default function AnexosTab({ id }) {
       setError('Error subiendo el archivo');
     }
   };
-  
 
+  // 3. Bloqueo en la función handleFileDelete
   const handleFileDelete = async (fileId) => {
+    // Chequeo adicional para rol 5
+    if (isRole5) {
+      alert('No tienes permisos para eliminar archivos.');
+      return;
+    }
+
     if (window.confirm('¿Estás seguro de que deseas eliminar este archivo?')) {
       try {
         const token = localStorage.getItem('token');
@@ -184,6 +202,7 @@ export default function AnexosTab({ id }) {
               <button
                 className="btn btn-primary btn-sm btn-block mb-2"
                 onClick={() => setShowUploadForm(true)}
+                disabled={isRole5} // 4. Deshabilitar el botón "Subir documento" si rol 5
               >
                 Subir documento
               </button>
@@ -208,7 +227,11 @@ export default function AnexosTab({ id }) {
                     onChange={handleFileChange}
                   />
                 </div>
-                <button type="submit" className="btn btn-success btn-sm btn-block mb-2">
+                <button
+                  type="submit"
+                  className="btn btn-success btn-sm btn-block mb-2"
+                  disabled={isRole5} // Deshabilitar el botón "Cargar archivo" si rol 5
+                >
                   Cargar archivo
                 </button>
                 <button
@@ -240,9 +263,11 @@ export default function AnexosTab({ id }) {
                         Ver archivo
                       </a>
                     </div>
+                    {/* 5. Deshabilitar el botón Eliminar si rol 5 */}
                     <button
                       className="btn btn-danger btn-sm"
                       onClick={() => handleFileDelete(file.id)}
+                      disabled={isRole5}
                     >
                       Eliminar
                     </button>
